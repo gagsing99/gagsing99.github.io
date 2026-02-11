@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="Scripts/jquery-3.7.1.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
+    <link href="Jass.css" rel="stylesheet" />
+</head>
+<body>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            // Start the sequence
+            $("#line1").fadeIn("slow", function () {
+            $(this).delay(2000).fadeOut("slow", function () {
+                // Callback after line1 fades out: fade in line2
+                $("#line2").fadeIn("slow", function () {
+                    // Callback after line2 fades in: delay and fade out line2
+                    $(this).delay(2000).fadeOut("slow", function () {
+                        // Callback after line2 fades out: fade in line3
+                        $("#line3").fadeIn("slow", function () {
+                            // You can add more steps here or loop back to line1
+                            $(this).delay(2000).fadeOut("slow", function () {
+                                $("#line4").fadeIn("slow", function () {
+                                    $(this).delay(2000).fadeOut("slow", function () {
+                                        $("#dvVal").fadeIn("slow", function () {
+                                            
+                    });
+                });
+            });
+            });
+            });
+            });
+        });
+            });
+            });
+
+            $('#btnYes').click(function () {
+                $("#dvVal").fadeOut("slow", function () {
+                    $('#dvYesPoem').fadeIn("slow");
+                });
+                
+            });
+
+            $('#btnNo').click(function () {
+                $("#dvVal").delay(2000).fadeOut("slow", function () {
+                    $('#dvNo').fadeIn("slow", function () {
+                        $("#dvNo").delay(3000).fadeOut("slow", function () {
+                            location.reload();
+                        });
+                    });
+                });
+
+            });
+        });
+
+
+    </script>
+
+    <div id="text-container" class="center" style="color:white">
+        <p id="line1" class="none">Hello <span style="color:red"><b>Jasleena Saluja</b></span></p>
+        <p id="line2" class="none">My name is <b style="color:yellow">Gagandeep Singh</b></p>
+        <p id="line3" class="none">I have a <u>simple assignment</u> for you.</p>
+        <p id="line4" class="none">You just have to answer one simple <u><b style="color:red">QUESTION</b></u>.</p>
+        <div align="center" class="none" id="dvVal"><p>Will you be my VALENTINE?</p>
+        <button style="background-color:pink;color:black;" id="btnYes">YES</button>&nbsp;&nbsp;<button style="background-color:blue;color:white" id="btnNo">NO</button>
+        </div>
+        <div id="dvYesPoem" class="none" style="text-align:center">
+            <p>You said <span style="color:Red">"Yes"</span>
+            <br />You are MINE, <span style="color:Red">Jass</span>
+            <br />You are my sweet <i>valentine</i>
+            <br />You will always be my brightest <span style="color:yellow">shine</span>
+            <br />I am <u>proud</u> to have you
+            <br />I hope <u>you</u> are proud too
+            <br /><b>I love you!</b>
+            <br /><span style="color:red">3000</span> to
+            <br />Infinity
+            <br />and Beyond..
+            </p>
+        </div>
+        <div id="dvNo" class="none" style="text-align:center">
+            <p>No matter what, you can't say no<br />Pleae try again!</p>
+        </div>
+    </div>
+</body>
+</html>
