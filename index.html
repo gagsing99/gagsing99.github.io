@@ -235,7 +235,7 @@
 
         <div id="status-bar">
             <div id="level-indicator">Level 1 / 5</div>
-            <div id="timer">⏱️ 30s</div>
+            <div id="timer">⏱️ 60s</div>
             <div id="inventory">🎒 Key: ❌</div>
         </div>
         
@@ -319,11 +319,11 @@
         ];
 
         const levelConfigs = [
-            { size: 21, time: 30, msg: "1. I love you 3000 to infinity" },
-            { size: 25, time: 45, msg: "2. #JG4Life" },
-            { size: 29, time: 60, msg: "3. You are you though" },
-            { size: 33, time: 75, msg: "4. Tu meri main tera" },
-            { size: 33, time: 75, msg: "5. I will love you more and more and more every day" }
+            { size: 21, msg: "1. I love you 3000 to infinity" },
+            { size: 25, msg: "2. #JG4Life" },
+            { size: 29, msg: "3. You are you though" },
+            { size: 33, msg: "4. Tu meri main tera" },
+            { size: 33, msg: "5. I will love you more and more and more every day" }
         ];
 
         const TILE = { FLOOR: 0, WALL: 1, HEART: 2, KEY: 3, GATE: 4 };
@@ -387,7 +387,8 @@
 
         function startTimer() {
             clearInterval(timerInterval);
-            timeLeft = levelConfigs[currentLevel].time;
+            // Starts at 60s for Level 1 (index 0) and adds 30s for each level after
+            timeLeft = 60 + (currentLevel * 30);
             updateTimerDisplay();
             
             timerInterval = setInterval(() => {
@@ -438,7 +439,7 @@
 
             if (!found) {
                 queue = [{x: start.x, y: start.y}];
-                visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+                visited = Array.from({ length: "../../", length: gridSize }, () => Array(gridSize).fill(false));
                 visited[start.y][start.x] = true;
                 
                 while (queue.length > 0) {
@@ -552,7 +553,7 @@
             ctx.bezierCurveTo(7.58, -10, 10, -7.58, 10, -4.5);
             ctx.bezierCurveTo(10, -0.72, 6.6, 2.36, 1.45, 7.05);
             ctx.closePath();
-            ctx.fillStyle = '#ff4d6d'; // Fixed Red color across all level themes
+            ctx.fillStyle = '#ff4d6d'; 
             ctx.fill();
             ctx.restore();
         }
