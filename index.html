@@ -324,7 +324,6 @@
             { bg: "#fafaf9", main: "#44403c", light: "#f5f5f4", wall: "#e7e5e4", wallBorder: "#d6d3d1" }  
         ];
 
-        // Size and Keys config per level. Time is calculated dynamically now.
         const levelConfigs = [
             { size: 19, keys: 1, msg: "1. I love you 3000 to infinity" },
             { size: 21, keys: 1, msg: "2. #JG4Life" },
@@ -399,7 +398,6 @@
 
         function startTimer() {
             clearInterval(timerInterval);
-            // Linear increase: Level 1 (index 0) = 45s, Level 2 (index 1) = 55s, etc.
             timeLeft = 45 + (currentLevel * 10);
             updateTimerDisplay();
             
@@ -439,25 +437,24 @@
             }
         }
 
+        // Modified forcePath to explicitly carve away WALLS to build a clear walkway
         function forcePath(start, target) {
             let queue = [{x: start.x, y: start.y}];
             let visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
             let parent = {};
             visited[start.y][start.x] = true;
-            let found = false;
 
+            // We use standard BFS tracking through all grid cells to find the shortest injection vector
             while (queue.length > 0) {
                 let curr = queue.shift();
-                if (curr.x === target.x && curr.y === target.y) {
-                    found = true;
-                    break;
-                }
+                if (curr.x === target.x && curr.y === target.y) break;
+                
                 let directions = [[0,1], [1,0], [0,-1], [-1,0]];
                 for (let [dx, dy] of directions) {
                     let nx = curr.x + dx;
                     let ny = curr.y + dy;
                     if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-                        if (!visited[ny][nx] && map[ny][nx] !== TILE.WALL) {
+                        if (!visited[ny][nx]) {
                             visited[ny][nx] = true;
                             parent[`${nx},${ny}`] = curr;
                             queue.push({x: nx, y: ny});
@@ -466,34 +463,17 @@
                 }
             }
 
-            if (!found) {
-                queue = [{x: start.x, y: start.y}];
-                visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
-                visited[start.y][start.x] = true;
+            // Crawl backward along the computed link chain and drill open any walls
+            let curr = target;
+            while (curr.x !== start.x || curr.y !== start.y) {
+                let p = parent[`${curr.x},${curr.y}`];
+                if (!p) break;
                 
-                while (queue.length > 0) {
-                    let curr = queue.shift();
-                    if (curr.x === target.x && curr.y === target.y) break;
-                    let directions = [[0,1], [1,0], [0,-1], [-1,0]];
-                    for (let [dx, dy] of directions) {
-                        let nx = curr.x + dx;
-                        let ny = curr.y + dy;
-                        if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
-                            if (!visited[ny][nx]) {
-                                visited[ny][nx] = true;
-                                parent[`${nx},${ny}`] = curr;
-                                queue.push({x: nx, y: ny});
-                            }
-                        }
-                    }
+                // Only wipe out obstacles if it is structurally blocking passage (protect gates/heart/keys)
+                if (map[curr.y][curr.x] === TILE.WALL) {
+                    map[curr.y][curr.x] = TILE.FLOOR;
                 }
-                let curr = target;
-                while (curr.x !== start.x || curr.y !== start.y) {
-                    if (map[curr.y][curr.x] === TILE.WALL) {
-                        map[curr.y][curr.x] = TILE.FLOOR;
-                    }
-                    curr = parent[`${curr.x},${curr.y}`];
-                }
+                curr = p;
             }
         }
 
@@ -508,6 +488,7 @@
             canvas.width = gridSize * tileSize;
             canvas.height = gridSize * tileSize;
 
+            // Step 1: Initialize full solid wall space
             map = Array.from({ length: gridSize }, () => Array(gridSize).fill(TILE.WALL));
 
             let walls = [];
@@ -531,50 +512,57 @@
                 }
             }
 
+            // Step 2: Grab random open tile nodes far away from starting corner to host assets
             let floorTiles = [];
-            for (let r = 2; r < gridSize - 2; r++) {
-                for (let c = 2; c < gridSize - 2; c++) {
-                    if (map[r][c] === TILE.FLOOR && (r !== 1 || c !== 1)) {
+            for (let r = 3; r < gridSize - 3; r++) {
+                for (let c = 3; c < gridSize - 3; c++) {
+                    if (map[r][c] === TILE.FLOOR) {
                         floorTiles.push({x: c, y: r});
                     }
                 }
             }
             
+            // Step 3: Establish the target Heart node 
             let heartIndex = Math.floor(Math.random() * floorTiles.length);
             let hPos = floorTiles.splice(heartIndex, 1)[0];
             map[hPos.y][hPos.x] = TILE.HEART;
 
+            // Step 4: Construct strict perimeter locks safely around the heart target
             let directions = [[0,1], [1,0], [0,-1], [-1,0]];
             let validGatePositions = [];
 
             for (let [dx, dy] of directions) {
                 let gx = hPos.x + dx;
                 let gy = hPos.y + dy;
-                if (map[gy][gx] === TILE.FLOOR) {
-                    map[gy][gx] = TILE.GATE;
-                    validGatePositions.push({x: gx, y: gy});
-                }
-            }
-
-            if (validGatePositions.length === 0) {
-                let randomDir = directions[Math.floor(Math.random() * directions.length)];
-                let gx = hPos.x + randomDir[0];
-                let gy = hPos.y + randomDir[1];
                 map[gy][gx] = TILE.GATE;
                 validGatePositions.push({x: gx, y: gy});
             }
 
+            // Step 5: Place the keys safely out in open pathways
+            let keyPositions = [];
             for (let k = 0; k < totalKeysNeeded; k++) {
                 if (floorTiles.length > 0) {
                     let kIdx = Math.floor(Math.random() * floorTiles.length);
                     let kPos = floorTiles.splice(kIdx, 1)[0];
                     map[kPos.y][kPos.x] = TILE.KEY;
-                    
-                    forcePath({x: 1, y: 1}, kPos);
+                    keyPositions.push(kPos);
                 }
             }
 
             player = { x: 1, y: 1 };
+
+            // Step 6: Core Path Correction Engine
+            // Ensure player has a guaranteed clear path to EVERY key
+            for (let kPos of keyPositions) {
+                forcePath(player, kPos);
+            }
+
+            // Ensure every key location has a guaranteed open path leading up to the perimeter security gates
+            for (let kPos of keyPositions) {
+                forcePath(kPos, validGatePositions[0]);
+            }
+            
+            // Final verification trace: Check if a structural link from player to gate point exists cleanly
             forcePath(player, validGatePositions[0]);
         }
 
