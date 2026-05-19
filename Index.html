@@ -547,4 +547,325 @@
             let directions = [[0,1], [1,0], [0,-1], [-1,0]];
             let validGatePositions = [];
 
-            for (let [dx, dy] of directio
+            for (let [dx, dy] of directions) {
+                let gx = hPos.x + dx;
+                let gy = hPos.y + dy;
+                if (map[gy][gx] === TILE.FLOOR) {
+                    map[gy][gx] = TILE.GATE;
+                    validGatePositions.push({x: gx, y: gy});
+                }
+            }
+
+            if (validGatePositions.length === 0) {
+                let randomDir = directions[Math.floor(Math.random() * directions.length)];
+                let gx = hPos.x + randomDir[0];
+                let gy = hPos.y + randomDir[1];
+                map[gy][gx] = TILE.GATE;
+                validGatePositions.push({x: gx, y: gy});
+            }
+
+            for (let k = 0; k < totalKeysNeeded; k++) {
+                if (floorTiles.length > 0) {
+                    let kIdx = Math.floor(Math.random() * floorTiles.length);
+                    let kPos = floorTiles.splice(kIdx, 1)[0];
+                    map[kPos.y][kPos.x] = TILE.KEY;
+                    
+                    forcePath({x: 1, y: 1}, kPos);
+                }
+            }
+
+            player = { x: 1, y: 1 };
+            forcePath(player, validGatePositions[0]);
+        }
+
+        function initLevel() {
+            levelWon = false;
+            keysFound = 0;
+            applyTheme();
+            updateInventoryDisplay();
+            levelIndicator.textContent = `Level ${currentLevel + 1} / 10`;
+            
+            generateHardMaze();
+            startTimer();
+
+            gameActive = true;
+            popupOverlay.style.display = 'none';
+            
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function drawHeart(x, y, size) {
+            ctx.save();
+            ctx.translate(x + tileSize/2, y + tileSize/2);
+
+            let pulseScale = 1.0;
+            if (gameActive && timeLeft <= 10 && timeLeft > 0) {
+                pulseFrame += 0.25;
+                pulseScale = 1.0 + Math.abs(Math.sin(pulseFrame)) * 0.25; 
+            }
+            ctx.scale((size / 24) * pulseScale, (size / 24) * pulseScale);
+
+            ctx.beginPath();
+            ctx.moveTo(0, 8.35);
+            ctx.lineTo(-1.45, 7.03);
+            ctx.bezierCurveTo(-6.6, 2.36, -10, -0.72, -10, -4.5);
+            ctx.bezierCurveTo(-10, -7.58, -7.58, -10, -4.5, -10);
+            ctx.bezierCurveTo(-2.76, -10, -1.09, -9.19, 0, -7.91);
+            ctx.bezierCurveTo(1.09, -7.91, 2.76, -10, 4.5, -10);
+            ctx.bezierCurveTo(7.58, -10, 10, -7.58, 10, -4.5);
+            ctx.bezierCurveTo(10, -0.72, 6.6, 2.36, 1.45, 7.05);
+            ctx.closePath();
+            ctx.fillStyle = '#ff4d6d'; 
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawGirlAndFlag(x, y) {
+            let cx = x * tileSize + tileSize / 2;
+            let cy = y * tileSize + tileSize / 2;
+            const scale = tileSize / 40;
+            const theme = themes[currentLevel];
+
+            flagWaveFrame += 0.15;
+
+            let bounceY = 0;
+            let rotation = 0;
+            if (levelWon) {
+                danceTimer += 0.25;
+                bounceY = Math.abs(Math.sin(danceTimer)) * -12 * scale; 
+                rotation = Math.sin(danceTimer) * 0.3; 
+            }
+
+            ctx.save();
+            ctx.translate(cx, cy + bounceY);
+            ctx.rotate(rotation);
+
+            ctx.save();
+            ctx.translate(-10 * scale, 5 * scale); 
+            
+            ctx.strokeStyle = '#5c3d2e';
+            ctx.lineWidth = 2 * scale;
+            ctx.beginPath();
+            ctx.moveTo(0, 10 * scale);
+            ctx.lineTo(-12 * scale, -15 * scale);
+            ctx.stroke();
+
+            ctx.fillStyle = theme.wallBorder;
+            ctx.beginPath();
+            let fx = -12 * scale;
+            let fy = -15 * scale;
+            ctx.moveTo(fx, fy);
+            
+            for (let i = 0; i <= 20; i++) {
+                let segmentX = fx - i * (scale * 1.3);
+                let segmentY = fy + Math.sin(flagWaveFrame + i * 0.5) * (3 * scale);
+                ctx.lineTo(segmentX, segmentY);
+            }
+            let flagWidth = 20 * (scale * 1.3);
+            ctx.lineTo(fx - flagWidth, fy + (12 * scale) + Math.sin(flagWaveFrame + 20 * 0.5) * (3 * scale));
+            
+            for (let i = 20; i >= 0; i--) {
+                let segmentX = fx - i * (scale * 1.3);
+                let segmentY = fy + (12 * scale) + Math.sin(flagWaveFrame + i * 0.5) * (3 * scale);
+                ctx.lineTo(segmentX, segmentY);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.font = `bold ${10 * scale}px Arial`;
+            ctx.fillStyle = '#4a282d'; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("Jass", fx - (flagWidth / 2), fy + (6 * scale) + Math.sin(flagWaveFrame + 10 * 0.5) * (3 * scale));
+            ctx.restore();
+
+            ctx.fillStyle = '#4a3728';
+            ctx.beginPath(); ctx.arc(-10 * scale, -10 * scale, 6 * scale, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(10 * scale, -10 * scale, 6 * scale, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#ffd6ba';
+            ctx.beginPath(); ctx.arc(0, 0, 12 * scale, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#4a3728';
+            ctx.beginPath(); ctx.arc(0, -4 * scale, 12 * scale, Math.PI, 0); ctx.fill();
+
+            ctx.fillStyle = '#222';
+            ctx.beginPath(); ctx.arc(-4 * scale, 0, 1.5 * scale, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(4 * scale, 0, 1.5 * scale, 0, Math.PI * 2); ctx.fill();
+
+            ctx.strokeStyle = theme.main;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(0, 3 * scale, 3 * scale, 0, Math.PI); ctx.stroke();
+
+            ctx.fillStyle = theme.main;
+            ctx.beginPath();
+            ctx.moveTo(-8 * scale, 11 * scale);
+            ctx.lineTo(8 * scale, 11 * scale);
+            ctx.lineTo(12 * scale, 19 * scale);
+            ctx.lineTo(-12 * scale, 19 * scale);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const theme = themes[currentLevel];
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const x = c * tileSize;
+                    const y = r * tileSize;
+
+                    if (map[r][c] === TILE.WALL) {
+                        ctx.fillStyle = theme.wall;
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.strokeStyle = theme.wallBorder;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, tileSize, tileSize);
+                    } 
+                    else if (map[r][c] === TILE.KEY) {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.font = `${tileSize * 0.75}px sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🔑', x + tileSize/2, y + tileSize/2);
+                    } 
+                    else if (map[r][c] === TILE.GATE) {
+                        ctx.fillStyle = '#b76e79';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.fillStyle = '#4a282d';
+                        ctx.fillRect(x + (tileSize*0.2), y, 2, tileSize);
+                        ctx.fillRect(x + (tileSize*0.5), y, 2, tileSize);
+                        ctx.fillRect(x + (tileSize*0.8), y, 2, tileSize);
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath(); ctx.arc(x + (tileSize*0.7), y + tileSize/2, 2.5, 0, Math.PI*2); ctx.fill();
+                    }
+                    else if (map[r][c] === TILE.HEART) {
+                        drawHeart(x, y, tileSize * 0.65);
+                    }
+                }
+            }
+            drawGirlAndFlag(player.x, player.y);
+        }
+
+        function gameLoop() {
+            draw();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function handleMove(dir) {
+            if (!gameActive) return;
+            tryPlayMusic();
+
+            let nextX = player.x;
+            let nextY = player.y;
+
+            switch(dir) {
+                case 'up': nextY--; break;
+                case 'down': nextY++; break;
+                case 'left': nextX--; break;
+                case 'right': nextX++; break;
+            }
+
+            if (nextY >= 0 && nextY < gridSize && nextX >= 0 && nextX < gridSize) {
+                const targetTile = map[nextY][nextX];
+
+                if (targetTile !== TILE.WALL) {
+                    if (targetTile === TILE.KEY) {
+                        keysFound++;
+                        updateInventoryDisplay();
+                        map[nextY][nextX] = TILE.FLOOR;
+                    }
+
+                    if (targetTile === TILE.GATE) {
+                        if (keysFound === totalKeysNeeded) {
+                            for (let r = 0; r < gridSize; r++) {
+                                for (let c = 0; c < gridSize; c++) {
+                                    if (map[r][c] === TILE.GATE) map[r][c] = TILE.FLOOR;
+                                }
+                            }
+                        } else {
+                            return; 
+                        }
+                    }
+
+                    player.x = nextX;
+                    player.y = nextY;
+
+                    if (map[player.y][player.x] === TILE.HEART) {
+                        triggerWin();
+                    }
+                }
+            }
+        }
+
+        function triggerWin() {
+            gameActive = false;
+            levelWon = true;
+            clearInterval(timerInterval);
+
+            setTimeout(() => {
+                popupMessage.textContent = levelConfigs[currentLevel].msg;
+                if (currentLevel === levelConfigs.length - 1) {
+                    popupBtn.textContent = "Play Again!";
+                } else {
+                    popupBtn.textContent = "Next Level";
+                }
+                popupOverlay.style.display = 'flex';
+            }, 1500);
+        }
+
+        function triggerGameOver() {
+            gameActive = false;
+            levelWon = false;
+            clearInterval(timerInterval);
+
+            popupMessage.textContent = "Time's up! Gagan's heart locked away.";
+            popupBtn.textContent = "Try Again";
+            popupOverlay.style.display = 'flex';
+        }
+
+        window.addEventListener('keydown', (e) => {
+            let dir = '';
+            switch(e.key.toLowerCase()) {
+                case 'arrowup': case 'w': dir = 'up'; break;
+                case 'arrowdown': case 's': dir = 'down'; break;
+                case 'arrowleft': case 'a': dir = 'left'; break;
+                case 'arrowright': case 'd': dir = 'right'; break;
+                default: return;
+            }
+            e.preventDefault();
+            handleMove(dir);
+        });
+
+        document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('up'); });
+        document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('down'); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('left'); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('right'); });
+
+        document.getElementById('btn-up').addEventListener('click', () => handleMove('up'));
+        document.getElementById('btn-down').addEventListener('click', () => handleMove('down'));
+        document.getElementById('btn-left').addEventListener('click', () => handleMove('left'));
+        document.getElementById('btn-right').addEventListener('click', () => handleMove('right'));
+
+        window.addEventListener('click', tryPlayMusic);
+
+        popupBtn.addEventListener('click', () => {
+            if (levelWon) {
+                if (currentLevel === levelConfigs.length - 1) {
+                    currentLevel = 0; 
+                } else {
+                    currentLevel++; 
+                }
+            }
+            initLevel();
+        });
+
+        initCarousel();
+        initLevel();
+    </script>
+</body>
+</html>
