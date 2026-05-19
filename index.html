@@ -44,9 +44,9 @@
         #carousel-container {
             border: 1px dashed #ccc;
             border-radius: 8px;
-            padding: 6px;
+            padding: 10px;
             margin-bottom: 10px;
-            min-height: 20px;
+            min-height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -57,7 +57,9 @@
         #carousel-text {
             font-weight: 600;
             font-style: italic;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-line;
             transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, color 0.5s ease;
         }
 
@@ -70,19 +72,14 @@
             margin-bottom: 10px;
             padding: 0 2px;
             font-size: 0.85rem;
-            gap: 6px;
-        }
-
-        #timer, #inventory {
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid transparent;
-            transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
         }
 
         #timer {
             font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
             min-width: 60px;
+            transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
         }
 
         #timer.hurry {
@@ -92,8 +89,14 @@
             border-color: #d90429 !important;
         }
 
+        #inventory {
+            padding: 4px 10px;
+            border-radius: 20px;
+            transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+        }
+
         #inventory.has-key {
-            color: #d4af37 !important;
+            color: #b48a04 !important;
             background: #fffdf0 !important;
             border-color: #f3e5ab !important;
         }
@@ -110,7 +113,7 @@
             border-radius: 8px;
             display: block;
             max-width: 100%;
-            max-height: 52vh;
+            max-height: 46vh;
             object-fit: contain;
             transition: border-color 0.5s ease, background-color 0.5s ease;
         }
@@ -119,7 +122,7 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            margin-top: 15px;
+            margin-top: 10px;
             user-select: none;
         }
 
@@ -129,16 +132,16 @@
         }
 
         .dpad-btn {
-            width: 55px;
-            height: 55px;
+            width: 50px;
+            height: 50px;
             background: rgba(0, 0, 0, 0.05);
             border: 2px solid #ccc;
             border-radius: 50%;
-            margin: 4px;
+            margin: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             touch-action: manipulation;
             transition: background 0.1s, border-color 0.5s ease, color 0.5s ease;
         }
@@ -148,7 +151,7 @@
         }
 
         .controls-hint {
-            margin-top: 10px;
+            margin-top: 8px;
             font-size: 0.8rem;
             color: #7a7a7a;
         }
@@ -201,10 +204,11 @@
         }
 
         @media (max-width: 768px) {
-            #mobile-controls { display: flex; }
+            #mobile-controls {
+                display: flex;
+            }
             h1 { font-size: 1.4rem; }
             .controls-hint { display: none; }
-            #status-bar { font-size: 0.78rem; }
         }
 
         @keyframes popIn {
@@ -222,7 +226,7 @@
 <body>
 
     <audio id="bgMusic" loop>
-        <source src="https://raw.githubusercontent.com/gagsing99/gagsing99.github.io/main/song.mp3#t=10" type="audio/mpeg">
+        <source src="song.mp3" type="audio/mpeg">
     </audio>
 
     <div id="game-container">
@@ -235,7 +239,7 @@
         <div id="status-bar">
             <div id="level-indicator">Level 1 / 10</div>
             <div id="timer">⏱️ 45s</div>
-            <div id="inventory">🎒 Key: ❌</div>
+            <div id="inventory">🎒 Keys: ❌</div>
         </div>
         
         <div id="canvas-wrapper">
@@ -253,8 +257,9 @@
             </div>
         </div>
         
-        <div class="controls-hint">Find the <b>🔑 Key</b>, collect <b>🎁 Gifts</b>, and unlock the <b>🚪 Door</b> before time runs out!</div>
+        <div class="controls-hint">Collect <b>🔑 Keys</b> to pass gates! Snag <b>🎁 Gifts</b> for hidden poems!</div>
 
+        <!-- Pop-up Overlay -->
         <div id="popup-overlay">
             <div id="popup-box">
                 <div id="popup-message">Message goes here!</div>
@@ -282,12 +287,13 @@
         let currentLevel = 0;
         let gameActive = false;
         let levelWon = false;
-        let giftPopupActive = false;
-        let hasKey = false;
+        let isGiftPopupActive = false;
+        let keysFound = 0;
+        let totalKeysNeeded = 1;
         let audioInitialized = false;
         let map = [];
-        const gridSize = 35;
-        const tileSize = 18;
+        let gridSize = 21; 
+        let tileSize = 20; 
         let player = { x: 1, y: 1 };
         
         let timerInterval;
@@ -298,55 +304,38 @@
         let danceTimer = 0;
         let pulseFrame = 0;
 
-        const carouselLines = [
-            "tere sang yaara mast baharaaaaa",
-            "aj din chadhya tere rang varga",
-            "Shake it off, shake it off",
-            "aj lagdi tu badhi HOT oye",
-            "ooo you look beautiful every day",
-            "aaja fer!!!!!",
-            "mast mausam mein awesome chawsome"
-        ];
-        let carouselIndex = 0;
-        let carouselInterval;
-
-        const funnyLovePoems = [
-            "Teri smile WiFi vargi, full signal mere dil tak.\nTu hassdi ae te mera brain ho janda lag-lag.",
-            "You stole my heart, no OTP, no login.\nHun dil mera kehnda bas tere naal sign-in.",
-            "Tere nakhre premium plan, bill main bhar da jawan.\nPyar da recharge kar ke, daily tenu call lagawan.",
-            "Tu meri chai, main tera biscuit thoda tooteya.\nDunk kar le pyar vich, mood ho jaye cute-eya.",
-            "Your eyes are like Google Maps, I get lost every time.\nPar destination hamesha tu hi, meri funny valentine.",
-            "Teri yaad aayi, fridge khol ke khada reh gaya.\nPyar bhi bhukh varga, main snack labhda reh gaya.",
-            "Tu meri playlist da repeat button ban gayi.\nHar gaana tere naam, meri battery vi full ho gayi.",
-            "Mera dil scooter, tu petrol premium.\nTere bina start na hove, love da engine minimum.",
-            "You are my password, strong and secure.\nPar tere bina main logout, lonely for sure.",
-            "Tere naal life comedy show, main audience front row.\nTu hassdi reh sohniye, bas pyar da flow-flow."
+        const poemsPool = [
+            "Twinkle twinkle little star,\nTu hi meri sohni car.\nWherever you go near or far,\nDil mera khaye jhatke yaar!",
+            "Kadi taan hot kadi sweet lagdi,\nTu menu poori pariyan di thweet lagdi.\nButter chicken vargi smile teri,\nSachi mere dil di har beat lagdi!",
+            "I love you more than makhan-malai,\nTere piche mummy di jhidak vi khai.\nJe tu na mili is vaar sohniye,\nSamjhi gaeo meri taan maut hi aai!",
+            "No matter how much you make me wait,\nTu hi hai goriye meri soulmate.\nLet's clear this maze and open the gate,\nOur love is written in golden fate!",
+            "Tussi haste ho to sab khil jaata hai,\nDil ko bina peete nasha chadh jaata hai.\nZyaada nakhre na dikhaya karo,\nKhama-kha time over ho jaata hai!"
         ];
 
         const themes = [
-            { bg: "#fff5f5", main: "#ff4d6d", light: "#fff0f3", wall: "#ffccd5", wallBorder: "#ffb3c1" },
-            { bg: "#f0f8ff", main: "#0077b6", light: "#e0f2fe", wall: "#bae6fd", wallBorder: "#7dd3fc" },
-            { bg: "#ecfeff", main: "#06b6d4", light: "#cffafe", wall: "#a5f3fc", wallBorder: "#67e8f9" },
-            { bg: "#faf5ff", main: "#7c3aed", light: "#f3e8ff", wall: "#e9d5ff", wallBorder: "#d8b4fe" },
-            { bg: "#fff7ed", main: "#ea580c", light: "#ffedd5", wall: "#fed7aa", wallBorder: "#fdba74" },
-            { bg: "#fdf2f8", main: "#db2777", light: "#fce7f3", wall: "#fbcfe8", wallBorder: "#f9a8d4" },
-            { bg: "#f5f3ff", main: "#4f46e5", light: "#e0e7ff", wall: "#c7d2fe", wallBorder: "#a5b4fc" },
-            { bg: "#fff1f2", main: "#e11d48", light: "#ffe4e6", wall: "#fecdd3", wallBorder: "#fda4af" },
-            { bg: "#f0fdfa", main: "#0d9488", light: "#ccfbf1", wall: "#99f6e4", wallBorder: "#5eead4" },
-            { bg: "#fafaf9", main: "#44403c", light: "#f5f5f4", wall: "#e7e5e4", wallBorder: "#d6d3d1" }
+            { bg: "#fff5f5", main: "#ff4d6d", light: "#fff0f3", wall: "#ffccd5" }, 
+            { bg: "#f0f8ff", main: "#0077b6", light: "#e0f2fe", wall: "#bae6fd" }, 
+            { bg: "#ecfeff", main: "#06b6d4", light: "#cffafe", wall: "#a5f3fc" }, 
+            { bg: "#faf5ff", main: "#7c3aed", light: "#f3e8ff", wall: "#e9d5ff" }, 
+            { bg: "#fff7ed", main: "#ea580c", light: "#ffedd5", wall: "#fed7aa" }, 
+            { bg: "#fdf2f8", main: "#db2777", light: "#fce7f3", wall: "#fbcfe8" }, 
+            { bg: "#f5f3ff", main: "#4f46e5", light: "#e0e7ff", wall: "#c7d2fe" }, 
+            { bg: "#fff1f2", main: "#e11d48", light: "#ffe4e6", wall: "#fecdd3" }, 
+            { bg: "#f0fdfa", main: "#0d9488", light: "#ccfbf1", wall: "#99f6e4" }, 
+            { bg: "#fafaf9", main: "#44403c", light: "#f5f5f4", wall: "#e7e5e4" }  
         ];
 
         const levelConfigs = [
-            { gifts: 2, msg: "1. I love you 3000 to infinity" },
-            { gifts: 2, msg: "2. #JG4Life" },
-            { gifts: 3, msg: "3. You are you though" },
-            { gifts: 3, msg: "4. Tu meri main tera" },
-            { gifts: 4, msg: "5. I will love you more and more and more every day" },
-            { gifts: 4, msg: "6. day and night I love you more" },
-            { gifts: 5, msg: "7. I wanna grow old with you" },
-            { gifts: 5, msg: "8. tu hi Dil ch, tu hi yaada ch" },
-            { gifts: 6, msg: "9. reh tu mere kol hamesha" },
-            { gifts: 6, msg: "10. jass, Gagan, maanya and Joey" }
+            { size: 19, keys: 1, gifts: 2, msg: "1. I love you 3000 to infinity" },
+            { size: 21, keys: 1, gifts: 2, msg: "2. #JG4Life" },
+            { size: 23, keys: 1, gifts: 3, msg: "3. You are you though" },
+            { size: 25, keys: 1, gifts: 3, msg: "4. Tu meri main tera" },
+            { size: 27, keys: 2, gifts: 4, msg: "5. I will love you more and more and more every day" },
+            { size: 29, keys: 2, gifts: 4, msg: "6. day and night I love you more" },
+            { size: 31, keys: 2, gifts: 5, msg: "7. I wanna grow old with you" },
+            { size: 33, keys: 3, gifts: 5, msg: "8. tu hi Dil ch, tu hi yaada ch" },
+            { size: 35, keys: 3, gifts: 6, msg: "9. reh tu mere kol hamesha" },
+            { size: 37, keys: 4, gifts: 6, msg: "10. jass, Gagan, maanya and Joey" }
         ];
 
         const TILE = { FLOOR: 0, WALL: 1, HEART: 2, KEY: 3, GATE: 4, GIFT: 5 };
@@ -355,17 +344,22 @@
             const theme = themes[currentLevel];
             document.body.style.backgroundColor = theme.bg;
             gameTitle.style.color = theme.main;
+            
             carouselContainer.style.backgroundColor = theme.light;
             carouselContainer.style.borderColor = theme.wall;
             carouselText.style.color = theme.main;
+
             timerDiv.style.backgroundColor = theme.light;
             timerDiv.style.borderColor = theme.wall;
             timerDiv.style.color = theme.main;
+
             inventoryDiv.style.backgroundColor = theme.light;
             inventoryDiv.style.borderColor = theme.wall;
-            inventoryDiv.style.color = theme.wallBorder;
+            inventoryDiv.style.color = theme.main;
+
             canvas.style.backgroundColor = theme.light;
             canvas.style.borderColor = theme.wall;
+
             popupBox.style.borderColor = theme.main;
             popupMessage.style.color = theme.main;
             popupBtn.style.backgroundColor = theme.main;
@@ -382,34 +376,27 @@
 
         function tryPlayMusic() {
             if (!audioInitialized) {
-                bgMusic.volume = 0.3;
+                bgMusic.volume = 0.2;
                 bgMusic.play().then(() => {
                     audioInitialized = true;
-                }).catch(e => console.log("Audio waiting for user gesture"));
+                }).catch(e => console.log("Audio waiting for gesture"));
             }
         }
 
-        function initCarousel() {
-            carouselText.textContent = carouselLines[carouselIndex];
-            clearInterval(carouselInterval);
-            carouselInterval = setInterval(() => {
-                carouselText.style.opacity = 0;
-                carouselText.style.transform = "translateY(-10px)";
-                setTimeout(() => {
-                    carouselIndex = (carouselIndex + 1) % carouselLines.length;
-                    carouselText.textContent = carouselLines[carouselIndex];
-                    carouselText.style.opacity = 1;
-                    carouselText.style.transform = "translateY(0)";
-                }, 400);
-            }, 3000);
+        function updateCarouselText() {
+            carouselText.style.opacity = 0;
+            carouselText.style.transform = "translateY(-10px)";
+            setTimeout(() => {
+                carouselText.textContent = levelConfigs[currentLevel].msg;
+                carouselText.style.opacity = 1;
+                carouselText.style.transform = "translateY(0)";
+            }, 200);
         }
 
         function startTimer() {
             clearInterval(timerInterval);
-            timeLeft = 45 + (currentLevel * 10);
-            updateTimerDisplay();
             timerInterval = setInterval(() => {
-                if (!gameActive || giftPopupActive) return;
+                if (!gameActive) return;
                 timeLeft--;
                 updateTimerDisplay();
                 if (timeLeft <= 0) {
@@ -427,42 +414,41 @@
             }
         }
 
-        function getFloorTiles(excludeSet = new Set()) {
-            const floorTiles = [];
-            for (let r = 1; r < gridSize - 1; r++) {
-                for (let c = 1; c < gridSize - 1; c++) {
-                    if (map[r][c] === TILE.FLOOR && !excludeSet.has(`${c},${r}`)) {
-                        floorTiles.push({ x: c, y: r });
-                    }
-                }
+        function updateInventoryDisplay() {
+            let statusStr = "🎒 Keys: ";
+            if (keysFound === 0) {
+                statusStr += "❌";
+            } else {
+                for (let i = 0; i < keysFound; i++) statusStr += "🔑";
+                for (let i = keysFound; i < totalKeysNeeded; i++) statusStr += "❌";
             }
-            return floorTiles;
-        }
+            inventoryDiv.textContent = statusStr;
 
-        function carvePath(start, target) {
-            let x = start.x;
-            let y = start.y;
-            map[y][x] = TILE.FLOOR;
-            while (x !== target.x || y !== target.y) {
-                if (Math.random() < 0.5 && x !== target.x) {
-                    x += x < target.x ? 1 : -1;
-                } else if (y !== target.y) {
-                    y += y < target.y ? 1 : -1;
-                } else if (x !== target.x) {
-                    x += x < target.x ? 1 : -1;
-                }
-                if (x > 0 && x < gridSize - 1 && y > 0 && y < gridSize - 1) {
-                    map[y][x] = TILE.FLOOR;
-                }
+            if (keysFound === totalKeysNeeded) {
+                inventoryDiv.classList.add('has-key');
+            } else {
+                inventoryDiv.classList.remove('has-key');
             }
         }
 
         function generateHardMaze() {
+            gridSize = levelConfigs[currentLevel].size;
+            totalKeysNeeded = levelConfigs[currentLevel].keys;
+            let totalGifts = levelConfigs[currentLevel].gifts;
+
+            if (gridSize <= 21) tileSize = 22;
+            else if (gridSize <= 27) tileSize = 18;
+            else tileSize = 14;
+
             canvas.width = gridSize * tileSize;
             canvas.height = gridSize * tileSize;
+
+            // Start with a solid wall grid
             map = Array.from({ length: gridSize }, () => Array(gridSize).fill(TILE.WALL));
 
             let walls = [];
+            
+            // Standard perfect maze carving
             function passage(x, y) {
                 map[y][x] = TILE.FLOOR;
                 if (x >= 3) walls.push([x - 1, y, x - 2, y]);
@@ -483,61 +469,99 @@
                 }
             }
 
-            player = { x: 1, y: 1 };
-            const heart = { x: gridSize - 2, y: gridSize - 2 };
-            const gate = { x: gridSize - 2, y: gridSize - 3 };
-            const doorstep = { x: gridSize - 2, y: gridSize - 4 };
-            const key = { x: gridSize - 2, y: 1 };
+            // Find valid floor tiles and dead-ends
+            let floorTiles = [];
+            let deadEnds = [];
 
-            carvePath(player, key);
-            carvePath(key, doorstep);
-            map[heart.y][heart.x] = TILE.HEART;
-            map[gate.y][gate.x] = TILE.GATE;
-            map[doorstep.y][doorstep.x] = TILE.FLOOR;
-            map[key.y][key.x] = TILE.KEY;
-
-            const exclude = new Set([
-                `${player.x},${player.y}`,
-                `${heart.x},${heart.y}`,
-                `${gate.x},${gate.y}`,
-                `${doorstep.x},${doorstep.y}`,
-                `${key.x},${key.y}`
-            ]);
-
-            const floorTiles = getFloorTiles(exclude);
-            const giftCount = levelConfigs[currentLevel].gifts;
-            for (let i = 0; i < giftCount && floorTiles.length > 0; i++) {
-                const idx = Math.floor(Math.random() * floorTiles.length);
-                const gift = floorTiles.splice(idx, 1)[0];
-                map[gift.y][gift.x] = TILE.GIFT;
+            for (let r = 1; r < gridSize - 1; r++) {
+                for (let c = 1; c < gridSize - 1; c++) {
+                    if (map[r][c] === TILE.FLOOR && !(r === 1 && c === 1)) {
+                        floorTiles.push({x: c, y: r});
+                        
+                        // Count walls around the tile
+                        let wallCount = 0;
+                        let exit = null;
+                        if (map[r-1][c] === TILE.WALL) wallCount++; else exit = {x: c, y: r-1};
+                        if (map[r+1][c] === TILE.WALL) wallCount++; else exit = {x: c, y: r+1};
+                        if (map[r][c-1] === TILE.WALL) wallCount++; else exit = {x: c-1, y: r};
+                        if (map[r][c+1] === TILE.WALL) wallCount++; else exit = {x: c+1, y: r};
+                        
+                        if (wallCount === 3 && exit) {
+                            deadEnds.push({x: c, y: r, exit: exit});
+                        }
+                    }
+                }
             }
+            
+            // Place Heart at a true dead-end, and Gate blocking its single exit
+            let heartData;
+            if (deadEnds.length > 0) {
+                let dIdx = Math.floor(Math.random() * deadEnds.length);
+                heartData = deadEnds[dIdx];
+            } else {
+                // Failsafe (perfect mazes always have dead ends, but just in case)
+                heartData = {x: floorTiles[floorTiles.length-1].x, y: floorTiles[floorTiles.length-1].y, exit: {x: floorTiles[floorTiles.length-2].x, y: floorTiles[floorTiles.length-2].y}};
+            }
+
+            map[heartData.y][heartData.x] = TILE.HEART;
+            map[heartData.exit.y][heartData.exit.x] = TILE.GATE;
+
+            // Remove heart and gate from pool of available floor tiles
+            floorTiles = floorTiles.filter(t => !(t.x === heartData.x && t.y === heartData.y) && !(t.x === heartData.exit.x && t.y === heartData.exit.y));
+
+            // Place Keys
+            for (let k = 0; k < totalKeysNeeded; k++) {
+                if (floorTiles.length > 0) {
+                    let kIdx = Math.floor(Math.random() * floorTiles.length);
+                    let kPos = floorTiles.splice(kIdx, 1)[0];
+                    map[kPos.y][kPos.x] = TILE.KEY;
+                }
+            }
+
+            // Place Gifts
+            for (let g = 0; g < totalGifts; g++) {
+                if (floorTiles.length > 0) {
+                    let gIdx = Math.floor(Math.random() * floorTiles.length);
+                    let gPos = floorTiles.splice(gIdx, 1)[0];
+                    map[gPos.y][gPos.x] = TILE.GIFT;
+                }
+            }
+
+            player = { x: 1, y: 1 };
         }
 
         function initLevel() {
             levelWon = false;
-            giftPopupActive = false;
-            hasKey = false;
+            isGiftPopupActive = false;
+            keysFound = 0;
             applyTheme();
-            inventoryDiv.textContent = "🎒 Key: ❌";
-            inventoryDiv.classList.remove('has-key');
+            updateInventoryDisplay();
+            updateCarouselText(); 
             levelIndicator.textContent = `Level ${currentLevel + 1} / 10`;
+            
             generateHardMaze();
+            timeLeft = 45 + (currentLevel * 10);
+            updateTimerDisplay();
             startTimer();
+
             gameActive = true;
             popupOverlay.style.display = 'none';
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
             gameLoop();
         }
 
         function drawHeart(x, y, size) {
             ctx.save();
             ctx.translate(x + tileSize/2, y + tileSize/2);
+
             let pulseScale = 1.0;
             if (gameActive && timeLeft <= 10 && timeLeft > 0) {
                 pulseFrame += 0.25;
                 pulseScale = 1.0 + Math.abs(Math.sin(pulseFrame)) * 0.25; 
             }
             ctx.scale((size / 24) * pulseScale, (size / 24) * pulseScale);
+
             ctx.beginPath();
             ctx.moveTo(0, 8.35);
             ctx.lineTo(-1.45, 7.03);
@@ -558,7 +582,9 @@
             let cy = y * tileSize + tileSize / 2;
             const scale = tileSize / 40;
             const theme = themes[currentLevel];
+
             flagWaveFrame += 0.15;
+
             let bounceY = 0;
             let rotation = 0;
             if (levelWon) {
@@ -570,8 +596,10 @@
             ctx.save();
             ctx.translate(cx, cy + bounceY);
             ctx.rotate(rotation);
+
             ctx.save();
             ctx.translate(-10 * scale, 5 * scale); 
+            
             ctx.strokeStyle = '#5c3d2e';
             ctx.lineWidth = 2 * scale;
             ctx.beginPath();
@@ -579,11 +607,12 @@
             ctx.lineTo(-12 * scale, -15 * scale);
             ctx.stroke();
 
-            ctx.fillStyle = theme.wallBorder;
+            ctx.fillStyle = theme.wall;
             ctx.beginPath();
             let fx = -12 * scale;
             let fy = -15 * scale;
             ctx.moveTo(fx, fy);
+            
             for (let i = 0; i <= 20; i++) {
                 let segmentX = fx - i * (scale * 1.3);
                 let segmentY = fy + Math.sin(flagWaveFrame + i * 0.5) * (3 * scale);
@@ -591,6 +620,7 @@
             }
             let flagWidth = 20 * (scale * 1.3);
             ctx.lineTo(fx - flagWidth, fy + (12 * scale) + Math.sin(flagWaveFrame + 20 * 0.5) * (3 * scale));
+            
             for (let i = 20; i >= 0; i--) {
                 let segmentX = fx - i * (scale * 1.3);
                 let segmentY = fy + (12 * scale) + Math.sin(flagWaveFrame + i * 0.5) * (3 * scale);
@@ -598,6 +628,7 @@
             }
             ctx.closePath();
             ctx.fill();
+
             ctx.font = `bold ${10 * scale}px Arial`;
             ctx.fillStyle = '#4a282d'; 
             ctx.textAlign = 'center';
@@ -608,16 +639,21 @@
             ctx.fillStyle = '#4a3728';
             ctx.beginPath(); ctx.arc(-10 * scale, -10 * scale, 6 * scale, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(10 * scale, -10 * scale, 6 * scale, 0, Math.PI * 2); ctx.fill();
+
             ctx.fillStyle = '#ffd6ba';
             ctx.beginPath(); ctx.arc(0, 0, 12 * scale, 0, Math.PI * 2); ctx.fill();
+
             ctx.fillStyle = '#4a3728';
             ctx.beginPath(); ctx.arc(0, -4 * scale, 12 * scale, Math.PI, 0); ctx.fill();
+
             ctx.fillStyle = '#222';
             ctx.beginPath(); ctx.arc(-4 * scale, 0, 1.5 * scale, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(4 * scale, 0, 1.5 * scale, 0, Math.PI * 2); ctx.fill();
+
             ctx.strokeStyle = theme.main;
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.arc(0, 3 * scale, 3 * scale, 0, Math.PI); ctx.stroke();
+
             ctx.fillStyle = theme.main;
             ctx.beginPath();
             ctx.moveTo(-8 * scale, 11 * scale);
@@ -626,13 +662,13 @@
             ctx.lineTo(-12 * scale, 19 * scale);
             ctx.closePath();
             ctx.fill();
+
             ctx.restore();
         }
 
         function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             const theme = themes[currentLevel];
-            ctx.fillStyle = theme.light;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let r = 0; r < gridSize; r++) {
                 for (let c = 0; c < gridSize; c++) {
@@ -641,29 +677,34 @@
 
                     if (map[r][c] === TILE.WALL) {
                         ctx.fillStyle = theme.wall;
-                        ctx.fillRect(x, y, tileSize + 0.75, tileSize + 0.75);
-                    } else if (map[r][c] === TILE.KEY) {
+                        // Draw block exactly to tile boundaries (+0.5 guards against anti-aliasing gaps)
+                        ctx.fillRect(x, y, tileSize + 0.5, tileSize + 0.5);
+                    } 
+                    else if (map[r][c] === TILE.KEY) {
                         ctx.fillStyle = '#ffd700';
-                        ctx.font = `${tileSize * 0.72}px sans-serif`;
+                        ctx.font = `${tileSize * 0.75}px sans-serif`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText('🔑', x + tileSize/2, y + tileSize/2);
-                    } else if (map[r][c] === TILE.GIFT) {
-                        ctx.font = `${tileSize * 0.72}px sans-serif`;
+                    } 
+                    else if (map[r][c] === TILE.GIFT) {
+                        ctx.font = `${tileSize * 0.75}px sans-serif`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText('🎁', x + tileSize/2, y + tileSize/2);
-                    } else if (map[r][c] === TILE.GATE) {
+                    }
+                    else if (map[r][c] === TILE.GATE) {
                         ctx.fillStyle = '#b76e79';
-                        ctx.fillRect(x, y, tileSize + 0.75, tileSize + 0.75);
+                        ctx.fillRect(x, y, tileSize, tileSize);
                         ctx.fillStyle = '#4a282d';
                         ctx.fillRect(x + (tileSize*0.2), y, 2, tileSize);
                         ctx.fillRect(x + (tileSize*0.5), y, 2, tileSize);
                         ctx.fillRect(x + (tileSize*0.8), y, 2, tileSize);
                         ctx.fillStyle = '#ffd700';
                         ctx.beginPath(); ctx.arc(x + (tileSize*0.7), y + tileSize/2, 2.5, 0, Math.PI*2); ctx.fill();
-                    } else if (map[r][c] === TILE.HEART) {
-                        drawHeart(x, y, tileSize * 0.6);
+                    }
+                    else if (map[r][c] === TILE.HEART) {
+                        drawHeart(x, y, tileSize * 0.65);
                     }
                 }
             }
@@ -676,20 +717,23 @@
         }
 
         function triggerGiftPopup() {
-            gameActive = false;
-            giftPopupActive = true;
-            const poem = funnyLovePoems[Math.floor(Math.random() * funnyLovePoems.length)];
-            popupMessage.textContent = `🎁 Funny Love Gift! 🎁\n\n${poem}`;
-            popupBtn.textContent = "+5 seconds ❤️";
+            gameActive = false; 
+            isGiftPopupActive = true;
+
+            let randomPoem = poemsPool[Math.floor(Math.random() * poemsPool.length)];
+            
+            popupMessage.textContent = `🎁 SURPRISE POEM GIFT! 🎁\n\n${randomPoem}`;
+            popupBtn.textContent = "Claim +5 Seconds! ❤️";
             popupOverlay.style.display = 'flex';
         }
 
         function handleMove(dir) {
-            if (!gameActive || giftPopupActive) return;
+            if (!gameActive || isGiftPopupActive) return; 
             tryPlayMusic();
 
             let nextX = player.x;
             let nextY = player.y;
+
             switch(dir) {
                 case 'up': nextY--; break;
                 case 'down': nextY++; break;
@@ -699,27 +743,39 @@
 
             if (nextY >= 0 && nextY < gridSize && nextX >= 0 && nextX < gridSize) {
                 const targetTile = map[nextY][nextX];
-                if (targetTile !== TILE.WALL) {
-                    if (targetTile === TILE.GATE && !hasKey) return;
 
+                if (targetTile !== TILE.WALL) {
                     player.x = nextX;
                     player.y = nextY;
 
                     if (targetTile === TILE.KEY) {
-                        hasKey = true;
-                        inventoryDiv.textContent = "🎒 Key: 🔑 Gold Key";
-                        inventoryDiv.classList.add('has-key');
-                        map[nextY][nextX] = TILE.FLOOR;
-                    }
-
-                    if (targetTile === TILE.GATE && hasKey) {
+                        keysFound++;
+                        updateInventoryDisplay();
                         map[nextY][nextX] = TILE.FLOOR;
                     }
 
                     if (targetTile === TILE.GIFT) {
                         map[nextY][nextX] = TILE.FLOOR;
                         triggerGiftPopup();
-                        return;
+                        return; 
+                    }
+
+                    if (targetTile === TILE.GATE) {
+                        if (keysFound === totalKeysNeeded) {
+                            for (let r = 0; r < gridSize; r++) {
+                                for (let c = 0; c < gridSize; c++) {
+                                    if (map[r][c] === TILE.GATE) map[r][c] = TILE.FLOOR;
+                                }
+                            }
+                        } else {
+                            switch(dir) {
+                                case 'up': player.y++; break;
+                                case 'down': player.y--; break;
+                                case 'left': player.x++; break;
+                                case 'right': player.x--; break;
+                            }
+                            return; 
+                        }
                     }
 
                     if (map[player.y][player.x] === TILE.HEART) {
@@ -731,21 +787,25 @@
 
         function triggerWin() {
             gameActive = false;
-            giftPopupActive = false;
             levelWon = true;
             clearInterval(timerInterval);
+
             setTimeout(() => {
                 popupMessage.textContent = levelConfigs[currentLevel].msg;
-                popupBtn.textContent = currentLevel === levelConfigs.length - 1 ? "Play Again!" : "Next Level";
+                if (currentLevel === levelConfigs.length - 1) {
+                    popupBtn.textContent = "Play Again!";
+                } else {
+                    popupBtn.textContent = "Next Level";
+                }
                 popupOverlay.style.display = 'flex';
-            }, 1800);
+            }, 1500);
         }
 
         function triggerGameOver() {
             gameActive = false;
-            giftPopupActive = false;
             levelWon = false;
             clearInterval(timerInterval);
+
             popupMessage.textContent = "Time's up! Gagan's heart locked away.";
             popupBtn.textContent = "Try Again";
             popupOverlay.style.display = 'flex';
@@ -777,22 +837,25 @@
         window.addEventListener('click', tryPlayMusic);
 
         popupBtn.addEventListener('click', () => {
-            if (giftPopupActive) {
-                timeLeft += 5;
+            if (isGiftPopupActive) {
+                timeLeft += 5; 
                 updateTimerDisplay();
-                giftPopupActive = false;
-                gameActive = true;
+                isGiftPopupActive = false;
+                gameActive = true; 
                 popupOverlay.style.display = 'none';
                 return;
             }
 
             if (levelWon) {
-                currentLevel = currentLevel === levelConfigs.length - 1 ? 0 : currentLevel + 1;
+                if (currentLevel === levelConfigs.length - 1) {
+                    currentLevel = 0; 
+                } else {
+                    currentLevel++; 
+                }
             }
             initLevel();
         });
 
-        initCarousel();
         initLevel();
     </script>
 </body>
