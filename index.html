@@ -44,9 +44,9 @@
         #carousel-container {
             border: 1px dashed #ccc;
             border-radius: 8px;
-            padding: 6px;
+            padding: 10px;
             margin-bottom: 10px;
-            min-height: 20px;
+            min-height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -57,7 +57,9 @@
         #carousel-text {
             font-weight: 600;
             font-style: italic;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-line;
             transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, color 0.5s ease;
         }
 
@@ -111,7 +113,7 @@
             border-radius: 8px;
             display: block;
             max-width: 100%;
-            max-height: 48vh;
+            max-height: 46vh;
             object-fit: contain;
             transition: border-color 0.5s ease, background-color 0.5s ease;
         }
@@ -186,6 +188,7 @@
             margin-bottom: 20px;
             font-family: 'Georgia', serif;
             line-height: 1.4;
+            white-space: pre-line;
             transition: color 0.5s ease;
         }
 
@@ -254,7 +257,7 @@
             </div>
         </div>
         
-        <div class="controls-hint">Collect all <b>🔑 Keys</b> to open the doors before reaching the heart!</div>
+        <div class="controls-hint">Collect <b>🔑 Keys</b> to pass gates! Snag <b>🎁 Gifts</b> for hidden poems!</div>
 
         <!-- Pop-up Overlay -->
         <div id="popup-overlay">
@@ -284,6 +287,7 @@
         let currentLevel = 0;
         let gameActive = false;
         let levelWon = false;
+        let isGiftPopupActive = false;
         let keysFound = 0;
         let totalKeysNeeded = 1;
         let audioInitialized = false;
@@ -300,14 +304,13 @@
         let danceTimer = 0;
         let pulseFrame = 0;
 
-        const carouselLines = [
-            "tere sang yaara mast baharaaaaa",
-            "aj din chadhya tere rang varga",
-            "Shake it off, shake it off",
-            "aj lagdi tu badhi HOT oye",
-            "ooo you look beautiful every day",
-            "aaja fer!!!!!",
-            "mast mausam mein awesome chawsome"
+        // 3-4 line romantic and funny Punglish poems
+        const poemsPool = [
+            "Twinkle twinkle little star,\nTu hi meri sohni car.\nWherever you go near or far,\nDil mera khaye jhatke yaar!",
+            "Kadi taan hot kadi sweet lagdi,\nTu menu poori pariyan di thweet lagdi.\nButter chicken vargi smile teri,\nSachi mere dil di har beat lagdi!",
+            "I love you more than makhan-malai,\nTere piche mummy di jhidak vi khai.\nJe tu na mili is vaar sohniye,\nSamjhi gaeo meri taan maut hi aai!",
+            "No matter how much you make me wait,\nTu hi hai goriye meri soulmate.\nLet's clear this maze and open the gate,\nOur love is written in golden fate!",
+            "Tussi haste ho to sab khil jaata hai,\nDil ko bina peete nasha chadh jaata hai.\nZyaada nakhre na dikhaya karo,\nKhama-kha time over ho jaata hai!"
         ];
         let carouselIndex = 0;
 
@@ -325,19 +328,19 @@
         ];
 
         const levelConfigs = [
-            { size: 19, keys: 1, msg: "1. I love you 3000 to infinity" },
-            { size: 21, keys: 1, msg: "2. #JG4Life" },
-            { size: 23, keys: 1, msg: "3. You are you though" },
-            { size: 25, keys: 1, msg: "4. Tu meri main tera" },
-            { size: 27, keys: 2, msg: "5. I will love you more and more and more every day" },
-            { size: 29, keys: 2, msg: "6. day and night I love you more" },
-            { size: 31, keys: 2, msg: "7. I wanna grow old with you" },
-            { size: 33, keys: 3, msg: "8. tu hi Dil ch, tu hi yaada ch" },
-            { size: 35, keys: 3, msg: "9. reh tu mere kol hamesha" },
-            { size: 35, keys: 4, msg: "10. jass, Gagan, maanya and Joey" }
+            { size: 19, keys: 1, gifts: 2, msg: "1. I love you 3000 to infinity" },
+            { size: 21, keys: 1, gifts: 2, msg: "2. #JG4Life" },
+            { size: 23, keys: 1, gifts: 3, msg: "3. You are you though" },
+            { size: 25, keys: 1, gifts: 3, msg: "4. Tu meri main tera" },
+            { size: 27, keys: 2, gifts: 4, msg: "5. I will love you more and more and more every day" },
+            { size: 29, keys: 2, gifts: 4, msg: "6. day and night I love you more" },
+            { size: 31, keys: 2, gifts: 5, msg: "7. I wanna grow old with you" },
+            { size: 33, keys: 3, gifts: 5, msg: "8. tu hi Dil ch, tu hi yaada ch" },
+            { size: 35, keys: 3, gifts: 6, msg: "9. reh tu mere kol hamesha" },
+            { size: 35, keys: 4, gifts: 6, msg: "10. jass, Gagan, maanya and Joey" }
         ];
 
-        const TILE = { FLOOR: 0, WALL: 1, HEART: 2, KEY: 3, GATE: 4 };
+        const TILE = { FLOOR: 0, WALL: 1, HEART: 2, KEY: 3, GATE: 4, GIFT: 5 };
 
         function applyTheme() {
             const theme = themes[currentLevel];
@@ -378,29 +381,27 @@
                 bgMusic.volume = 0.2;
                 bgMusic.play().then(() => {
                     audioInitialized = true;
-                }).catch(e => console.log("Audio playlist gesture active"));
+                }).catch(e => console.log("Audio waiting for gesture"));
             }
         }
 
         function initCarousel() {
-            carouselText.textContent = carouselLines[carouselIndex];
+            carouselText.textContent = poemsPool[carouselIndex];
             setInterval(() => {
+                if (isGiftPopupActive || !gameActive) return; // Don't flip background text if paused
                 carouselText.style.opacity = 0;
                 carouselText.style.transform = "translateY(-10px)";
                 setTimeout(() => {
-                    carouselIndex = (carouselIndex + 1) % carouselLines.length;
-                    carouselText.textContent = carouselLines[carouselIndex];
+                    carouselIndex = (carouselIndex + 1) % poemsPool.length;
+                    carouselText.textContent = poemsPool[carouselIndex];
                     carouselText.style.opacity = 1;
                     carouselText.style.transform = "translateY(0)";
                 }, 400);
-            }, 3000);
+            }, 5000);
         }
 
         function startTimer() {
             clearInterval(timerInterval);
-            timeLeft = 45 + (currentLevel * 10);
-            updateTimerDisplay();
-            
             timerInterval = setInterval(() => {
                 if (!gameActive) return;
                 timeLeft--;
@@ -437,14 +438,12 @@
             }
         }
 
-        // Modified forcePath to explicitly carve away WALLS to build a clear walkway
         function forcePath(start, target) {
             let queue = [{x: start.x, y: start.y}];
             let visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
             let parent = {};
             visited[start.y][start.x] = true;
 
-            // We use standard BFS tracking through all grid cells to find the shortest injection vector
             while (queue.length > 0) {
                 let curr = queue.shift();
                 if (curr.x === target.x && curr.y === target.y) break;
@@ -463,13 +462,10 @@
                 }
             }
 
-            // Crawl backward along the computed link chain and drill open any walls
             let curr = target;
             while (curr.x !== start.x || curr.y !== start.y) {
                 let p = parent[`${curr.x},${curr.y}`];
                 if (!p) break;
-                
-                // Only wipe out obstacles if it is structurally blocking passage (protect gates/heart/keys)
                 if (map[curr.y][curr.x] === TILE.WALL) {
                     map[curr.y][curr.x] = TILE.FLOOR;
                 }
@@ -480,6 +476,7 @@
         function generateHardMaze() {
             gridSize = levelConfigs[currentLevel].size;
             totalKeysNeeded = levelConfigs[currentLevel].keys;
+            let totalGifts = levelConfigs[currentLevel].gifts;
 
             if (gridSize <= 21) tileSize = 22;
             else if (gridSize <= 27) tileSize = 18;
@@ -488,7 +485,6 @@
             canvas.width = gridSize * tileSize;
             canvas.height = gridSize * tileSize;
 
-            // Step 1: Initialize full solid wall space
             map = Array.from({ length: gridSize }, () => Array(gridSize).fill(TILE.WALL));
 
             let walls = [];
@@ -512,7 +508,6 @@
                 }
             }
 
-            // Step 2: Grab random open tile nodes far away from starting corner to host assets
             let floorTiles = [];
             for (let r = 3; r < gridSize - 3; r++) {
                 for (let c = 3; c < gridSize - 3; c++) {
@@ -522,12 +517,10 @@
                 }
             }
             
-            // Step 3: Establish the target Heart node 
             let heartIndex = Math.floor(Math.random() * floorTiles.length);
             let hPos = floorTiles.splice(heartIndex, 1)[0];
             map[hPos.y][hPos.x] = TILE.HEART;
 
-            // Step 4: Construct strict perimeter locks safely around the heart target
             let directions = [[0,1], [1,0], [0,-1], [-1,0]];
             let validGatePositions = [];
 
@@ -538,7 +531,6 @@
                 validGatePositions.push({x: gx, y: gy});
             }
 
-            // Step 5: Place the keys safely out in open pathways
             let keyPositions = [];
             for (let k = 0; k < totalKeysNeeded; k++) {
                 if (floorTiles.length > 0) {
@@ -549,31 +541,41 @@
                 }
             }
 
+            let giftPositions = [];
+            for (let g = 0; g < totalGifts; g++) {
+                if (floorTiles.length > 0) {
+                    let gIdx = Math.floor(Math.random() * floorTiles.length);
+                    let gPos = floorTiles.splice(gIdx, 1)[0];
+                    map[gPos.y][gPos.x] = TILE.GIFT;
+                    giftPositions.push(gPos);
+                }
+            }
+
             player = { x: 1, y: 1 };
 
-            // Step 6: Core Path Correction Engine
-            // Ensure player has a guaranteed clear path to EVERY key
             for (let kPos of keyPositions) {
                 forcePath(player, kPos);
-            }
-
-            // Ensure every key location has a guaranteed open path leading up to the perimeter security gates
-            for (let kPos of keyPositions) {
                 forcePath(kPos, validGatePositions[0]);
             }
+
+            for (let gPos of giftPositions) {
+                forcePath(player, gPos);
+            }
             
-            // Final verification trace: Check if a structural link from player to gate point exists cleanly
             forcePath(player, validGatePositions[0]);
         }
 
         function initLevel() {
             levelWon = false;
+            isGiftPopupActive = false;
             keysFound = 0;
             applyTheme();
             updateInventoryDisplay();
             levelIndicator.textContent = `Level ${currentLevel + 1} / 10`;
             
             generateHardMaze();
+            timeLeft = 45 + (currentLevel * 10);
+            updateTimerDisplay();
             startTimer();
 
             gameActive = true;
@@ -721,6 +723,12 @@
                         ctx.textBaseline = 'middle';
                         ctx.fillText('🔑', x + tileSize/2, y + tileSize/2);
                     } 
+                    else if (map[r][c] === TILE.GIFT) {
+                        ctx.font = `${tileSize * 0.75}px sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🎁', x + tileSize/2, y + tileSize/2);
+                    }
                     else if (map[r][c] === TILE.GATE) {
                         ctx.fillStyle = '#b76e79';
                         ctx.fillRect(x, y, tileSize, tileSize);
@@ -744,8 +752,20 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
+        function triggerGiftPopup() {
+            gameActive = false; // Pauses controls and background timer loop execution
+            isGiftPopupActive = true;
+
+            // Grab a random poem from our selection
+            let randomPoem = poemsPool[Math.floor(Math.random() * poemsPool.length)];
+            
+            popupMessage.textContent = `🎁 SURPRISE POEM GIFT! 🎁\n\n${randomPoem}`;
+            popupBtn.textContent = "Claim +5 Seconds! ❤️";
+            popupOverlay.style.display = 'flex';
+        }
+
         function handleMove(dir) {
-            if (!gameActive) return;
+            if (!gameActive || isGiftPopupActive) return; // Disables controls entirely when popups are active
             tryPlayMusic();
 
             let nextX = player.x;
@@ -762,10 +782,19 @@
                 const targetTile = map[nextY][nextX];
 
                 if (targetTile !== TILE.WALL) {
+                    player.x = nextX;
+                    player.y = nextY;
+
                     if (targetTile === TILE.KEY) {
                         keysFound++;
                         updateInventoryDisplay();
                         map[nextY][nextX] = TILE.FLOOR;
+                    }
+
+                    if (targetTile === TILE.GIFT) {
+                        map[nextY][nextX] = TILE.FLOOR;
+                        triggerGiftPopup();
+                        return; // Exit out early to prevent checking heart underneath
                     }
 
                     if (targetTile === TILE.GATE) {
@@ -776,12 +805,16 @@
                                 }
                             }
                         } else {
+                            // Reset back step if player doesn't have the key yet
+                            switch(dir) {
+                                case 'up': player.y++; break;
+                                case 'down': player.y--; break;
+                                case 'left': player.x++; break;
+                                case 'right': player.x--; break;
+                            }
                             return; 
                         }
                     }
-
-                    player.x = nextX;
-                    player.y = nextY;
 
                     if (map[player.y][player.x] === TILE.HEART) {
                         triggerWin();
@@ -842,6 +875,17 @@
         window.addEventListener('click', tryPlayMusic);
 
         popupBtn.addEventListener('click', () => {
+            // If it's a gift box popup being closed
+            if (isGiftPopupActive) {
+                timeLeft += 5; // Reward bonus time safely outside of loop
+                updateTimerDisplay();
+                isGiftPopupActive = false;
+                gameActive = true; // Turn controls/timer back on
+                popupOverlay.style.display = 'none';
+                return;
+            }
+
+            // Normal Level progression win/lose popup closed
             if (levelWon) {
                 if (currentLevel === levelConfigs.length - 1) {
                     currentLevel = 0; 
