@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Letter Word Spelling Game</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background-color: #f0fdf4;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            border: 4px solid #bbf7d0;
+        }
+        h1 { color: #16a34a; margin-top: 0; font-size: 2rem; }
+        .score { font-size: 1.2rem; font-weight: bold; color: #64748b; margin-bottom: 20px; }
+        
+        .audio-btn {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #16a34a;
+            transition: all 0.1s;
+            margin-bottom: 30px;
+        }
+        .audio-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .slot {
+            width: 60px;
+            height: 60px;
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            font-size: 2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8fafc;
+            text-transform: uppercase;
+        }
+        .slot.filled { border-style: solid; border-color: #22c55e; background-color: #f0fdf4; }
+
+        .letters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .letter-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2563eb;
+            text-transform: uppercase;
+        }
+        .letter-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        .clear-btn { background-color: #ef4444; color: white; box-shadow: 0 4px 0 #dc2626; }
+        .next-btn { background-color: #eab308; color: white; box-shadow: 0 4px 0 #ca8a04; display: none; }
+        .control-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        .message { font-size: 1.5rem; font-weight: bold; min-height: 40px; margin-top: 20px; }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Spell the Word! 🌟</h1>
+    <div class="score">Score: <span id="score-val">0</span></div>
+    
+    <button class="audio-btn" onclick="pronounceWord()">🔊 Listen</button>
+    
+    <div class="slots-container">
+        <div class="slot" id="slot-0"></div>
+        <div class="slot" id="slot-1"></div>
+        <div class="slot" id="slot-2"></div>
+    </div>
+
+    <div class="letters-grid" id="letters-input"></div>
+
+    <div class="controls">
+        <button class="control-btn clear-btn" onclick="clearSpelling()">Clear</button>
+        <button class="control-btn next-btn" id="next-button" onclick="nextWord()">Next Word ➡️</button>
+    </div>
+
+    <div class="message" id="message-display"></div>
+</div>
+
+<script>
+    const wordList = ['cat', 'dog', 'sun', 'box', 'fox', 'hat', 'pig', 'bus', 'cup', 'net', 'bed', 'map', 'bat', 'fan', 'run'];
+    let currentWord = '';
+    let currentGuess = [];
+    let score = 0;
+
+    function initGame() {
+        // Pick a random word
+        currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+        currentGuess = [];
+        document.getElementById('message-display').innerText = '';
+        document.getElementById('next-button').style.display = 'none';
+        
+        updateSlots();
+        generateLetterButtons();
+        setTimeout(pronounceWord, 400); // Auto-say word at start
+    }
+
+    function pronounceWord() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop any current speech
+            const utterance = new SpeechSynthesisUtterance(currentWord);
+            utterance.rate = 0.8; // Slightly slower for kids
+            utterance.pitch = 1.2; // Friendly tone
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Your browser doesn't support text-to-speech. Try Google Chrome!");
+        }
+    }
+
+    function generateLetterButtons() {
+        const grid = document.getElementById('letters-input');
+        grid.innerHTML = '';
+        
+        // Take the 3 correct letters and add 5 random extra ones
+        let lettersPool = currentWord.split('');
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        while(lettersPool.length < 8) {
+            let randomLetter = alphabet[Math.floor(Math.random() * 26)];
+            if(!lettersPool.includes(randomLetter)) {
+                lettersPool.push(randomLetter);
+            }
+        }
+        
+        // Shuffle the choices
+        lettersPool.sort(() => Math.random() - 0.5);
+
+        lettersPool.forEach(letter => {
+            const btn = document.createElement('button');
+            btn.className = 'letter-btn';
+            btn.innerText = letter;
+            btn.onclick = () => handleLetterClick(letter);
+            grid.appendChild(btn);
+        });
+    }
+
+    function handleLetterClick(letter) {
+        if (currentGuess.length < 3) {
+            currentGuess.push(letter);
+            updateSlots();
+            
+            if (currentGuess.length === 3) {
+                checkAnswer();
+            }
+        }
+    }
+
+    function updateSlots() {
+        for (let i = 0; i < 3; i++) {
+            const slot = document.getElementById(`slot-${i}`);
+            if (currentGuess[i]) {
+                slot.innerText = currentGuess[i];
+                slot.classList.add('filled');
+            } else {
+                slot.innerText = '';
+                slot.classList.remove('filled');
+            }
+        }
+    }
+
+    function clearSpelling() {
+        if (document.getElementById('next-button').style.display === 'none') {
+            currentGuess = [];
+            updateSlots();
+            document.getElementById('message-display').innerText = '';
+        }
+    }
+
+    function checkAnswer() {
+        const finalGuess = currentGuess.join('');
+        const msg = document.getElementById('message-display');
+        
+        if (finalGuess === currentWord) {
+            msg.innerText = "🎉 Awesome Job! Correct! 🎉";
+            msg.className = "message success";
+            score += 10;
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('next-button').style.display = 'inline-block';
+            playSuccessSound();
+        } else {
+            msg.innerText = "❌ Try again! You can do it!";
+            msg.className = "message error";
+            setTimeout(clearSpelling, 1500); // Reset automatically if wrong
+        }
+    }
+
+    function playSuccessSound() {
+        if ('speechSynthesis' in window) {
+            const celebrate = new SpeechSynthesisUtterance("You got it!");
+            celebrate.rate = 1.1;
+            window.speechSynthesis.speak(celebrate);
+        }
+    }
+
+    function nextWord() {
+        initGame();
+    }
+
+    // Start the very first game on load
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
