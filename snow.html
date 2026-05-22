@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snowflake Splat!</title>
+    <title>Build a Snowman!</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,7 +13,6 @@
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
             background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
             overflow: hidden;
             font-family: 'Arial', sans-serif;
@@ -24,24 +23,31 @@
             width: 100%;
             height: 100%;
         }
-        #score-board {
+        #ui-layer {
             position: absolute;
             top: 20px;
             left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
             color: white;
             font-size: 24px;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
-        /* The Snowman */
+        #timer {
+            color: #ff4d4d;
+        }
+        
+        /* The Build-a-Snowman Container */
         #snowman {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 150px;
-            height: 230px;
+            width: 160px;
+            height: 250px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -49,52 +55,72 @@
             z-index: 2;
             transition: transform 0.1s ease;
         }
+        
+        /* Progressive Build Stages (Hidden by default via opacity/scale) */
         .snowman-part {
             background: #ffffff;
             border-radius: 50%;
             box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .head {
-            width: 60px;
-            height: 60px;
-            position: relative;
-            z-index: 3;
+        .snowman-part.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .base {
+            width: 130px;
+            height: 130px;
+            z-index: 1;
         }
         .torso {
             width: 90px;
             height: 90px;
-            margin-top: -10px;
-            position: relative;
+            margin-top: -20px;
             z-index: 2;
+            position: relative;
         }
-        .base {
-            width: 130px;
-            height: 130px;
+        .head {
+            width: 65px;
+            height: 65px;
             margin-top: -15px;
             position: relative;
-            z-index: 1;
+            z-index: 3;
         }
-        /* Snowman Features */
+
+        /* Details (Facial features & buttons inside parts) */
+        .detail {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .detail.visible {
+            opacity: 1;
+        }
+
         .eye {
             position: absolute;
-            background: #333;
+            background: #222;
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            top: 20px;
+            top: 22px;
         }
-        .eye.left { left: 15px; }
-        .eye.right { right: 15px; }
+        .eye.left { left: 16px; }
+        .eye.right { right: 16px; }
+        
         .nose {
             position: absolute;
             width: 0;
             height: 0;
-            border-left: 15px solid #ff6b1a;
+            border-left: 18px solid #ff6b1a;
             border-top: 5px solid transparent;
             border-bottom: 5px solid transparent;
-            top: 28px;
-            left: 25px;
+            top: 30px;
+            left: 26px;
         }
+        
         .button {
             position: absolute;
             background: #333;
@@ -104,9 +130,26 @@
             left: 50%;
             transform: translateX(-50%);
         }
-        .b1 { top: 20px; }
-        .b2 { top: 45px; }
-        .b3 { top: 70px; }
+        .b1 { top: 25px; }
+        .b2 { top: 55px; }
+
+        /* Stick Arms */
+        .arm {
+            position: absolute;
+            top: 30px;
+            width: 40px;
+            height: 6px;
+            background: #654321;
+            border-radius: 3px;
+        }
+        .arm.left {
+            left: -35px;
+            transform: rotate(-15deg);
+        }
+        .arm.right {
+            right: -35px;
+            transform: rotate(15deg);
+        }
 
         /* Game Elements */
         .snowflake {
@@ -116,13 +159,14 @@
             cursor: pointer;
             z-index: 5;
             animation: spin 3s linear infinite;
-            padding: 10px; /* Bigger tap target */
+            padding: 10px;
             line-height: 1;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
         .snowball {
             position: absolute;
             background: radial-gradient(circle, #ffffff 60%, #e0e0e0 100%);
@@ -130,23 +174,22 @@
             box-shadow: 0 0 10px rgba(255,255,255,0.8);
             z-index: 4;
             pointer-events: none;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        /* Splat Effect */
+
         .splat {
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 50%;
-            transform: scale(0);
-            animation: splatAnim 0.3s ease-out forwards;
+            animation: splatAnim 0.25s ease-out forwards;
             pointer-events: none;
             z-index: 6;
         }
         @keyframes splatAnim {
             0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.4); opacity: 0; }
         }
-        /* Ground */
+
         #ground {
             position: absolute;
             bottom: 0;
@@ -155,70 +198,165 @@
             background: #ffffff;
             z-index: 1;
         }
+
+        /* Game Over Modal */
+        #game-over {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        #game-over.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #game-over h1 { font-size: 48px; margin-bottom: 10px; }
+        #game-over p { font-size: 24px; margin-bottom: 20px; }
+        #restart-btn {
+            padding: 12px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            background: #ff6b1a;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        #restart-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="score-board">Score: <span id="score">0</span></div>
+    <div id="ui-layer">
+        <div>Score: <span id="score">0</span></div>
+        <div>Time: <span id="timer">60</span>s</div>
+    </div>
     
     <div id="snowman">
-        <div class="snowman-part head">
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-            <div class="nose"></div>
+        <!-- Built order: Base -> Torso -> Head -> Details -> Arms -->
+        <div id="part-head" class="snowman-part head">
+            <div id="detail-eyes" class="detail"><div class="eye left"></div><div class="eye right"></div></div>
+            <div id="detail-nose" class="detail nose"></div>
         </div>
-        <div class="snowman-part torso">
-            <div class="button b1"></div>
-            <div class="button b2"></div>
+        <div id="part-torso" class="snowman-part torso">
+            <div id="detail-buttons" class="detail"><div class="button b1"></div><div class="button b2"></div></div>
+            <div id="detail-arms" class="detail">
+                <div class="arm left"></div>
+                <div class="arm right"></div>
+            </div>
         </div>
-        <div class="snowman-part base">
-            <div class="button b3"></div>
-        </div>
+        <div id="part-base" class="snowman-part base"></div>
     </div>
 
     <div id="ground"></div>
+
+    <div id="game-over">
+        <h1>Time's Up!</h1>
+        <p>You built the snowman and scored <span id="final-score">0</span> points!</p>
+        <button id="restart-btn" onclick="resetGame()">Play Again</button>
+    </div>
 </div>
 
 <script>
     const container = document.getElementById('game-container');
     const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
     const snowman = document.getElementById('snowman');
-    let score = 0;
+    const gameOverScreen = document.getElementById('game-over');
+    const finalScoreDisplay = document.getElementById('final-score');
 
-    // Configuration
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = true;
+    let buildStage = 0; 
+    let gameTimerInterval;
+    let spawnInterval;
+
     const snowflakeSymbols = ['❄', '❅', '❆'];
-    const spawnRate = 800; // ms between new snowflakes
+
+    // DOM references to standard structural build stages
+    const buildSteps = [
+        { type: 'part', element: document.getElementById('part-base') },
+        { type: 'part', element: document.getElementById('part-torso') },
+        { type: 'part', element: document.getElementById('part-head') },
+        { type: 'detail', element: document.getElementById('detail-eyes') },
+        { type: 'detail', element: document.getElementById('detail-nose') },
+        { type: 'detail', element: document.getElementById('detail-buttons') },
+        { type: 'detail', element: document.getElementById('detail-arms') }
+    ];
+
+    function initGame() {
+        score = 0;
+        timeLeft = 60;
+        buildStage = 0;
+        gameActive = true;
+        
+        scoreDisplay.innerText = score;
+        timerDisplay.innerText = timeLeft;
+        gameOverScreen.classList.remove('active');
+
+        // Clear out old elements safely
+        document.querySelectorAll('.snowman-part, .detail').forEach(el => {
+            el.classList.remove('visible');
+        });
+        document.querySelectorAll('.snowflake, .snowball, .splat').forEach(el => el.remove());
+
+        // Kick off intervals
+        clearInterval(gameTimerInterval);
+        clearInterval(spawnInterval);
+        
+        gameTimerInterval = setInterval(updateTimer, 1000);
+        spawnInterval = setInterval(createSnowflake, 700);
+    }
+
+    function updateTimer() {
+        if (!gameActive) return;
+        timeLeft--;
+        timerDisplay.innerText = timeLeft;
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }
 
     function createSnowflake() {
+        if (!gameActive) return;
+
         const flake = document.createElement('div');
         flake.className = 'snowflake';
-        
-        // Randomize snowflake look and starting position
         flake.innerText = snowflakeSymbols[Math.floor(Math.random() * snowflakeSymbols.length)];
+        
         const startX = Math.random() * (window.innerWidth - 40);
         flake.style.left = startX + 'px';
         flake.style.top = '-50px';
         
-        // Setup movement variables
-        let speed = Math.random() * 2 + 1.5;
+        let speed = Math.random() * 2 + 2;
         let currentY = -50;
-        let drift = Math.random() * 2 - 1; // Slight side-to-side movement
+        let drift = Math.random() * 2 - 1;
         let currentX = startX;
 
         container.appendChild(flake);
 
-        // Fall Animation Loop
         function fall() {
-            if (!flake.parentElement) return; // Stop if already clicked/removed
+            if (!gameActive || !flake.parentElement) return;
             
             currentY += speed;
-            currentX += Math.sin(currentY / 30) * drift; // Gentle weaving pattern
+            currentX += Math.sin(currentY / 30) * drift;
             
             flake.style.top = currentY + 'px';
             flake.style.left = currentX + 'px';
 
-            // Check if it hit the ground
             if (currentY > window.innerHeight - 60) {
                 flake.remove();
             } else {
@@ -227,18 +365,14 @@
         }
         requestAnimationFrame(fall);
 
-        // Handle Tap / Click
         flake.addEventListener('pointerdown', (e) => {
-            e.stopPropagation(); // Prevent duplicate triggers
+            e.stopPropagation();
+            if (!gameActive) return;
             
-            // Get click coordinates
             const clickX = e.clientX;
             const clickY = e.clientY;
-            
-            // Remove the snowflake immediately
             flake.remove();
             
-            // Launch a snowball from the tap location to the snowman
             throwSnowball(clickX, clickY);
         });
     }
@@ -247,8 +381,7 @@
         const ball = document.createElement('div');
         ball.className = 'snowball';
         
-        // Set initial size and position at the tap site
-        const initialSize = 30;
+        const initialSize = 35;
         ball.style.width = initialSize + 'px';
         ball.style.height = initialSize + 'px';
         ball.style.left = (startX - initialSize/2) + 'px';
@@ -256,63 +389,77 @@
         
         container.appendChild(ball);
 
-        // Calculate destination (Snowman's center chest)
+        // Target coordinates adjusted slightly depending on height built
         const snowmanRect = snowman.getBoundingClientRect();
         const targetX = snowmanRect.left + (snowmanRect.width / 2);
-        const targetY = snowmanRect.top + (snowmanRect.height / 2);
+        let targetY = snowmanRect.bottom - 50; // default low target if unbuilt
 
-        // Trigger the flight transition on the next frame
+        if (buildStage >= 3) {
+            targetY = snowmanRect.top + (snowmanRect.height / 2); // middle chest
+        }
+
         requestAnimationFrame(() => {
-            // Shrink as it travels away to simulate 3D depth
-            ball.style.width = '15px';
-            ball.style.height = '15px';
-            ball.style.left = (targetX - 7.5) + 'px';
-            ball.style.top = (targetY - 7.5) + 'px';
+            ball.style.width = '12px';
+            ball.style.height = '12px';
+            ball.style.left = (targetX - 6) + 'px';
+            ball.style.top = (targetY - 6) + 'px';
         });
 
-        // When the ball arrives at the snowman
         setTimeout(() => {
             ball.remove();
-            
-            // Create a splat effect on the snowman
             createSplat(targetX, targetY);
             
-            // Animate the snowman reacting to getting hit
-            snowman.style.transform = 'translateX(-50%) scale(1.1) rotate(5deg)';
+            // Handle build mechanics vs score mechanics
+            if (buildStage < buildSteps.length) {
+                buildSteps[buildStage].element.classList.add('visible');
+                buildStage++;
+            } else {
+                // Fully built! Now gain raw points
+                score++;
+                scoreDisplay.innerText = score;
+            }
+
+            // Wobble Animation
+            snowman.style.transform = 'translateX(-50%) scale(1.05) rotate(4deg)';
             setTimeout(() => {
                 snowman.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
             }, 100);
 
-            // Update Score
-            score++;
-            scoreDisplay.innerText = score;
-        }, 400); // Matches the 0.4s CSS transition
+        }, 350);
     }
 
     function createSplat(x, y) {
         const splat = document.createElement('div');
         splat.className = 'splat';
-        
-        // Randomize splat size slightly
-        const size = Math.random() * 20 + 30;
+        const size = Math.random() * 20 + 35;
         splat.style.width = size + 'px';
         splat.style.height = size + 'px';
         
-        // Random offset on the snowman so they don't stack perfectly
-        const offsetX = Math.random() * 40 - 20;
-        const offsetY = Math.random() * 60 - 30;
+        const offsetX = Math.random() * 30 - 15;
+        const offsetY = Math.random() * 40 - 20;
         
         splat.style.left = (x - size/2 + offsetX) + 'px';
         splat.style.top = (y - size/2 + offsetY) + 'px';
         
         container.appendChild(splat);
-        
-        // Clean up splat element after animation ends
-        setTimeout(() => splat.remove(), 300);
+        setTimeout(() => splat.remove(), 250);
     }
 
-    // Game loop spawning snowflakes
-    setInterval(createSnowflake, spawnRate);
+    function endGame() {
+        gameActive = false;
+        clearInterval(gameTimerInterval);
+        clearInterval(spawnInterval);
+        
+        finalScoreDisplay.innerText = score;
+        gameOverScreen.classList.add('active');
+    }
+
+    function resetGame() {
+        initGame();
+    }
+
+    // Start everything on launch
+    initGame();
 </script>
 
 </body>
