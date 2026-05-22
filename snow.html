@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snowflake Splat!</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        /* The Snowman */
+        #snowman {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 230px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            z-index: 2;
+            transition: transform 0.1s ease;
+        }
+        .snowman-part {
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .head {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            z-index: 3;
+        }
+        .torso {
+            width: 90px;
+            height: 90px;
+            margin-top: -10px;
+            position: relative;
+            z-index: 2;
+        }
+        .base {
+            width: 130px;
+            height: 130px;
+            margin-top: -15px;
+            position: relative;
+            z-index: 1;
+        }
+        /* Snowman Features */
+        .eye {
+            position: absolute;
+            background: #333;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            top: 20px;
+        }
+        .eye.left { left: 15px; }
+        .eye.right { right: 15px; }
+        .nose {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 15px solid #ff6b1a;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            top: 28px;
+            left: 25px;
+        }
+        .button {
+            position: absolute;
+            background: #333;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .b1 { top: 20px; }
+        .b2 { top: 45px; }
+        .b3 { top: 70px; }
+
+        /* Game Elements */
+        .snowflake {
+            position: absolute;
+            color: #ffffff;
+            font-size: 35px;
+            cursor: pointer;
+            z-index: 5;
+            animation: spin 3s linear infinite;
+            padding: 10px; /* Bigger tap target */
+            line-height: 1;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .snowball {
+            position: absolute;
+            background: radial-gradient(circle, #ffffff 60%, #e0e0e0 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+            z-index: 4;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        /* Splat Effect */
+        .splat {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: splatAnim 0.3s ease-out forwards;
+            pointer-events: none;
+            z-index: 6;
+        }
+        @keyframes splatAnim {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        /* Ground */
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 30px;
+            background: #ffffff;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="score-board">Score: <span id="score">0</span></div>
+    
+    <div id="snowman">
+        <div class="snowman-part head">
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="nose"></div>
+        </div>
+        <div class="snowman-part torso">
+            <div class="button b1"></div>
+            <div class="button b2"></div>
+        </div>
+        <div class="snowman-part base">
+            <div class="button b3"></div>
+        </div>
+    </div>
+
+    <div id="ground"></div>
+</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const scoreDisplay = document.getElementById('score');
+    const snowman = document.getElementById('snowman');
+    let score = 0;
+
+    // Configuration
+    const snowflakeSymbols = ['❄', '❅', '❆'];
+    const spawnRate = 800; // ms between new snowflakes
+
+    function createSnowflake() {
+        const flake = document.createElement('div');
+        flake.className = 'snowflake';
+        
+        // Randomize snowflake look and starting position
+        flake.innerText = snowflakeSymbols[Math.floor(Math.random() * snowflakeSymbols.length)];
+        const startX = Math.random() * (window.innerWidth - 40);
+        flake.style.left = startX + 'px';
+        flake.style.top = '-50px';
+        
+        // Setup movement variables
+        let speed = Math.random() * 2 + 1.5;
+        let currentY = -50;
+        let drift = Math.random() * 2 - 1; // Slight side-to-side movement
+        let currentX = startX;
+
+        container.appendChild(flake);
+
+        // Fall Animation Loop
+        function fall() {
+            if (!flake.parentElement) return; // Stop if already clicked/removed
+            
+            currentY += speed;
+            currentX += Math.sin(currentY / 30) * drift; // Gentle weaving pattern
+            
+            flake.style.top = currentY + 'px';
+            flake.style.left = currentX + 'px';
+
+            // Check if it hit the ground
+            if (currentY > window.innerHeight - 60) {
+                flake.remove();
+            } else {
+                requestAnimationFrame(fall);
+            }
+        }
+        requestAnimationFrame(fall);
+
+        // Handle Tap / Click
+        flake.addEventListener('pointerdown', (e) => {
+            e.stopPropagation(); // Prevent duplicate triggers
+            
+            // Get click coordinates
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+            
+            // Remove the snowflake immediately
+            flake.remove();
+            
+            // Launch a snowball from the tap location to the snowman
+            throwSnowball(clickX, clickY);
+        });
+    }
+
+    function throwSnowball(startX, startY) {
+        const ball = document.createElement('div');
+        ball.className = 'snowball';
+        
+        // Set initial size and position at the tap site
+        const initialSize = 30;
+        ball.style.width = initialSize + 'px';
+        ball.style.height = initialSize + 'px';
+        ball.style.left = (startX - initialSize/2) + 'px';
+        ball.style.top = (startY - initialSize/2) + 'px';
+        
+        container.appendChild(ball);
+
+        // Calculate destination (Snowman's center chest)
+        const snowmanRect = snowman.getBoundingClientRect();
+        const targetX = snowmanRect.left + (snowmanRect.width / 2);
+        const targetY = snowmanRect.top + (snowmanRect.height / 2);
+
+        // Trigger the flight transition on the next frame
+        requestAnimationFrame(() => {
+            // Shrink as it travels away to simulate 3D depth
+            ball.style.width = '15px';
+            ball.style.height = '15px';
+            ball.style.left = (targetX - 7.5) + 'px';
+            ball.style.top = (targetY - 7.5) + 'px';
+        });
+
+        // When the ball arrives at the snowman
+        setTimeout(() => {
+            ball.remove();
+            
+            // Create a splat effect on the snowman
+            createSplat(targetX, targetY);
+            
+            // Animate the snowman reacting to getting hit
+            snowman.style.transform = 'translateX(-50%) scale(1.1) rotate(5deg)';
+            setTimeout(() => {
+                snowman.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
+            }, 100);
+
+            // Update Score
+            score++;
+            scoreDisplay.innerText = score;
+        }, 400); // Matches the 0.4s CSS transition
+    }
+
+    function createSplat(x, y) {
+        const splat = document.createElement('div');
+        splat.className = 'splat';
+        
+        // Randomize splat size slightly
+        const size = Math.random() * 20 + 30;
+        splat.style.width = size + 'px';
+        splat.style.height = size + 'px';
+        
+        // Random offset on the snowman so they don't stack perfectly
+        const offsetX = Math.random() * 40 - 20;
+        const offsetY = Math.random() * 60 - 30;
+        
+        splat.style.left = (x - size/2 + offsetX) + 'px';
+        splat.style.top = (y - size/2 + offsetY) + 'px';
+        
+        container.appendChild(splat);
+        
+        // Clean up splat element after animation ends
+        setTimeout(() => splat.remove(), 300);
+    }
+
+    // Game loop spawning snowflakes
+    setInterval(createSnowflake, spawnRate);
+</script>
+
+</body>
+</html>
