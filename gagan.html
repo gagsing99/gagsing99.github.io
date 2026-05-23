@@ -21,12 +21,13 @@
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         #game-container {
             position: relative;
             width: 100%;
-            max-width: 500px; /* Constraints for better look on mobile/desktop */
+            max-width: 500px;
             height: 100%;
             max-height: 85vh;
             display: flex;
@@ -45,9 +46,9 @@
             background-image: url('IMG-20260518-WA0000.jpg');
             background-size: cover;
             background-position: center;
-            filter: blur(25px); /* Starts heavily blurred */
-            transform: scale(1.1); /* Prevents white edges from blur */
-            transition: filter 2s ease, transform 2s ease;
+            filter: blur(25px);
+            transform: scale(1.1);
+            transition: filter 2.5s ease, transform 2.5s ease;
         }
 
         /* Pure CSS Heart Overlay */
@@ -60,9 +61,11 @@
             margin-left: -50px;
             margin-top: -50px;
             transform: rotate(-45deg) scale(1);
-            transition: background-color 0.3s ease, transform 0.1s ease, opacity 1.5s ease;
+            background-color: rgb(255, 249, 214); 
+            transition: transform 0.08s ease, opacity 1.5s ease;
             opacity: 0.9;
-            pointer-events: none; /* Let clicks pass to the container */
+            pointer-events: none;
+            z-index: 10;
         }
 
         /* CSS Heart Shapes via pseudo-elements */
@@ -73,7 +76,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background-color: inherit; /* Matches parent color dynamically */
+            background-color: inherit;
         }
 
         #heart-overlay::before {
@@ -86,34 +89,84 @@
             left: 50px;
         }
 
-        /* Color Stages: Pale Yellow transitioning to Crimson Red */
-        .stage-0 { background-color: #fff9d6; }
-        .stage-1 { background-color: #ffefa1; }
-        .stage-2 { background-color: #ffe06b; }
-        .stage-3 { background-color: #ffd036; }
-        .stage-4 { background-color: #ffb426; }
-        .stage-5 { background-color: #ff9126; }
-        .stage-6 { background-color: #ff6226; }
-        .stage-7 { background-color: #ff2626; }
-        .stage-8 { background-color: #d61111; }
-        .stage-9 { background-color: #990012; } /* Crimson */
-
-        /* Text Overlay */
-        #text-overlay {
+        /* Floating Counter Overlay */
+        #counter-overlay {
             position: absolute;
-            bottom: 12%;
-            width: 100%;
-            text-align: center;
-            color: #ffffff;
-            font-size: 3rem;
+            top: 10%;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.5rem;
             font-weight: bold;
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            z-index: 5;
+            transition: opacity 1s ease;
+        }
+
+        /* 1-Liner Pop-up Messages (Toasts) */
+        #message-toast {
+            position: absolute;
+            top: 22%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            max-width: 85%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 2s ease 1s, transform 2s ease 1s; /* Subtle delay so it pops up perfectly */
+            transform: translateY(10px) scale(0.95);
+            transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
             pointer-events: none;
+        }
+
+        #message-toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Beautiful Final "I love you" Banner Overlay */
+        #text-banner {
+            position: absolute;
+            bottom: 8%;
+            width: 85%;
+            padding: 16px 20px;
+            text-align: center;
+            
+            /* Glassmorphism background design */
+            background: rgba(15, 15, 15, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 
+                        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+
+            /* Typography */
+            color: #ffffff;
+            font-size: 2.8rem;
+            font-weight: 800;
+            font-family: 'Playfair Display', 'Didot', 'Georgia', serif;
+            font-style: italic;
+            letter-spacing: 1px;
+            
+            /* Multi-layer text glow */
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5),
+                         0 0 20px rgba(153, 0, 18, 0.6);
+            
+            /* Initial State (Hidden) */
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+            transition: opacity 2.5s cubic-bezier(0.19, 1, 0.22, 1) 0.8s, 
+                        transform 2.5s cubic-bezier(0.19, 1, 0.22, 1) 0.8s;
+            pointer-events: none;
+            z-index: 15;
         }
 
         /* Game Finished State Styling */
@@ -127,60 +180,116 @@
             transform: rotate(-45deg) scale(0);
         }
 
-        #game-container.finished #text-overlay {
+        #game-container.finished #text-banner {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
+        }
+
+        #game-container.finished #counter-overlay,
+        #game-container.finished #message-toast {
+            opacity: 0 !important;
         }
     </style>
+    <!-- Import an elegant luxury display font option -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div id="game-container">
         <div id="photo"></div>
-        <div id="heart-overlay" class="stage-0"></div>
-        <div id="text-overlay">I love you</div>
+        <div id="counter-overlay">0 / 1000</div>
+        <div id="message-toast"></div>
+        <div id="heart-overlay"></div>
+        <div id="text-banner">I love you</div>
     </div>
 
     <script>
         const container = document.getElementById('game-container');
         const heart = document.getElementById('heart-overlay');
+        const counter = document.getElementById('counter-overlay');
+        const toast = document.getElementById('message-toast');
+        
         let clicks = 0;
-        const maxClicks = 100;
+        const maxClicks = 1000;
         let isFinished = false;
+        let toastTimeout;
+
+        const loveLines = [
+            "Every click brings me closer to you. ❤️",
+            "You are my favorite distraction. ✨",
+            "My heart beats a little faster with every tap.",
+            "Still completely, totally, utterly in love with you.",
+            "You make my world so much brighter. 🌟",
+            "In a room full of art, I'd still stare at you.",
+            "Just a little reminder: you are incredible. 🥰",
+            "Loving you is the easiest thing I've ever done.",
+            "You have my whole heart, for my whole life.",
+            "Almost there, keep going for a surprise! 😘",
+            "My favorite place in the world is right next to you.",
+            "You're my blue sky on a rainy day. 🌤️",
+            "Forever wouldn't be long enough with you.",
+            "You match my vibe perfectly.",
+            "Every step of the way, it's always been you.",
+            "You make my heart smile. 😊 🤍",
+            "Thank you for being my person.",
+            "My love for you grows click by click!"
+        ];
+
+        const startColor = { r: 255, g: 249, b: 214 }; // Pale Yellow
+        const endColor = { r: 153, g: 0, b: 18 };     // Crimson Red
 
         function handleTap(e) {
             if (isFinished) return;
             
-            // Prevent zooming/double-tap delays on mobile devices
             if (e.type === 'touchstart') {
                 e.preventDefault();
             }
 
             clicks++;
+            counter.innerText = `${clicks} / ${maxClicks}`;
 
-            if (clicks < maxClicks) {
-                // Update heart color stage
-                heart.className = `stage-${clicks}`;
-                
-                // Fast heart pop-animation feedback on click
-                heart.style.transform = 'rotate(-45deg) scale(1.2)';
-                setTimeout(() => {
-                    if (!isFinished) heart.style.transform = 'rotate(-45deg) scale(1)';
-                }, 100);
+            // Calculate precise custom gradient ratio
+            const ratio = clicks / maxClicks;
+            const r = Math.round(startColor.r + (endColor.r - startColor.r) * ratio);
+            const g = Math.round(startColor.g + (endColor.g - startColor.g) * ratio);
+            const b = Math.round(startColor.b + (endColor.b - startColor.b) * ratio);
+            heart.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
 
-            } else if (clicks === maxClicks) {
+            // Snappy micro-pop reaction on tap
+            heart.style.transform = 'rotate(-45deg) scale(1.18)';
+            setTimeout(() => {
+                if (!isFinished) heart.style.transform = 'rotate(-45deg) scale(1)';
+            }, 60);
+
+            // Toast updates every 50 steps
+            if (clicks < maxClicks && clicks % 50 === 0) {
+                showNewToast();
+            }
+
+            // Completion check
+            if (clicks >= maxClicks) {
                 isFinished = true;
-                
-                // Turn to final crimson stage instantly
-                heart.className = 'stage-9';
-                
-                // Trigger the fade transitions via parent class
+                heart.style.backgroundColor = `rgb(${endColor.r}, ${endColor.g}, ${endColor.b})`;
                 container.classList.add('finished');
                 container.style.cursor = 'default';
             }
         }
 
-        // Attach both click and touch listeners for smooth responsive control
+        function showNewToast() {
+            clearTimeout(toastTimeout);
+            toast.classList.remove('show');
+            
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * loveLines.length);
+                toast.innerText = loveLines[randomIndex];
+                toast.classList.add('show');
+                
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }, 50);
+        }
+
         container.addEventListener('click', handleTap);
         container.addEventListener('touchstart', handleTap, { passive: false });
     </script>
