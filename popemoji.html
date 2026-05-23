@@ -25,8 +25,8 @@
             position: absolute;
             top: 40px;
             right: 15%;
-            width: 100px;
-            height: 100px;
+            width: 90px;
+            height: 90px;
             background: radial-gradient(circle, #ffffff 0%, #fff7b3 30%, #ffdd43 70%, rgba(255,166,0,0) 100%);
             border-radius: 50%;
             box-shadow: 0 0 60px 20px rgba(255, 235, 59, 0.6);
@@ -47,18 +47,19 @@
             justify-content: space-around;
             padding: 0 5%;
             z-index: 5;
+            pointer-events: none; /* Crucial: stops clouds from blocking clicks! */
         }
         .cloud {
             position: relative;
             background: rgba(255, 255, 255, 0.95);
             background: radial-gradient(circle at 30% 30%, #ffffff, #f0f4f8);
-            width: 100px;
-            height: 50px;
+            width: 90px;
+            height: 45px;
             border-radius: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.1rem;
+            font-size: 1.8rem;
             font-weight: 900;
             color: #d81b60;
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(0,0,0,0.15);
@@ -72,16 +73,16 @@
             border-radius: 50%;
         }
         .cloud::before {
-            width: 60px;
-            height: 60px;
-            top: -30px;
-            left: 18px;
+            width: 55px;
+            height: 55px;
+            top: -25px;
+            left: 15px;
         }
         .cloud::after {
-            width: 50px;
-            height: 50px;
-            top: -22px;
-            right: 18px;
+            width: 45px;
+            height: 45px;
+            top: -18px;
+            right: 15px;
         }
         .cloud span {
             position: relative;
@@ -107,21 +108,22 @@
             overflow: hidden;
         }
 
-        /* Flying Emojis - Interactive & Sized down for tiny fingers */
+        /* Flying Emojis - Interactive, Small Size, Huge Click Zone */
         .emoji {
             position: absolute;
-            font-size: 2.4rem; /* Reduced size */
+            font-size: 1.8rem; /* Made Small */
             cursor: pointer;
+            z-index: 9999; /* Higher layer than everything else to prevent blocking */
+            padding: 25px; /* HUGE invisible padding so Maanya can pop them incredibly easily */
+            margin: -25px; /* Offsets padding so visual positioning stays accurate */
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
             touch-action: none;
-            z-index: 10;
-            padding: 10px; /* Expands invisible tap box area so it's still easy to click */
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
 
-        /* Landed Pile Emojis - No Pointer Events */
+        /* Landed Pile Emojis - Frozen at bottom */
         .landed-emoji {
             position: absolute;
-            font-size: 2.1rem; /* Reduced size */
+            font-size: 1.6rem; /* Small Ground Size */
             pointer-events: none; 
             z-index: 2;
             filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
@@ -143,12 +145,12 @@
         .ui-panel {
             position: absolute;
             top: 115px;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: #fff;
             background: rgba(12, 38, 68, 0.5);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            padding: 8px 22px;
+            padding: 6px 18px;
             border-radius: 30px;
             z-index: 20;
             font-weight: bold;
@@ -169,27 +171,27 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 100000;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s ease;
         }
-        #game-over-screen { background: rgba(24, 45, 73, 0.92); }
-        #game-win-screen { background: rgba(46, 125, 50, 0.94); }
+        #game-over-screen { background: rgba(24, 45, 73, 0.95); }
+        #game-win-screen { background: rgba(46, 125, 50, 0.95); }
         
         .end-screen.visible {
             opacity: 1;
             pointer-events: auto;
         }
         .end-screen h1 {
-            font-size: 3.8rem;
+            font-size: 3.5rem;
             color: white;
             margin-bottom: 10px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
             text-align: center;
         }
         .end-screen p {
-            font-size: 1.9rem;
+            font-size: 1.7rem;
             color: #e3f2fd;
             margin-bottom: 35px;
         }
@@ -198,7 +200,7 @@
             color: white;
             border: none;
             padding: 16px 45px;
-            font-size: 2.2rem;
+            font-size: 2rem;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 8px 0px #c2185b, 0 10px 25px rgba(0,0,0,0.3);
@@ -218,7 +220,7 @@
         .pop-particle {
             position: absolute;
             pointer-events: none;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             z-index: 30;
             animation: explode 0.55s ease-out forwards;
         }
@@ -282,9 +284,9 @@
         let countdownInterval;
         let gameLoopFrame;
         
-        // Settings: Lower speed values tailored for 5-year-old tracking speed
-        const baseFallSpeed = 1.8; 
-        const spawnRate = 850; // Gently intervals
+        // Super slow fall speed configuration perfect for toddler tracking
+        const baseFallSpeed = 0.9; 
+        const spawnRate = 950; 
         
         const emojiPool = [
             { char: '💩', type: 'poop' },
@@ -384,24 +386,27 @@
             const widthOffset = 60;
             const startX = Math.random() * (window.innerWidth - widthOffset);
             el.style.left = startX + 'px';
-            el.style.top = '-80px';
+            el.style.top = '-60px';
 
-            // Fixed explicitly for both desktop click and multi-touch mobile tapping
-            const popHandler = (e) => {
+            // Robust multi-event trigger handles both clicks & mobile touch events natively
+            const handlePop = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 popActiveEmoji(el, randomTemplate.type);
             };
-            el.addEventListener('pointerdown', popHandler);
+
+            el.addEventListener('mousedown', handlePop);
+            el.addEventListener('touchstart', handlePop, { passive: false });
 
             stage.appendChild(el);
 
             activeEmojis.push({
                 element: el,
                 x: startX,
-                y: -80,
+                y: -60,
                 type: randomTemplate.type,
                 char: randomTemplate.char,
-                speed: baseFallSpeed + Math.random() * 1.2
+                speed: baseFallSpeed + Math.random() * 0.5
             });
         }
 
@@ -414,7 +419,7 @@
                 p.style.top = y + 'px';
                 
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 35 + Math.random() * 45;
+                const distance = 30 + Math.random() * 40;
                 const dx = Math.cos(angle) * distance;
                 const dy = Math.sin(angle) * distance;
                 
@@ -428,14 +433,15 @@
 
         function popActiveEmoji(el, type) {
             if (isGameOver) return;
-            playSound(type);
             
+            // Immediately delete visual element so she sees a direct reaction response
             const rect = el.getBoundingClientRect();
-            // Center sparkle burst on smaller size profile
-            createPopParticles(rect.left + 15, rect.top + 15);
-
+            createPopParticles(rect.left + 25, rect.top + 25);
+            
             activeEmojis = activeEmojis.filter(item => item.element !== el);
             el.remove();
+
+            playSound(type);
 
             score++;
             scoreVal.innerText = score;
@@ -451,8 +457,8 @@
                 em.y += em.speed;
                 em.element.style.top = em.y + 'px';
 
-                // Adjusted for the smaller dimensions
-                if (em.y >= groundY - 45) {
+                // Bottom hit registration
+                if (em.y >= groundY - 35) {
                     landEmojiOnGround(em);
                     activeEmojis.splice(i, 1);
                 }
@@ -469,12 +475,12 @@
             landed.innerText = em.char;
             landed.style.left = em.x + 'px';
             
-            let targetBottom = Math.random() * 8; 
+            let targetBottom = Math.random() * 6; 
 
-            // Stacking layout calculations adjusted tighter for reduced sizes
+            // Compact bottom pile tracking mechanics
             landedEmojis.forEach(other => {
-                if (Math.abs(other.x - em.x) < 32) {
-                    targetBottom = Math.max(targetBottom, other.bottomHeight + 26);
+                if (Math.abs(other.x - em.x) < 25) {
+                    targetBottom = Math.max(targetBottom, other.bottomHeight + 20);
                 }
             });
 
@@ -487,9 +493,9 @@
                 bottomHeight: targetBottom
             });
 
-            // 30% Screen Height Failure Check
+            // 30% Screen Height Breakpoint Validation
             const maxAllowedPileHeight = window.innerHeight * 0.30;
-            if (targetBottom >= maxAllowedPileHeight - 15) {
+            if (targetBottom >= maxAllowedPileHeight - 10) {
                 triggerEndGame(false);
             }
         }
@@ -501,7 +507,7 @@
                 timerVal.innerText = timeLeft;
 
                 if (timeLeft <= 0) {
-                    triggerEndGame(true); // Victory!
+                    triggerEndGame(true);
                 }
             }, 1000);
         }
@@ -545,7 +551,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            window.addEventListener('click', initAudio, { once: true });
+            window.addEventListener('mousedown', initAudio, { once: true });
             window.addEventListener('touchstart', initAudio, { once: true });
             
             spawnInterval = setInterval(spawnEmoji, spawnRate);
