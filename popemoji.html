@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maanya's Emoji Pop!</title>
+    <title>Maanya's Magical Emoji Sky</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,71 +16,91 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+            background: linear-gradient(to bottom, #1e528e 0%, #2672b7 40%, #6da1d9 75%, #bcd3f0 100%);
             font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
         }
 
-        /* Sky & Clouds Setup */
+        /* Sun Graphic */
+        #sun {
+            position: absolute;
+            top: 40px;
+            right: 15%;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffffff 0%, #fff7b3 30%, #ffdd43 70%, rgba(255,166,0,0) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 60px 20px rgba(255, 235, 59, 0.6);
+            z-index: 1;
+            animation: pulseSun 6s ease-in-out infinite alternate;
+        }
+        @keyframes pulseSun {
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Sky & Cloud Grid with Name Layout */
         #sky-container {
             position: absolute;
-            top: 10px;
+            top: 25px;
             width: 100%;
             display: flex;
             justify-content: space-around;
-            padding: 0 10px;
+            padding: 0 5%;
             z-index: 5;
         }
         .cloud {
             position: relative;
-            background: #ffffff;
-            width: 90px;
-            height: 45px;
-            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.95);
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f4f8);
+            width: 110px;
+            height: 55px;
+            border-radius: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ff4081;
-            text-shadow: 1px 1px 0px #fff, 2px 2px 0px rgba(0,0,0,0.1);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-            animation: float 4s ease-in-out infinite alternate;
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: #d81b60;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15), inset 0 -3px 6px rgba(0,0,0,0.05);
+            animation: float 5s ease-in-out infinite alternate;
         }
         .cloud::before, .cloud::after {
             content: '';
             position: absolute;
-            background: #ffffff;
+            background: inherit;
             border-radius: 50%;
         }
         .cloud::before {
-            width: 50px;
-            height: 50px;
-            top: -25px;
-            left: 15px;
+            width: 65px;
+            height: 65px;
+            top: -35px;
+            left: 20px;
         }
         .cloud::after {
-            width: 40px;
-            height: 40px;
-            top: -18px;
-            right: 15px;
+            width: 55px;
+            height: 55px;
+            top: -25px;
+            right: 20px;
         }
         .cloud span {
             position: relative;
             z-index: 10;
         }
-        /* Stagger cloud animations */
-        .cloud:nth-child(2) { animation-delay: 0.5s; }
-        .cloud:nth-child(3) { animation-delay: 1s; }
-        .cloud:nth-child(4) { animation-delay: 1.5s; }
-        .cloud:nth-child(5) { animation-delay: 2s; }
-        .cloud:nth-child(6) { animation-delay: 2.5s; }
+        /* Randomized drift delays for organic flow */
+        .cloud:nth-child(1) { animation-delay: 0s; }
+        .cloud:nth-child(2) { animation-delay: 0.7s; }
+        .cloud:nth-child(3) { animation-delay: 1.4s; }
+        .cloud:nth-child(4) { animation-delay: 0.3s; }
+        .cloud:nth-child(5) { animation-delay: 1.1s; }
+        .cloud:nth-child(6) { animation-delay: 1.8s; }
 
         @keyframes float {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(8px); }
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(12px) scale(1.02); }
         }
 
-        /* Game Stage */
+        /* Game Canvas Stage */
         #game-stage {
             position: relative;
             width: 100%;
@@ -88,60 +108,63 @@
             overflow: hidden;
         }
 
-        /* Active Falling Emoji */
+        /* Flying Emojis - Interactive */
         .emoji {
             position: absolute;
             font-size: 3.5rem;
             cursor: pointer;
             touch-action: none;
             z-index: 10;
-            transition: transform 0.1s ease;
-        }
-        .emoji:active {
-            transform: scale(1.3);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
 
-        /* Ground Pile Area */
+        /* Landed Pile Emojis - No Pointer Events (Cannot be clicked) */
+        .landed-emoji {
+            position: absolute;
+            font-size: 2.8rem;
+            pointer-events: none; 
+            z-index: 2;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)) grayscale(10%);
+        }
+
+        /* Bottom Floor Grid & Pile Marker Zone */
         #ground-pile-zone {
             position: absolute;
             bottom: 0;
             width: 100%;
             height: 30%;
-            border-top: 3px dashed rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.1);
+            border-top: 3px dotted rgba(255, 255, 255, 0.4);
+            background: linear-gradient(to top, rgba(255,255,255,0.15), rgba(255,255,255,0));
             z-index: 1;
             pointer-events: none;
         }
 
-        /* Emojis that rest on the ground */
-        .landed-emoji {
+        /* Score & Timer HUD Graphics */
+        .ui-panel {
             position: absolute;
-            font-size: 2.8rem;
-            pointer-events: none;
-            z-index: 2;
-            transition: bottom 0.2s ease, left 0.2s ease;
-        }
-
-        /* UI Panels */
-        #score-board {
-            position: absolute;
-            top: 100px;
-            left: 20px;
-            font-size: 1.5rem;
+            top: 115px;
+            font-size: 1.6rem;
             color: #fff;
-            background: rgba(0,0,0,0.2);
-            padding: 5px 15px;
-            border-radius: 20px;
+            background: rgba(12, 38, 68, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 8px 22px;
+            border-radius: 30px;
             z-index: 20;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+        #score-board { left: 25px; }
+        #timer-board { right: 25px; background: rgba(216, 27, 96, 0.5); }
 
-        #game-over-screen {
+        /* Pop Display Screens */
+        .end-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 105, 180, 0.85);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -151,56 +174,65 @@
             pointer-events: none;
             transition: opacity 0.5s ease;
         }
-        #game-over-screen.visible {
+        #game-over-screen { background: rgba(24, 45, 73, 0.92); }
+        #game-win-screen { background: rgba(46, 125, 50, 0.94); }
+        
+        .end-screen.visible {
             opacity: 1;
             pointer-events: auto;
         }
-        #game-over-screen h1 {
-            font-size: 3.5rem;
+        .end-screen h1 {
+            font-size: 3.8rem;
             color: white;
             margin-bottom: 10px;
-            text-shadow: 3px 3px 0px #ff4081;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
             text-align: center;
         }
-        #game-over-screen p {
-            font-size: 1.8rem;
-            color: white;
-            margin-bottom: 30px;
+        .end-screen p {
+            font-size: 1.9rem;
+            color: #e3f2fd;
+            margin-bottom: 35px;
         }
         .btn {
-            background: #4caf50;
+            background: #ff4081;
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 2rem;
+            padding: 16px 45px;
+            font-size: 2.2rem;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 8px 0px #388e3c, 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 0px #c2185b, 0 10px 25px rgba(0,0,0,0.3);
             transition: transform 0.1s;
+        }
+        #game-win-screen .btn {
+            background: #ffeb3b;
+            color: #212121;
+            box-shadow: 0 8px 0px #fbc02d, 0 10px 25px rgba(0,0,0,0.3);
         }
         .btn:active {
             transform: translateY(4px);
-            box-shadow: 0 4px 0px #388e3c, 0 5px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 0px rgba(0,0,0,0.4);
         }
 
-        /* Particle Pops */
+        /* FX Particles */
         .pop-particle {
             position: absolute;
             pointer-events: none;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             z-index: 30;
-            animation: explode 0.6s ease-out forwards;
+            animation: explode 0.55s ease-out forwards;
         }
         @keyframes explode {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+            0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
     <div id="game-stage">
-        <!-- Maanya's Name Clouds -->
+        <div id="sun"></div>
+
         <div id="sky-container">
             <div class="cloud"><span>M</span></div>
             <div class="cloud"><span>A</span></div>
@@ -210,34 +242,44 @@
             <div class="cloud"><span>A</span></div>
         </div>
 
-        <div id="score-board">Pops: <span id="score-val">0</span></div>
+        <div id="score-board" class="ui-panel">Pops: <span id="score-val">0</span></div>
+        <div id="timer-board" class="ui-panel">Time: <span id="timer-val">100</span>s</div>
 
-        <!-- The Danger Pile Line Area (Bottom 30%) -->
         <div id="ground-pile-zone"></div>
     </div>
 
-    <!-- Game Over Splash Screen -->
-    <div id="game-over-screen">
-        <h1>Oh No! Too Much Magic!</h1>
-        <p>The screen is filled up! 🎈</p>
+    <div id="game-over-screen" class="end-screen">
+        <h1>Try Again, Maanya! 🌟</h1>
+        <p>The screen filled up too high! Let's pop faster!</p>
         <button class="btn" onclick="resetGame()">Try Again 🔄</button>
+    </div>
+
+    <div id="game-win-screen" class="end-screen">
+        <h1>Maanya is a Superstar! 🏆</h1>
+        <p>Fantastic job keeping the sky clean for 100 seconds! ⭐</p>
+        <button class="btn" onclick="resetGame()">Play Again 🔄</button>
     </div>
 
     <script>
         const stage = document.getElementById('game-stage');
         const scoreVal = document.getElementById('score-val');
+        const timerVal = document.getElementById('timer-val');
         const gameOverScreen = document.getElementById('game-over-screen');
+        const gameWinScreen = document.getElementById('game-win-screen');
         
         let score = 0;
+        let timeLeft = 100;
         let isGameOver = false;
         let activeEmojis = [];
         let landedEmojis = [];
+        
         let spawnInterval;
+        let countdownInterval;
         let gameLoopFrame;
         
-        // Settings tailored for a 5-year-old
-        const baseFallSpeed = 2; 
-        const spawnRate = 1200; // MS between new emoji drops
+        // Settings: High speed action profile
+        const baseFallSpeed = 4.8; 
+        const spawnRate = 600; // Fast regular intervals
         
         const emojiPool = [
             { char: '💩', type: 'poop' },
@@ -248,12 +290,10 @@
             { char: '🦄', type: 'silly' },
             { char: '🤪', type: 'silly' },
             { char: '🐵', type: 'silly' },
-            { char: '🍕', type: 'normal' },
             { char: '⭐', type: 'normal' },
             { char: '🎈', type: 'normal' }
         ];
 
-        // Web Audio API Synthesizer (No external mp3 files required!)
         let audioCtx = null;
         function initAudio() {
             if (!audioCtx) {
@@ -269,74 +309,58 @@
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
             const now = audioCtx.currentTime;
 
             if (type === 'poop') {
-                // Fart: Low pitched frequency drop with distortion/vibration
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(95, now);
                 osc.frequency.linearRampToValueAtTime(45, now + 0.35);
-                
                 gain.gain.setValueAtTime(0.4, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
                 osc.start(now);
                 osc.stop(now + 0.35);
-
             } else if (type === 'heart') {
-                // Awww: Sweet upward warm chime chord
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(330, now); // E4
-                osc.frequency.exponentialRampToValueAtTime(660, now + 0.4); // E5
-                
+                osc.frequency.setValueAtTime(330, now);
+                osc.frequency.exponentialRampToValueAtTime(660, now + 0.4);
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
                 osc.start(now);
                 osc.stop(now + 0.4);
 
-                // Quick extra note for harmony
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
                 osc2.type = 'sine';
                 osc2.connect(gain2);
                 gain2.connect(audioCtx.destination);
-                osc2.frequency.setValueAtTime(440, now + 0.05); // A4
+                osc2.frequency.setValueAtTime(440, now + 0.05);
                 osc2.frequency.exponentialRampToValueAtTime(880, now + 0.45);
                 gain2.gain.setValueAtTime(0.2, now);
                 gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
                 osc2.start(now + 0.05);
                 osc2.stop(now + 0.45);
-
             } else if (type === 'weird') {
-                // Spacey / Alien Vibrato
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(400, now);
                 osc.frequency.linearRampToValueAtTime(800, now + 0.1);
                 osc.frequency.linearRampToValueAtTime(300, now + 0.2);
                 osc.frequency.linearRampToValueAtTime(700, now + 0.3);
-                
                 gain.gain.setValueAtTime(0.25, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
                 osc.start(now);
                 osc.stop(now + 0.35);
-
             } else if (type === 'silly') {
-                // Boing effect
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(150, now);
                 osc.frequency.quadraticRampToValueAtTime(600, now + 0.2);
-                
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
                 osc.start(now);
                 osc.stop(now + 0.25);
-
             } else {
-                // Classic standard pop sound
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(600, now);
                 osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
-                
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
                 osc.start(now);
@@ -344,7 +368,6 @@
             }
         }
 
-        // Create a falling emoji element
         function spawnEmoji() {
             if (isGameOver) return;
 
@@ -353,16 +376,15 @@
             el.className = 'emoji';
             el.innerText = randomTemplate.char;
             
-            // Random horizontal start position
-            const widthOffset = 60;
+            const widthOffset = 70;
             const startX = Math.random() * (window.innerWidth - widthOffset);
             el.style.left = startX + 'px';
-            el.style.top = '-70px'; // start offscreen above cloud line
+            el.style.top = '-80px';
 
-            // Attach touch/click listeners
+            // Active tracking event handler (Popping while in air)
             el.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                popEmoji(el, randomTemplate.type);
+                popActiveEmoji(el, randomTemplate.type);
             });
 
             stage.appendChild(el);
@@ -370,14 +392,13 @@
             activeEmojis.push({
                 element: el,
                 x: startX,
-                y: -70,
+                y: -80,
                 type: randomTemplate.type,
                 char: randomTemplate.char,
-                speed: baseFallSpeed + Math.random() * 1.5
+                speed: baseFallSpeed + Math.random() * 2.5
             });
         }
 
-        // Popper Particle Sparkles
         function createPopParticles(x, y) {
             for (let i = 0; i < 8; i++) {
                 const p = document.createElement('div');
@@ -386,9 +407,8 @@
                 p.style.left = x + 'px';
                 p.style.top = y + 'px';
                 
-                // Math directions for explosion spread
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 40 + Math.random() * 60;
+                const distance = 45 + Math.random() * 65;
                 const dx = Math.cos(angle) * distance;
                 const dy = Math.sin(angle) * distance;
                 
@@ -396,20 +416,17 @@
                 p.style.setProperty('--dy', dy + 'px');
                 
                 stage.appendChild(p);
-                setTimeout(() => p.remove(), 600);
+                setTimeout(() => p.remove(), 550);
             }
         }
 
-        // Action when popped successfully
-        function popEmoji(el, type) {
+        function popActiveEmoji(el, type) {
             if (isGameOver) return;
-            
             playSound(type);
             
             const rect = el.getBoundingClientRect();
-            createPopParticles(rect.left + 20, rect.top + 20);
+            createPopParticles(rect.left + 25, rect.top + 25);
 
-            // Clean data entries
             activeEmojis = activeEmojis.filter(item => item.element !== el);
             el.remove();
 
@@ -417,20 +434,18 @@
             scoreVal.innerText = score;
         }
 
-        // Central game updates calculation loop
         function updateGame() {
             if (isGameOver) return;
 
             const groundY = window.innerHeight;
-            const fillLimitY = window.innerHeight * 0.70; // 30% height line from bottom
 
             for (let i = activeEmojis.length - 1; i >= 0; i--) {
                 const em = activeEmojis[i];
                 em.y += em.speed;
                 em.element.style.top = em.y + 'px';
 
-                // Check if emoji has reached the ground line or resting pile height
-                if (em.y >= groundY - 55) {
+                // Check landing trigger point
+                if (em.y >= groundY - 65) {
                     landEmojiOnGround(em);
                     activeEmojis.splice(i, 1);
                 }
@@ -439,9 +454,7 @@
             gameLoopFrame = requestAnimationFrame(updateGame);
         }
 
-        // Pile settlement logic
         function landEmojiOnGround(em) {
-            // Transfer element from active falling state to stationary ground element
             em.element.remove();
 
             const landed = document.createElement('div');
@@ -449,13 +462,11 @@
             landed.innerText = em.char;
             landed.style.left = em.x + 'px';
             
-            // Basic random staggering so they settle dynamically into piles
-            const randomSettleOffset = Math.random() * 20; 
-            let targetBottom = randomSettleOffset;
+            let targetBottom = Math.random() * 12; 
 
-            // Stack on top of closest neighbors horizontally if they exist
+            // Stacking layout calculations
             landedEmojis.forEach(other => {
-                if (Math.abs(other.x - em.x) < 35) {
+                if (Math.abs(other.x - em.x) < 40) {
                     targetBottom = Math.max(targetBottom, other.bottomHeight + 35);
                 }
             });
@@ -469,47 +480,69 @@
                 bottomHeight: targetBottom
             });
 
-            // GAME OVER CONDITION: If pile builds up past 30% screen height threshold
+            // Evaluate failure parameters: 30% Height Fill Check
             const maxAllowedPileHeight = window.innerHeight * 0.30;
             if (targetBottom >= maxAllowedPileHeight - 20) {
-                triggerGameOver();
+                triggerEndGame(false);
             }
         }
 
-        function triggerGameOver() {
+        function startTimer() {
+            countdownInterval = setInterval(() => {
+                if (isGameOver) return;
+                timeLeft--;
+                timerVal.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    triggerEndGame(true); // Victory!
+                }
+            }, 1000);
+        }
+
+        function triggerEndGame(isWin) {
             isGameOver = true;
             clearInterval(spawnInterval);
+            clearInterval(countdownInterval);
             cancelAnimationFrame(gameLoopFrame);
-            gameOverScreen.classList.add('visible');
-            playSound('weird'); // generic silly sound on wrap-up
+            
+            if (isWin) {
+                gameWinScreen.classList.add('visible');
+                playSound('heart'); 
+            } else {
+                gameOverScreen.classList.add('visible');
+                playSound('weird');
+            }
         }
 
         function resetGame() {
-            // Clean active entities
             activeEmojis.forEach(em => em.element.remove());
             landedEmojis.forEach(em => em.element.remove());
             activeEmojis = [];
             landedEmojis = [];
             
             score = 0;
+            timeLeft = 100;
             scoreVal.innerText = score;
+            timerVal.innerText = timeLeft;
             isGameOver = false;
             
             gameOverScreen.classList.remove('visible');
+            gameWinScreen.classList.remove('visible');
             
-            // Restart Timers
             clearInterval(spawnInterval);
+            clearInterval(countdownInterval);
+            
             spawnInterval = setInterval(spawnEmoji, spawnRate);
+            startTimer();
             updateGame();
         }
 
-        // Initialize engine on boot load
         window.addEventListener('DOMContentLoaded', () => {
-            // Explicitly unlock audio on child's first window tap interaction
             window.addEventListener('click', initAudio, { once: true });
             window.addEventListener('touchstart', initAudio, { once: true });
             
             spawnInterval = setInterval(spawnEmoji, spawnRate);
+            startTimer();
             updateGame();
         });
     </script>
