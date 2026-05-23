@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click the Heart Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #111;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Constraints for better look on mobile/desktop */
+            height: 100%;
+            max-height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+        }
+
+        /* The Picture Container */
+        #photo {
+            width: 100%;
+            height: 100%;
+            background-image: url('23112.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(25px); /* Starts heavily blurred */
+            transform: scale(1.1); /* Prevents white edges from blur */
+            transition: filter 2s ease, transform 2s ease;
+        }
+
+        /* Pure CSS Heart Overlay */
+        #heart-overlay {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            top: 45%;
+            left: 50%;
+            margin-left: -50px;
+            margin-top: -50px;
+            transform: rotate(-45deg) scale(1);
+            transition: background-color 0.3s ease, transform 0.1s ease, opacity 1.5s ease;
+            opacity: 0.9;
+            pointer-events: none; /* Let clicks pass to the container */
+        }
+
+        /* CSS Heart Shapes via pseudo-elements */
+        #heart-overlay::before,
+        #heart-overlay::after {
+            content: "";
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: inherit; /* Matches parent color dynamically */
+        }
+
+        #heart-overlay::before {
+            top: -50px;
+            left: 0;
+        }
+
+        #heart-overlay::after {
+            top: 0;
+            left: 50px;
+        }
+
+        /* Color Stages: Pale Yellow transitioning to Crimson Red */
+        .stage-0 { background-color: #fff9d6; }
+        .stage-1 { background-color: #ffefa1; }
+        .stage-2 { background-color: #ffe06b; }
+        .stage-3 { background-color: #ffd036; }
+        .stage-4 { background-color: #ffb426; }
+        .stage-5 { background-color: #ff9126; }
+        .stage-6 { background-color: #ff6226; }
+        .stage-7 { background-color: #ff2626; }
+        .stage-8 { background-color: #d61111; }
+        .stage-9 { background-color: #990012; } /* Crimson */
+
+        /* Text Overlay */
+        #text-overlay {
+            position: absolute;
+            bottom: 12%;
+            width: 100%;
+            text-align: center;
+            color: #ffffff;
+            font-size: 3rem;
+            font-weight: bold;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 2s ease 1s, transform 2s ease 1s; /* Subtle delay so it pops up perfectly */
+            pointer-events: none;
+        }
+
+        /* Game Finished State Styling */
+        #game-container.finished #photo {
+            filter: blur(0px);
+            transform: scale(1);
+        }
+
+        #game-container.finished #heart-overlay {
+            opacity: 0;
+            transform: rotate(-45deg) scale(0);
+        }
+
+        #game-container.finished #text-overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="photo"></div>
+        <div id="heart-overlay" class="stage-0"></div>
+        <div id="text-overlay">I love you</div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const heart = document.getElementById('heart-overlay');
+        let clicks = 0;
+        const maxClicks = 10;
+        let isFinished = false;
+
+        function handleTap(e) {
+            if (isFinished) return;
+            
+            // Prevent zooming/double-tap delays on mobile devices
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+            }
+
+            clicks++;
+
+            if (clicks < maxClicks) {
+                // Update heart color stage
+                heart.className = `stage-${clicks}`;
+                
+                // Fast heart pop-animation feedback on click
+                heart.style.transform = 'rotate(-45deg) scale(1.2)';
+                setTimeout(() => {
+                    if (!isFinished) heart.style.transform = 'rotate(-45deg) scale(1)';
+                }, 100);
+
+            } else if (clicks === maxClicks) {
+                isFinished = true;
+                
+                // Turn to final crimson stage instantly
+                heart.className = 'stage-9';
+                
+                // Trigger the fade transitions via parent class
+                container.classList.add('finished');
+                container.style.cursor = 'default';
+            }
+        }
+
+        // Attach both click and touch listeners for smooth responsive control
+        container.addEventListener('click', handleTap);
+        container.addEventListener('touchstart', handleTap, { passive: false });
+    </script>
+
+</body>
+</html>
