@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piece Together My Heart</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffe6e6, #ffb3b3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #d63384;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* The board where pieces are dropped */
+        #puzzle-board {
+            width: 500px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.4);
+            border: 3px dashed #ff6b8b;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* The container where pieces are scattered */
+        #pieces-pool {
+            width: 700px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            position: relative;
+            border: 1px solid #ffccd5;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .puzzle-piece {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            box-sizing: border-box;
+            border: 0.5px solid rgba(255,255,255,0.4);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            transition: box-shadow 0.2s;
+        }
+
+        .puzzle-piece:active {
+            cursor: grabbing;
+            box-shadow: 4px 8px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        /* Target grid guides on the board */
+        .grid-slot {
+            position: absolute;
+            border: 1px dashed rgba(214, 51, 132, 0.15);
+            box-sizing: border-box;
+        }
+
+        /* Popup Message Styling */
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        #popup-card {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid #ff3366;
+            transform: scale(0.7);
+            animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        #popup-card h2 {
+            color: #ff3366;
+            font-size: 2.5rem;
+            margin: 0 0 20px 0;
+            font-family: 'Georgia', serif;
+        }
+
+        #popup-card button {
+            background: #ff3366;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 51, 102, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        #popup-card button:hover {
+            background: #e02251;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popUp { from { transform: scale(0.7); } to { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <h1>Piece Together My Heart</h1>
+    
+    <div id="game-container">
+        <!-- Board where the pieces must go -->
+        <div id="puzzle-board"></div>
+        
+        <!-- Pool where shuffled pieces start -->
+        <div id="pieces-pool"></div>
+    </div>
+
+    <!-- Success Popup -->
+    <div id="popup-overlay">
+        <div id="popup-card">
+            <h2>❤️ You made it to my heart! ❤️</h2>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+<script>
+    // --- CONFIGURATION ---
+    const COLS = 10;
+    const ROWS = 5;
+    const TOTAL_PIECES = COLS * ROWS; // 50 Pieces
+    const BOARD_WIDTH = 500;
+    const BOARD_HEIGHT = 250;
+    const PIECE_WIDTH = BOARD_WIDTH / COLS;  // 50px
+    const PIECE_HEIGHT = BOARD_HEIGHT / ROWS; // 50px
+
+    const board = document.getElementById('puzzle-board');
+    const pool = document.getElementById('pieces-pool');
+    const popup = document.getElementById('popup-overlay');
+
+    let audioCtx = null;
+    let dragMusicInterval = null;
+
+    // --- PROCEDURAL AUDIO EFFECTS (Web Audio API) ---
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // Playful repetitive note while dragging
+    function startDragMusic() {
+        initAudio();
+        if (dragMusicInterval) return;
+        
+        let toggle = false;
+        function playNote() {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            // Alternate between two light, playful notes
+            osc.frequency.setValueAtTime(toggle ? 330 : 392, audioCtx.currentTime); 
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            toggle = !toggle;
+        }
+        playNote();
+        dragMusicInterval = setInterval(playNote, 180);
+    }
+
+    function stopDragMusic() {
+        if (dragMusicInterval) {
+            clearInterval(dragMusicInterval);
+            dragMusicInterval = null;
+        }
+    }
+
+    // Quick crisp "click" when placed correctly
+    function playClickSound() {
+        initAudio();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // Disappointed "awwwww" sliding tone
+    function playAwSound() {
+        initAudio();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(130, audioCtx.currentTime + 0.4);
+        
+        // Low pass filter to make it sound more like a vocal "aww"
+        let filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(700, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    // Light applause crowd effect synthesized via white noise bursts
+    function playApplauseSound() {
+        initAudio();
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                let bufferSize = audioCtx.sampleRate * 0.12;
+                let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                let data = buffer.getChannelData(0);
+                for (let j = 0; j < bufferSize; j++) {
+                    data[j] = Math.random() * 2 - 1;
+                }
+                let noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                let filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000 + Math.random() * 600;
+                
+                let gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
+            }, i * 60);
+        }
+    }
+
+
+    // --- GENERATE HEART IMAGE VIA CANVAS ---
+    const heartCanvas = document.createElement('canvas');
+    heartCanvas.width = BOARD_WIDTH;
+    heartCanvas.height = BOARD_HEIGHT;
+    const ctx = heartCanvas.getContext('2d');
+
+    // Draw a beautiful crisp red/pink gradient heart
+    const gradient = ctx.createLinearGradient(0, 0, 0, BOARD_HEIGHT);
+    gradient.addColorStop(0, '#ff4d6d');
+    gradient.addColorStop(1, '#c9184a');
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+    // Smooth custom Bezier curves for a clean landscape heart alignment
+    ctx.moveTo(250, 70);
+    ctx.bezierCurveTo(250, 10, 130, 10, 130, 85);
+    ctx.bezierCurveTo(130, 150, 250, 210, 250, 230);
+    ctx.bezierCurveTo(250, 210, 370, 150, 370, 85);
+    ctx.bezierCurveTo(370, 10, 250, 10, 250, 70);
+    ctx.fill();
+
+
+    // --- INITIALIZE GAME ---
+    function setupGame() {
+        board.innerHTML = '';
+        pool.innerHTML = '';
+        
+        // 1. Create Grid Background Hints
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const slot = document.createElement('div');
+                slot.classList.add('grid-slot');
+                slot.style.width = `${PIECE_WIDTH}px`;
+                slot.style.height = `${PIECE_HEIGHT}px`;
+                slot.style.left = `${c * PIECE_WIDTH}px`;
+                slot.style.top = `${r * PIECE_HEIGHT}px`;
+                board.appendChild(slot);
+            }
+        }
+
+        // 2. Generate Pieces
+        const pieces = [];
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const piece = document.createElement('div');
+                piece.classList.add('puzzle-piece');
+                piece.style.width = `${PIECE_WIDTH}px`;
+                piece.style.height = `${PIECE_HEIGHT}px`;
+                
+                // Store correct coordinate targets
+                const targetX = c * PIECE_WIDTH;
+                const targetY = r * PIECE_HEIGHT;
+                piece.dataset.correctX = targetX;
+                piece.dataset.correctY = targetY;
+                piece.dataset.isLocked = "false";
+
+                // Slice the heart image using background positions
+                piece.style.backgroundImage = `url(${heartCanvas.toDataURL()})`;
+                piece.style.backgroundPosition = `-${targetX}px -${targetY}px`;
+                
+                makeElementDraggable(piece);
+                pieces.push(piece);
+            }
+        }
+
+        // 3. Shuffle and Scatter pieces dynamically inside the Pool container
+        pieces.forEach(piece => {
+            const maxScatterX = pool.clientWidth - PIECE_WIDTH;
+            const maxScatterY = pool.clientHeight - PIECE_HEIGHT;
+            
+            const randomX = Math.random() * maxScatterX;
+            const randomY = Math.random() * maxScatterY;
+
+            piece.style.left = `${randomX}px`;
+            piece.style.top = `${randomY}px`;
+            pool.appendChild(piece);
+        });
+    }
+
+
+    // --- DRAG AND DROP ENGINE ---
+    function makeElementDraggable(el) {
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0;
+
+        el.addEventListener('mousedown', dragStart);
+        el.addEventListener('touchstart', dragStart, { passive: false });
+
+        function dragStart(e) {
+            if (el.dataset.isLocked === "true") return;
+            initAudio(); // Initialize audio context on first user gesture
+            startDragMusic();
+
+            // Handle touch vs mouse
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+            // Shift element to the global body layer seamlessly to bypass container borders while moving
+            const rect = el.getBoundingClientRect();
+            currentX = rect.left;
+            currentY = rect.top;
+            
+            el.style.position = 'fixed';
+            el.style.left = `${currentX}px`;
+            el.style.top = `${currentY}px`;
+            document.body.appendChild(el);
+
+            startX = clientX - currentX;
+            startY = clientY - currentY;
+
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('touchmove', dragMove, { passive: false });
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+        }
+
+        function dragMove(e) {
+            e.preventDefault();
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            currentX = clientX - startX;
+            currentY = clientY - startY;
+
+            el.style.left = `${currentX}px`;
+            el.style.top = `${currentY}px`;
+        }
+
+        function dragEnd() {
+            stopDragMusic();
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('touchend', dragEnd);
+
+            // Get target alignment metrics relative to the board boundaries
+            const boardRect = board.getBoundingClientRect();
+            const targetLeft = boardRect.left + parseFloat(el.dataset.correctX);
+            const targetTop = boardRect.top + parseFloat(el.dataset.correctY);
+
+            // Allowed snap distance variance (25px radius leeway)
+            const snapTolerance = 25; 
+            const distance = Math.hypot(currentX - targetLeft, currentY - targetTop);
+
+            if (distance < snapTolerance) {
+                // Success: Snap perfectly onto the target frame
+                el.style.position = 'absolute';
+                el.style.left = `${el.dataset.correctX}px`;
+                el.style.top = `${el.dataset.correctY}px`;
+                board.appendChild(el);
+                
+                el.dataset.isLocked = "true";
+                el.style.border = "none";
+                el.style.boxShadow = "none";
+                el.style.cursor = "default";
+                
+                playClickSound();
+                checkVictory();
+            } else {
+                // Return to local pool layout space upon failure
+                playAwSound();
+                el.style.position = 'absolute';
+                const poolRect = pool.getBoundingClientRect();
+                let localX = currentX - poolRect.left;
+                let localY = currentY - poolRect.top;
+
+                // Ensure it snaps within bounding walls safely
+                localX = Math.max(0, Math.min(localX, pool.clientWidth - PIECE_WIDTH));
+                localY = Math.max(0, Math.min(localY, pool.clientHeight - PIECE_HEIGHT));
+
+                el.style.left = `${localX}px`;
+                el.style.top = `${localY}px`;
+                pool.appendChild(el);
+            }
+        }
+    }
+
+    // --- CHECK WINNING CONDITIONS ---
+    function checkVictory() {
+        const lockedPieces = board.querySelectorAll('.puzzle-piece[data-isLocked="true"]');
+        if (lockedPieces.length === TOTAL_PIECES) {
+            setTimeout(() => {
+                playApplauseSound();
+                popup.style.display = 'flex';
+            }, 300);
+        }
+    }
+
+    function restartGame() {
+        popup.style.display = 'none';
+        setupGame();
+    }
+
+    // Run setup on load
+    setupGame();
+</script>
+
+</body>
+</html>
