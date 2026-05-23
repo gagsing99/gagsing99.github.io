@@ -47,7 +47,7 @@
             justify-content: space-around;
             padding: 0 5%;
             z-index: 5;
-            pointer-events: none; /* Crucial: stops clouds from blocking clicks! */
+            pointer-events: none;
         }
         .cloud {
             position: relative;
@@ -111,11 +111,11 @@
         /* Flying Emojis - Interactive, Small Size, Huge Click Zone */
         .emoji {
             position: absolute;
-            font-size: 1.8rem; /* Made Small */
+            font-size: 1.8rem;
             cursor: pointer;
-            z-index: 9999; /* Higher layer than everything else to prevent blocking */
-            padding: 25px; /* HUGE invisible padding so Maanya can pop them incredibly easily */
-            margin: -25px; /* Offsets padding so visual positioning stays accurate */
+            z-index: 9999; 
+            padding: 25px; 
+            margin: -25px; 
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
             touch-action: none;
         }
@@ -123,7 +123,7 @@
         /* Landed Pile Emojis - Frozen at bottom */
         .landed-emoji {
             position: absolute;
-            font-size: 1.6rem; /* Small Ground Size */
+            font-size: 1.6rem;
             pointer-events: none; 
             z-index: 2;
             filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
@@ -285,9 +285,10 @@
         let gameLoopFrame;
         
         // Super slow fall speed configuration perfect for toddler tracking
-        const baseFallSpeed = 0.9; 
+        const baseFallSpeed = 0.8; 
         const spawnRate = 950; 
         
+        // Every single item in our pool has an explicitly mapped, working audio type now!
         const emojiPool = [
             { char: '💩', type: 'poop' },
             { char: '❤️', type: 'heart' },
@@ -296,9 +297,9 @@
             { char: '👻', type: 'weird' },
             { char: '🦄', type: 'silly' },
             { char: '🤪', type: 'silly' },
-            { char: '🐵', type: 'silly' },
-            { char: '⭐', type: 'normal' },
-            { char: '🎈', type: 'normal' }
+            { char: '🐵', type: 'monkey' },
+            { char: '⭐', type: 'star' },
+            { char: '🎈', type: 'balloon' }
         ];
 
         let audioCtx = null;
@@ -364,14 +365,40 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
                 osc.start(now);
                 osc.stop(now + 0.25);
-            } else {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+            } else if (type === 'monkey') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(500, now + 0.15);
+                osc.frequency.linearRampToValueAtTime(250, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 osc.start(now);
-                osc.stop(now + 0.09);
+                osc.stop(now + 0.3);
+            } else if (type === 'star') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1500, now + 0.12);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'balloon') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else {
+                // Catch-all safety sound so nothing ever softlocks
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
             }
         }
 
@@ -388,7 +415,6 @@
             el.style.left = startX + 'px';
             el.style.top = '-60px';
 
-            // Robust multi-event trigger handles both clicks & mobile touch events natively
             const handlePop = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -406,7 +432,7 @@
                 y: -60,
                 type: randomTemplate.type,
                 char: randomTemplate.char,
-                speed: baseFallSpeed + Math.random() * 0.5
+                speed: baseFallSpeed + Math.random() * 0.4
             });
         }
 
@@ -434,13 +460,13 @@
         function popActiveEmoji(el, type) {
             if (isGameOver) return;
             
-            // Immediately delete visual element so she sees a direct reaction response
             const rect = el.getBoundingClientRect();
             createPopParticles(rect.left + 25, rect.top + 25);
             
             activeEmojis = activeEmojis.filter(item => item.element !== el);
             el.remove();
 
+            // Run sound cleanly
             playSound(type);
 
             score++;
@@ -457,7 +483,6 @@
                 em.y += em.speed;
                 em.element.style.top = em.y + 'px';
 
-                // Bottom hit registration
                 if (em.y >= groundY - 35) {
                     landEmojiOnGround(em);
                     activeEmojis.splice(i, 1);
@@ -477,7 +502,6 @@
             
             let targetBottom = Math.random() * 6; 
 
-            // Compact bottom pile tracking mechanics
             landedEmojis.forEach(other => {
                 if (Math.abs(other.x - em.x) < 25) {
                     targetBottom = Math.max(targetBottom, other.bottomHeight + 20);
@@ -493,7 +517,6 @@
                 bottomHeight: targetBottom
             });
 
-            // 30% Screen Height Breakpoint Validation
             const maxAllowedPileHeight = window.innerHeight * 0.30;
             if (targetBottom >= maxAllowedPileHeight - 10) {
                 triggerEndGame(false);
@@ -543,21 +566,4 @@
             gameWinScreen.classList.remove('visible');
             
             clearInterval(spawnInterval);
-            clearInterval(countdownInterval);
-            
-            spawnInterval = setInterval(spawnEmoji, spawnRate);
-            startTimer();
-            updateGame();
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            window.addEventListener('mousedown', initAudio, { once: true });
-            window.addEventListener('touchstart', initAudio, { once: true });
-            
-            spawnInterval = setInterval(spawnEmoji, spawnRate);
-            startTimer();
-            updateGame();
-        });
-    </script>
-</body>
-</html>
+    
