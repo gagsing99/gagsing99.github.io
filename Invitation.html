@@ -19,7 +19,6 @@ body {
     overflow: hidden;
 }
 
-/* Card */
 .card {
     background: rgba(255, 255, 255, 0.1);
     padding: 3rem;
@@ -30,7 +29,6 @@ body {
     transition: opacity 0.5s ease;
 }
 
-/* Input */
 input {
     background: transparent;
     border: none;
@@ -43,7 +41,6 @@ input {
     margin-top: 20px;
 }
 
-/* Error text */
 #error {
     color: #ff416c;
     margin-top: 10px;
@@ -51,7 +48,6 @@ input {
     display: none;
 }
 
-/* Buttons */
 button {
     background: #ff416c;
     color: white;
@@ -60,14 +56,12 @@ button {
     margin: 10px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: transform 0.2s;
 }
+
 button:hover {
     transform: scale(1.1);
 }
 
-/* Shake animation */
 @keyframes shake {
     0%,100% { transform: translateX(0);}
     25% { transform: translateX(-8px);}
@@ -77,18 +71,136 @@ button:hover {
     animation: shake 0.3s;
 }
 
-/* Starry night */
 .stars {
     position: absolute;
     width: 100%;
     height: 100%;
     background: black;
-    overflow: hidden;
 }
 
-/* Twinkling stars */
 .star {
     position: absolute;
     background: white;
     border-radius: 50%;
-    opacity: 0.8;
+    animation: twinkle 2s infinite ease-in-out;
+}
+
+@keyframes twinkle {
+    0%,100% { opacity: 0.2;}
+    50% { opacity: 1;}
+}
+
+.center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app" class="card">
+    <h2 id="prompt">Enter First Name</h2>
+    <input type="text" id="input-field" onkeypress="handleInput(event)">
+    <div id="error">Only Jasleena Saluja is permitted</div>
+</div>
+
+<script>
+
+const steps = [
+    { val: 'jasleena', text: 'Enter Last Name' },
+    { val: 'saluja', text: 'done' }
+];
+
+let currentStep = 0;
+
+function handleInput(e) {
+    if (e.key === 'Enter') {
+        const input = document.getElementById('input-field');
+        const val = input.value.toLowerCase().trim();
+        const error = document.getElementById('error');
+        const card = document.getElementById('app');
+
+        if (val === steps[currentStep].val) {
+            currentStep++;
+            error.style.display = 'none';
+            card.style.opacity = 0;
+
+            setTimeout(() => {
+                if (currentStep < steps.length) {
+                    document.getElementById('prompt').innerText = steps[currentStep].text;
+                    input.value = '';
+                    card.style.opacity = 1;
+                } else {
+                    showQuestion();
+                }
+            }, 400);
+        } else {
+            input.classList.add('shake');
+            error.style.display = 'block';
+            setTimeout(() => input.classList.remove('shake'), 300);
+        }
+    }
+}
+
+function showQuestion() {
+    const card = document.getElementById('app');
+    card.innerHTML = `
+        <h2>Do you want QUALITY time with me tonight?</h2>
+        <button onclick="success()">Yes</button>
+        <button onclick="askAgain()">No</button>
+    `;
+}
+
+function askAgain() {
+    const card = document.getElementById('app');
+    card.innerHTML = `
+        <h2>Are you REALLY sure? 😏</h2>
+        <button onclick="success()">Yes</button>
+        <button onclick="askFinal()">Still No</button>
+    `;
+}
+
+function askFinal() {
+    const card = document.getElementById('app');
+    card.innerHTML = `
+        <h2>Last chance... 😌</h2>
+        <button onclick="success()">Okay fine, Yes ❤️</button>
+        <button onclick="askAgain()">Hmm... No</button>
+    `;
+}
+
+function success() {
+    document.body.innerHTML = '<div class="stars" id="stars"></div>';
+
+    const starsContainer = document.getElementById('stars');
+
+    for (let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        let size = Math.random() * 3;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+
+        star.style.top = Math.random()*100 + '%';
+        star.style.left = Math.random()*100 + '%';
+        star.style.animationDelay = Math.random()*2 + 's';
+
+        starsContainer.appendChild(star);
+    }
+
+    const text = document.createElement('div');
+    text.className = 'center-text';
+    text.innerHTML = "✨ See you tonight ✨";
+
+    document.body.appendChild(text);
+}
+
+</script>
+
+</body>
+</html>
