@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Special Invitation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
+
+        body { margin: 0; background: #0f0c29; color: white; font-family: 'Poppins', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        
+        .card { background: rgba(255, 255, 255, 0.1); padding: 3rem; border-radius: 20px; backdrop-filter: blur(10px); text-align: center; width: 350px; transition: opacity 0.5s ease; }
+        
+        input { background: transparent; border: none; border-bottom: 2px solid #fff; color: white; padding: 10px; width: 80%; font-size: 1.2rem; outline: none; margin-top: 20px; }
+        
+        button { background: #ff416c; color: white; border: none; padding: 10px 25px; margin: 10px; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+
+        .hidden { display: none; opacity: 0; }
+        .fade-in { opacity: 1; }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.3s; border-bottom: 2px solid #ff416c; }
+
+        #fireworks { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="card">
+        <div id="step-0">
+            <h2 id="prompt">Enter First Name</h2>
+            <input type="text" id="input-field" onkeypress="checkEnter(event)">
+        </div>
+    </div>
+
+    <canvas id="fireworks"></canvas>
+
+    <script>
+        const steps = [
+            { id: 'first', val: 'jasleena', text: 'Enter First Name' },
+            { id: 'last', val: 'saluja', text: 'Enter Last Name' }
+        ];
+        let currentStep = 0;
+
+        function checkEnter(e) {
+            if (e.key === 'Enter') {
+                const val = document.getElementById('input-field').value.toLowerCase().trim();
+                const card = document.querySelector('.card');
+                
+                if (val === steps[currentStep].val) {
+                    currentStep++;
+                    card.style.opacity = 0;
+                    setTimeout(() => {
+                        if (currentStep < steps.length) {
+                            document.getElementById('prompt').innerText = steps[currentStep].text;
+                            document.getElementById('input-field').value = '';
+                            card.style.opacity = 1;
+                        } else {
+                            showQuestion();
+                        }
+                    }, 500);
+                } else {
+                    const input = document.getElementById('input-field');
+                    input.classList.add('shake');
+                    setTimeout(() => input.classList.remove('shake'), 300);
+                }
+            }
+        }
+
+        function showQuestion() {
+            const card = document.getElementById('app');
+            card.innerHTML = `<h2>Do you want QUALITY time with me, tonight?</h2>
+                              <button onclick="success()">Yes</button>
+                              <button id="no-btn" onmouseover="moveNo()">No</button>`;
+        }
+
+        function moveNo() {
+            const btn = document.getElementById('no-btn');
+            btn.innerText = "Yes (I was kidding, of course it's a yes)";
+            btn.onclick = success;
+        }
+
+        function success() {
+            document.getElementById('app').style.display = 'none';
+            document.body.style.background = 'radial-gradient(circle, #24243e, #0f0c29)';
+            // Simple Starry Effect
+            for(let i=0; i<100; i++) {
+                let star = document.createElement('div');
+                star.style.position = 'absolute';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = '2px'; star.style.height = '2px';
+                star.style.background = 'white';
+                document.body.appendChild(star);
+            }
+        }
+    </script>
+</body>
+</html>
