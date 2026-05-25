@@ -1,104 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Special Invitation</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
+<meta charset="UTF-8">
+<title>Special Invitation</title>
 
-        body { margin: 0; background: #0f0c29; color: white; font-family: 'Poppins', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        
-        .card { background: rgba(255, 255, 255, 0.1); padding: 3rem; border-radius: 20px; backdrop-filter: blur(10px); text-align: center; width: 350px; transition: opacity 0.5s ease; }
-        
-        input { background: transparent; border: none; border-bottom: 2px solid #fff; color: white; padding: 10px; width: 80%; font-size: 1.2rem; outline: none; margin-top: 20px; }
-        
-        button { background: #ff416c; color: white; border: none; padding: 10px 25px; margin: 10px; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        .shake { animation: shake 0.3s; border-bottom: 2px solid #ff416c; }
-    </style>
-</head>
-<body>
+body {
+    margin: 0;
+    background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+}
 
-    <div id="app" class="card">
-        <div id="step-container">
-            <h2 id="prompt">Enter First Name</h2>
-            <input type="text" id="input-field" onkeypress="handleInput(event)">
-        </div>
-    </div>
+/* Card */
+.card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3rem;
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    text-align: center;
+    width: 360px;
+    transition: opacity 0.5s ease;
+}
 
-    <script>
-        const steps = [
-            { val: 'jasleena', text: 'Enter Last Name' },
-            { val: 'saluja', text: 'done' }
-        ];
-        let currentStep = 0;
+/* Input */
+input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #fff;
+    color: white;
+    padding: 10px;
+    width: 80%;
+    font-size: 1.2rem;
+    outline: none;
+    margin-top: 20px;
+}
 
-        function handleInput(e) {
-            if (e.key === 'Enter') {
-                const input = document.getElementById('input-field');
-                const val = input.value.toLowerCase().trim();
-                const card = document.getElementById('app');
-                
-                if (val === steps[currentStep].val) {
-                    currentStep++;
-                    card.style.opacity = 0;
-                    
-                    setTimeout(() => {
-                        if (currentStep < steps.length) {
-                            document.getElementById('prompt').innerText = steps[currentStep].text;
-                            input.value = '';
-                            card.style.opacity = 1;
-                        } else {
-                            showQuestion();
-                        }
-                    }, 500);
-                } else {
-                    input.classList.add('shake');
-                    setTimeout(() => input.classList.remove('shake'), 300);
-                }
-            }
-        }
+/* Error text */
+#error {
+    color: #ff416c;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    display: none;
+}
 
-        function showQuestion() {
-            const card = document.getElementById('app');
-            card.style.opacity = 1;
-            card.innerHTML = `<h2>Do you want QUALITY time with me, tonight?</h2>
-                              <button onclick="success()">Yes</button>
-                              <button id="no-btn" onmouseover="changeNoToYes()">No</button>`;
-        }
+/* Buttons */
+button {
+    background: #ff416c;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+button:hover {
+    transform: scale(1.1);
+}
 
-        function changeNoToYes() {
-            const btn = document.getElementById('no-btn');
-            btn.innerText = "Yes (I was kidding, of course it's a yes)";
-            btn.onclick = success;
-        }
+/* Shake animation */
+@keyframes shake {
+    0%,100% { transform: translateX(0);}
+    25% { transform: translateX(-8px);}
+    75% { transform: translateX(8px);}
+}
+.shake {
+    animation: shake 0.3s;
+}
 
-        function success() {
-            document.body.innerHTML = '';
-            document.body.style.background = '#000';
-            // Add Stars
-            for(let i = 0; i < 150; i++) {
-                const star = document.createElement('div');
-                star.style.position = 'absolute';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.width = Math.random() * 3 + 'px';
-                star.style.height = star.style.width;
-                star.style.background = 'white';
-                star.style.borderRadius = '50%';
-                document.body.appendChild(star);
-            }
-            // Add simple "Fireworks" text or feel free to add a library like particles.js
-            const h1 = document.createElement('h1');
-            h1.innerText = "✨ See you tonight! ✨";
-            h1.style.color = "white";
-            document.body.appendChild(h1);
-        }
-    </script>
-</body>
-</html>
+/* Starry night */
+.stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+}
+
+/* Twinkling stars */
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
