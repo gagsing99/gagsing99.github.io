@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Puzzle to Starry Night</title>
+<title>Special Page</title>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -16,14 +17,6 @@
         padding: 10px;
         font-size: 16px;
         margin: 5px;
-    }
-
-    #canvasContainer {
-        display: none;
-    }
-
-    canvas {
-        display: block;
     }
 
     #loveMessage {
@@ -40,40 +33,56 @@
 </head>
 <body>
 
-<h1>Welcome</h1>
-<p>Do you want to continue?</p>
+<!-- STEP 1: NAME INPUT -->
+<div id="nameSection">
+    <h1>Welcome</h1>
+    <input type="text" id="firstName" placeholder="First Name" />
+    <input type="text" id="lastName" placeholder="Last Name" />
+    <br>
+    <button onclick="goToQuestion()">Continue</button>
+</div>
 
-<input type="text" id="answerInput" placeholder="Type yes or no..." />
-<br>
-<button onclick="checkAnswer()">Submit</button>
+<!-- STEP 2: QUESTION -->
+<div id="questionSection" style="display:none;">
+    <h2>Do you want to spend time with me?</h2>
+    <button onclick="answerQuestion('yes')">Yes</button>
+    <button onclick="answerQuestion('no')">No</button>
+</div>
 
+<!-- STEP 3: PUZZLE -->
 <div id="puzzleSection" style="display:none;">
     <h2 id="puzzleText"></h2>
-    <p id="warningText" style="color: #ff8080;"></p>
+    <p id="warningText" style="color:#ff8080;"></p>
     <input type="text" id="puzzleInput" placeholder="Enter answer..." />
     <br>
-    <button onclick="checkPuzzle()">Submit Puzzle</button>
+    <button onclick="checkPuzzle()">Submit</button>
 </div>
 
 <script>
 let currentPuzzle = "";
 
-/* STEP 1 */
-function checkAnswer() {
-    const val = document.getElementById("answerInput").value.toLowerCase().trim();
+/* STEP 1 → STEP 2 */
+function goToQuestion() {
+    const first = document.getElementById("firstName").value.trim();
+    const last = document.getElementById("lastName").value.trim();
 
-    if (
-        val === "yes" ||
-        val === "no" ||
-        val === "i m kidding, it's yes"
-    ) {
-        showPuzzle();
-    } else {
-        alert("Please answer properly 😄");
+    if (!first || !last) {
+        alert("Please enter your name 😊");
+        return;
     }
+
+    document.getElementById("nameSection").style.display = "none";
+    document.getElementById("questionSection").style.display = "block";
 }
 
-/* STEP 2: Generate puzzle always = 3000 */
+/* STEP 2 → STEP 3 */
+function answerQuestion(answer) {
+    // regardless of yes or no → go to puzzle
+    document.getElementById("questionSection").style.display = "none";
+    showPuzzle();
+}
+
+/* PUZZLE GENERATOR (always = 3000) */
 function generatePuzzle() {
     const templates = [
         () => {
@@ -105,7 +114,7 @@ function rand(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/* STEP 3 */
+/* SHOW PUZZLE */
 function showPuzzle() {
     currentPuzzle = generatePuzzle();
     document.getElementById("puzzleSection").style.display = "block";
@@ -114,7 +123,7 @@ function showPuzzle() {
     document.getElementById("puzzleInput").value = "";
 }
 
-/* STEP 4 */
+/* CHECK PUZZLE */
 function checkPuzzle() {
     const userAnswer = Number(document.getElementById("puzzleInput").value);
 
@@ -123,14 +132,14 @@ function checkPuzzle() {
     } else {
         document.getElementById("warningText").innerText =
             "now now!! in order to proceed, type in the write answer, Jasleena!";
-        
-        // show SAME puzzle again
+
+        // SAME puzzle again
         document.getElementById("puzzleText").innerText = "Solve: " + currentPuzzle;
         document.getElementById("puzzleInput").value = "";
     }
 }
 
-/* STEP 5 */
+/* STARRY NIGHT */
 function startStarryNight() {
     document.body.innerHTML = `
         <canvas id="stars"></canvas>
