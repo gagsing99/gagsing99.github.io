@@ -2,183 +2,291 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Special Page</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Special Invitation</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        background: #111;
-        color: white;
-        padding-top: 50px;
-    }
 
-    input, button {
-        padding: 10px;
-        font-size: 16px;
-        margin: 5px;
-    }
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 15px;
+}
 
-    #loveMessage {
-        position: absolute;
-        top: 40%;
-        width: 100%;
-        text-align: center;
-        font-size: 40px;
-        color: white;
-        font-weight: bold;
-        text-shadow: 0 0 20px white;
+.card {
+    width: 100%;
+    max-width: 350px;
+    background: rgba(255,255,255,0.08);
+    padding: 25px;
+    border-radius: 16px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition: opacity 0.4s ease;
+}
+
+h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    font-size: 1rem;
+    border: none;
+    border-bottom: 2px solid white;
+    background: transparent;
+    color: white;
+    outline: none;
+}
+
+.error {
+    color: #ff4d6d;
+    font-size: 0.85rem;
+    display: none;
+    margin-top: 10px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    background: #ff4d6d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.shake { animation: shake 0.3s; }
+
+/* Stars */
+.stars {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s infinite;
+}
+
+@keyframes twinkle {
+    0%,100% { opacity: 0.2; }
+    50% { opacity: 1; }
+}
+
+/* Fireworks */
+.firework {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    animation: explode 1s infinite ease-out;
+}
+
+@keyframes explode {
+    0% { box-shadow: 0 0 white; }
+    100% {
+        box-shadow:
+        0 -40px red,
+        40px 0 blue,
+        -40px 0 yellow,
+        0 40px purple;
+        opacity: 0;
     }
+}
+
+.center-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.6rem;
+    text-align: center;
+}
+
 </style>
 </head>
+
 <body>
 
-<!-- STEP 1: NAME INPUT -->
-<div id="nameSection">
-    <h1>Welcome</h1>
-    <input type="text" id="firstName" placeholder="First Name" />
-    <input type="text" id="lastName" placeholder="Last Name" />
-    <br>
-    <button onclick="goToQuestion()">Continue</button>
-</div>
-
-<!-- STEP 2: QUESTION -->
-<div id="questionSection" style="display:none;">
-    <h2>Do you want to spend time with me?</h2>
-    <button onclick="answerQuestion('yes')">Yes</button>
-    <button onclick="answerQuestion('no')">No</button>
-</div>
-
-<!-- STEP 3: PUZZLE -->
-<div id="puzzleSection" style="display:none;">
-    <h2 id="puzzleText"></h2>
-    <p id="warningText" style="color:#ff8080;"></p>
-    <input type="text" id="puzzleInput" placeholder="Enter answer..." />
-    <br>
-    <button onclick="checkPuzzle()">Submit</button>
-</div>
+<div id="app" class="card"></div>
 
 <script>
-let currentPuzzle = "";
 
-/* STEP 1 → STEP 2 */
-function goToQuestion() {
-    const first = document.getElementById("firstName").value.trim();
-    const last = document.getElementById("lastName").value.trim();
+const app = document.getElementById("app");
+let first = "";
+let last = "";
 
-    if (!first || !last) {
-        alert("Please enter your name 😊");
-        return;
-    }
-
-    document.getElementById("nameSection").style.display = "none";
-    document.getElementById("questionSection").style.display = "block";
-}
-
-/* STEP 2 → STEP 3 */
-function answerQuestion(answer) {
-    // regardless of yes or no → go to puzzle
-    document.getElementById("questionSection").style.display = "none";
-    showPuzzle();
-}
-
-/* PUZZLE GENERATOR (always = 3000) */
-function generatePuzzle() {
-    const templates = [
-        () => {
-            const a = rand(1000, 2000);
-            return `${a} + ${3000 - a}`;
-        },
-        () => {
-            const factors = [5, 6, 10, 12, 15, 20, 25, 30];
-            const a = factors[Math.floor(Math.random() * factors.length)];
-            return `${a} × ${3000 / a}`;
-        },
-        () => {
-            const a = rand(3500, 5000);
-            return `${a} - ${a - 3000}`;
-        },
-        () => {
-            const a = rand(500, 1500);
-            const b = rand(500, 1500);
-            const c = 3000 - (a + b);
-            return `(${a} + ${b}) + ${c}`;
-        }
-    ];
-
-    const generator = templates[Math.floor(Math.random() * templates.length)];
-    return generator();
-}
-
-function rand(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/* SHOW PUZZLE */
-function showPuzzle() {
-    currentPuzzle = generatePuzzle();
-    document.getElementById("puzzleSection").style.display = "block";
-    document.getElementById("puzzleText").innerText = "Solve: " + currentPuzzle;
-    document.getElementById("warningText").innerText = "";
-    document.getElementById("puzzleInput").value = "";
-}
-
-/* CHECK PUZZLE */
-function checkPuzzle() {
-    const userAnswer = Number(document.getElementById("puzzleInput").value);
-
-    if (userAnswer === 3000) {
-        startStarryNight();
-    } else {
-        document.getElementById("warningText").innerText =
-            "now now!! in order to proceed, type in the write answer, Jasleena!";
-
-        // SAME puzzle again
-        document.getElementById("puzzleText").innerText = "Solve: " + currentPuzzle;
-        document.getElementById("puzzleInput").value = "";
-    }
-}
-
-/* STARRY NIGHT */
-function startStarryNight() {
-    document.body.innerHTML = `
-        <canvas id="stars"></canvas>
-        <div id="loveMessage">I love you 3000</div>
+/* STEP 1 */
+function step1() {
+    app.innerHTML = `
+        <h2>Enter First Name</h2>
+        <input id="input">
+        <div class="error">Only your name is permitted</div>
     `;
 
-    const canvas = document.getElementById("stars");
-    const ctx = canvas.getContext("2d");
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const stars = [];
-
-    for (let i = 0; i < 300; i++) {
-        stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            r: Math.random() * 2
-        });
-    }
-
-    function draw() {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "white";
-
-        stars.forEach(s => {
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        requestAnimationFrame(draw);
-    }
-
-    draw();
+    validate("jasleena", () => {
+        first = "Jasleena";
+        fade(step2);
+    });
 }
+
+/* STEP 2 */
+function step2() {
+    app.innerHTML = `
+        <h2>Enter Last Name</h2>
+        <input id="input">
+        <div class="error">Only your name is permitted</div>
+    `;
+
+    validate("saluja", () => {
+        last = "Saluja";
+        fade(() => question(false));
+    });
+}
+
+/* VALIDATION */
+function validate(expected, next) {
+    const input = document.getElementById("input");
+    const error = document.querySelector(".error");
+
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            const val = input.value.trim().toLowerCase();
+
+            if (val === expected) {
+                error.style.display = "none";
+                next();
+            } else {
+                error.style.display = "block";
+                input.classList.add("shake");
+                setTimeout(() => input.classList.remove("shake"), 300);
+            }
+        }
+    });
+}
+
+/* FADE */
+function fade(next) {
+    app.style.opacity = 0;
+    setTimeout(() => {
+        next();
+        app.style.opacity = 1;
+    }, 400);
+}
+
+/* QUESTION */
+function question(second) {
+    app.innerHTML = `
+        <h2>
+        Hello, ${first} ${last},<br><br>
+        Would you like to spend some quality time with me?
+        </h2>
+
+        <button onclick="startPuzzle()">Yes</button>
+        <button onclick="${second ? 'startPuzzle()' : 'no()'}">
+        ${second ? "I was kidding, it's Yes" : "No"}
+        </button>
+    `;
+}
+
+function no() {
+    fade(() => question(true));
+}
+
+/* ✅ RANDOM PUZZLE */
+let answer = 3000;
+
+function generatePuzzle() {
+    let a = Math.floor(Math.random()*2000 + 1000);
+    let b = 3000 - a;
+    return `${a} + ${b}`;
+}
+
+function startPuzzle() {
+    const puzzle = generatePuzzle();
+
+    app.innerHTML = `
+        <h2>Solve this to continue</h2>
+        <h2>${puzzle} = ?</h2>
+        <input id="input" placeholder="Enter answer">
+        <div class="error">Wrong answer 😏</div>
+    `;
+
+    const input = document.getElementById("input");
+    const error = document.querySelector(".error");
+
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            if (parseInt(input.value) === answer) {
+                showStars();
+            } else {
+                error.style.display = "block";
+                input.classList.add("shake");
+                setTimeout(() => input.classList.remove("shake"), 300);
+            }
+        }
+    });
+}
+
+/* STAR SCREEN */
+function showStars() {
+    document.body.innerHTML = `<div class="stars" id="stars"></div>`;
+
+    const stars = document.getElementById("stars");
+
+    for (let i = 0; i < 120; i++) {
+        const s = document.createElement("div");
+        s.className = "star";
+
+        let size = Math.random()*3;
+        s.style.width = size+"px";
+        s.style.height = size+"px";
+        s.style.top = Math.random()*100+"%";
+        s.style.left = Math.random()*100+"%";
+
+        stars.appendChild(s);
+    }
+
+    for (let i = 0; i < 5; i++) {
+        const f = document.createElement("div");
+        f.className = "firework";
+        f.style.top = Math.random()*80+"%";
+        f.style.left = Math.random()*80+"%";
+
+        stars.appendChild(f);
+    }
+
+    const text = document.createElement("div");
+    text.className = "center-text";
+    text.innerHTML = "✨ I Love you 3000 and more ✨";
+
+    document.body.appendChild(text);
+}
+
+/* START */
+step1();
+
 </script>
 
 </body>
