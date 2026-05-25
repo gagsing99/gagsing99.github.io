@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Special Invitation</title>
 
-<!-- Beautiful Font -->
+<!-- ✅ Correct Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
 
 <style>
@@ -17,32 +17,35 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    padding: 15px;
 }
 
 /* Card */
 .card {
+    width: 100%;
+    max-width: 380px;
     background: rgba(255,255,255,0.08);
-    padding: 40px;
+    padding: 30px 20px;
     border-radius: 20px;
     text-align: center;
-    width: 380px;
     backdrop-filter: blur(14px);
-    transition: opacity 0.6s ease;
+    transition: opacity 0.5s ease;
 }
 
-/* Title */
+/* Text */
 h2 {
     font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    line-height: 1.5;
 }
 
 /* Input */
 input {
     margin-top: 20px;
-    padding: 10px;
-    width: 80%;
-    font-size: 1.1rem;
+    padding: 12px;
+    width: 100%;
+    font-size: 1rem;
     border: none;
     border-bottom: 2px solid white;
     background: transparent;
@@ -60,19 +63,19 @@ input {
 
 /* Buttons */
 button {
-    margin: 15px;
-    padding: 10px 25px;
+    width: 100%;
+    margin: 10px 0;
+    padding: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #ff4d6d;
     color: white;
     font-size: 1rem;
     cursor: pointer;
-    transition: 0.2s;
 }
 
-button:hover {
-    transform: scale(1.1);
+button:active {
+    transform: scale(0.95);
 }
 
 /* Shake */
@@ -81,25 +84,21 @@ button:hover {
     25% { transform: translateX(-6px);}
     75% { transform: translateX(6px);}
 }
-
-.shake {
-    animation: shake 0.3s;
-}
+.shake { animation: shake 0.3s; }
 
 /* Fade */
-.fade-out {
-    opacity: 0;
-}
+.fade-out { opacity: 0; }
 
-/* STAR FIELD */
+/* Stars */
 .stars {
-    position: absolute;
+    position: fixed;
     width: 100%;
     height: 100%;
     background: black;
     overflow: hidden;
 }
 
+/* Star */
 .star {
     position: absolute;
     background: white;
@@ -117,36 +116,34 @@ button:hover {
     position: absolute;
     width: 4px;
     height: 4px;
-    background: transparent;
     border-radius: 50%;
     animation: explode 1s ease-out infinite;
 }
 
 @keyframes explode {
-    0% {
-        box-shadow: 0 0 white;
-    }
+    0% { box-shadow: 0 0 white; }
     100% {
         box-shadow:
         0 -50px red,
         50px 0 blue,
         -50px 0 yellow,
         0 50px purple,
-        35px 35px orange,
-        -35px 35px pink,
-        35px -35px cyan,
-        -35px -35px white;
+        30px 30px orange,
+        -30px 30px pink,
+        30px -30px cyan,
+        -30px -30px white;
         opacity: 0;
     }
 }
 
 /* Center Text */
 .center-text {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    text-align: center;
     font-family: 'Playfair Display', serif;
 }
 
@@ -167,11 +164,11 @@ let lastName = "";
 function showFirstName() {
     app.innerHTML = `
         <h2>Enter First Name</h2>
-        <input id="input" type="text">
-        <div class="error" id="error">Only Jasleena Saluja is permitted</div>
+        <input id="input" type="text" placeholder="First Name">
+        <div class="error">Only your name is permitted</div>
     `;
 
-    handleValidation("jasleena", () => {
+    validate("jasleena", () => {
         firstName = "Jasleena";
         transition(showLastName);
     });
@@ -181,37 +178,28 @@ function showFirstName() {
 function showLastName() {
     app.innerHTML = `
         <h2>Enter Last Name</h2>
-        <input id="input" type="text">
-        <div class="error" id="error">Only Jasleena Saluja name is permitted</div>
+        <input id="input" type="text" placeholder="Last Name">
+        <div class="error">Only your name is permitted</div>
     `;
 
-    handleValidation("saluja", () => {
+    validate("saluja", () => {
         lastName = "Saluja";
-        transition(showQuestion);
+        transition(() => showQuestion(false));
     });
 }
 
-/* TRANSITION */
-function transition(next) {
-    app.classList.add("fade-out");
-    setTimeout(() => {
-        app.classList.remove("fade-out");
-        next();
-    }, 500);
-}
-
 /* VALIDATION */
-function handleValidation(expected, onSuccess) {
+function validate(expected, callback) {
     const input = document.getElementById("input");
-    const error = document.getElementById("error");
+    const error = document.querySelector(".error");
 
-    input.addEventListener("keypress", function(e) {
+    input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-            let value = input.value.trim().toLowerCase();
+            const val = input.value.trim().toLowerCase();
 
-            if (value === expected) {
+            if (val === expected) {
                 error.style.display = "none";
-                onSuccess();
+                callback();
             } else {
                 error.style.display = "block";
                 input.classList.add("shake");
@@ -221,21 +209,33 @@ function handleValidation(expected, onSuccess) {
     });
 }
 
+/* TRANSITION */
+function transition(next) {
+    app.classList.add("fade-out");
+    setTimeout(() => {
+        app.classList.remove("fade-out");
+        next();
+    }, 400);
+}
+
 /* QUESTION */
-function showQuestion(secondAttempt = false) {
+function showQuestion(secondAttempt) {
     app.innerHTML = `
-        <h2>Hello, ${firstName} ${lastName},<br>
+        <h2>
+        Hello, ${firstName} ${lastName},<br>
         the most beautiful woman of the world.<br><br>
-        Would you like to spend some quality time with me?</h2>
+        Would you like to spend some quality time with me?
+        </h2>
 
         <button onclick="yes()">Yes</button>
+
         <button onclick="${secondAttempt ? 'yes()' : 'no()'}">
             ${secondAttempt ? "I was kidding, it's Yes" : "No"}
         </button>
     `;
 }
 
-/* NO CLICK */
+/* NO */
 function no() {
     transition(() => showQuestion(true));
 }
@@ -246,12 +246,12 @@ function yes() {
 
     const stars = document.getElementById("stars");
 
-    // create stars
+    // stars
     for (let i = 0; i < 150; i++) {
         let s = document.createElement("div");
         s.className = "star";
-        let size = Math.random() * 3;
 
+        let size = Math.random() * 3;
         s.style.width = size + "px";
         s.style.height = size + "px";
         s.style.top = Math.random() * 100 + "%";
