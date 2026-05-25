@@ -4,201 +4,284 @@
 <meta charset="UTF-8">
 <title>Special Invitation</title>
 
+<!-- Beautiful Font -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
 
 body {
     margin: 0;
-    background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
-    color: white;
     font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: white;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     height: 100vh;
     overflow: hidden;
 }
 
+/* Card */
 .card {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 3rem;
+    background: rgba(255,255,255,0.08);
+    padding: 40px;
     border-radius: 20px;
-    backdrop-filter: blur(12px);
     text-align: center;
-    width: 360px;
-    transition: opacity 0.5s ease;
+    width: 380px;
+    backdrop-filter: blur(14px);
+    transition: opacity 0.6s ease;
 }
 
+/* Title */
+h2 {
+    font-family: 'Playfair Display', serif;
+}
+
+/* Input */
 input {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid #fff;
-    color: white;
+    margin-top: 20px;
     padding: 10px;
     width: 80%;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    border: none;
+    border-bottom: 2px solid white;
+    background: transparent;
+    color: white;
     outline: none;
-    margin-top: 20px;
 }
 
-#error {
-    color: #ff416c;
+/* Error */
+.error {
+    color: #ff4d6d;
+    font-size: 0.85rem;
     margin-top: 10px;
-    font-size: 0.9rem;
     display: none;
 }
 
+/* Buttons */
 button {
-    background: #ff416c;
-    color: white;
-    border: none;
+    margin: 15px;
     padding: 10px 25px;
-    margin: 10px;
+    border: none;
     border-radius: 8px;
+    background: #ff4d6d;
+    color: white;
+    font-size: 1rem;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
     transform: scale(1.1);
 }
 
+/* Shake */
 @keyframes shake {
     0%,100% { transform: translateX(0);}
-    25% { transform: translateX(-8px);}
-    75% { transform: translateX(8px);}
+    25% { transform: translateX(-6px);}
+    75% { transform: translateX(6px);}
 }
+
 .shake {
     animation: shake 0.3s;
 }
 
+/* Fade */
+.fade-out {
+    opacity: 0;
+}
+
+/* STAR FIELD */
 .stars {
     position: absolute;
     width: 100%;
     height: 100%;
     background: black;
+    overflow: hidden;
 }
 
 .star {
     position: absolute;
     background: white;
     border-radius: 50%;
-    animation: twinkle 2s infinite ease-in-out;
+    animation: twinkle 2s infinite;
 }
 
 @keyframes twinkle {
-    0%,100% { opacity: 0.2;}
-    50% { opacity: 1;}
+    0%,100% { opacity: 0.2; }
+    50% { opacity: 1; }
 }
 
+/* Fireworks */
+.firework {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: transparent;
+    border-radius: 50%;
+    animation: explode 1s ease-out infinite;
+}
+
+@keyframes explode {
+    0% {
+        box-shadow: 0 0 white;
+    }
+    100% {
+        box-shadow:
+        0 -50px red,
+        50px 0 blue,
+        -50px 0 yellow,
+        0 50px purple,
+        35px 35px orange,
+        -35px 35px pink,
+        35px -35px cyan,
+        -35px -35px white;
+        opacity: 0;
+    }
+}
+
+/* Center Text */
 .center-text {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 2rem;
+    transform: translate(-50%,-50%);
+    font-size: 2.2rem;
+    font-family: 'Playfair Display', serif;
 }
+
 </style>
 </head>
 
 <body>
 
-<div id="app" class="card">
-    <h2 id="prompt">Enter First Name</h2>
-    <input type="text" id="input-field" onkeypress="handleInput(event)">
-    <div id="error">Only Jasleena Saluja is permitted</div>
-</div>
+<div id="app" class="card"></div>
 
 <script>
 
-const steps = [
-    { val: 'jasleena', text: 'Enter Last Name' },
-    { val: 'saluja', text: 'done' }
-];
+const app = document.getElementById("app");
+let firstName = "";
+let lastName = "";
 
-let currentStep = 0;
+/* STEP 1 */
+function showFirstName() {
+    app.innerHTML = `
+        <h2>Enter First Name</h2>
+        <input id="input" type="text" placeholder="First Name">
+        <div class="error" id="error">Only your name is permitted</div>
+    `;
 
-function handleInput(e) {
-    if (e.key === 'Enter') {
-        const input = document.getElementById('input-field');
-        const val = input.value.toLowerCase().trim();
-        const error = document.getElementById('error');
-        const card = document.getElementById('app');
+    handleValidation("jasleena", () => {
+        firstName = "Jasleena";
+        transition(showLastName);
+    });
+}
 
-        if (val === steps[currentStep].val) {
-            currentStep++;
-            error.style.display = 'none';
-            card.style.opacity = 0;
+/* STEP 2 */
+function showLastName() {
+    app.innerHTML = `
+        <h2>Enter Last Name</h2>
+        <input id="input" type="text" placeholder="Last Name">
+        <div class="error" id="error">Only your name is permitted</div>
+    `;
 
-            setTimeout(() => {
-                if (currentStep < steps.length) {
-                    document.getElementById('prompt').innerText = steps[currentStep].text;
-                    input.value = '';
-                    card.style.opacity = 1;
-                } else {
-                    showQuestion();
-                }
-            }, 400);
-        } else {
-            input.classList.add('shake');
-            error.style.display = 'block';
-            setTimeout(() => input.classList.remove('shake'), 300);
+    handleValidation("saluja", () => {
+        lastName = "Saluja";
+        transition(showQuestion);
+    });
+}
+
+/* TRANSITION */
+function transition(next) {
+    app.classList.add("fade-out");
+    setTimeout(() => {
+        app.classList.remove("fade-out");
+        next();
+    }, 500);
+}
+
+/* VALIDATION */
+function handleValidation(expected, onSuccess) {
+    const input = document.getElementById("input");
+    const error = document.getElementById("error");
+
+    input.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            let value = input.value.trim().toLowerCase();
+
+            if (value === expected) {
+                error.style.display = "none";
+                onSuccess();
+            } else {
+                error.style.display = "block";
+                input.classList.add("shake");
+                setTimeout(() => input.classList.remove("shake"), 300);
+            }
         }
-    }
+    });
 }
 
-function showQuestion() {
-    const card = document.getElementById('app');
-    card.innerHTML = `
-        <h2>Do you want QUALITY time with me tonight?</h2>
-        <button onclick="success()">Yes</button>
-        <button onclick="askAgain()">No</button>
+/* QUESTION */
+function showQuestion(secondAttempt = false) {
+    app.innerHTML = `
+        <h2>Hello, ${firstName} ${lastName},<br>
+        the most beautiful woman of the world.<br><br>
+        Would you like to spend some quality time with me?</h2>
+
+        <button onclick="yes()">Yes</button>
+        <button onclick="${secondAttempt ? 'yes()' : 'no()'}">
+            ${secondAttempt ? "I was kidding, it's Yes" : "No"}
+        </button>
     `;
 }
 
-function askAgain() {
-    const card = document.getElementById('app');
-    card.innerHTML = `
-        <h2>Are you REALLY sure? 😏</h2>
-        <button onclick="success()">Yes</button>
-        <button onclick="askFinal()">Still No</button>
-    `;
+/* NO CLICK */
+function no() {
+    transition(() => showQuestion(true));
 }
 
-function askFinal() {
-    const card = document.getElementById('app');
-    card.innerHTML = `
-        <h2>Last chance... 😌</h2>
-        <button onclick="success()">Okay fine, Yes ❤️</button>
-        <button onclick="askAgain()">Hmm... No</button>
-    `;
-}
+/* YES */
+function yes() {
+    document.body.innerHTML = `<div class="stars" id="stars"></div>`;
 
-function success() {
-    document.body.innerHTML = '<div class="stars" id="stars"></div>';
+    const stars = document.getElementById("stars");
 
-    const starsContainer = document.getElementById('stars');
-
-    for (let i = 0; i < 200; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-
+    // create stars
+    for (let i = 0; i < 150; i++) {
+        let s = document.createElement("div");
+        s.className = "star";
         let size = Math.random() * 3;
-        star.style.width = size + 'px';
-        star.style.height = size + 'px';
 
-        star.style.top = Math.random()*100 + '%';
-        star.style.left = Math.random()*100 + '%';
-        star.style.animationDelay = Math.random()*2 + 's';
+        s.style.width = size + "px";
+        s.style.height = size + "px";
+        s.style.top = Math.random() * 100 + "%";
+        s.style.left = Math.random() * 100 + "%";
+        s.style.animationDelay = Math.random() * 2 + "s";
 
-        starsContainer.appendChild(star);
+        stars.appendChild(s);
     }
 
-    const text = document.createElement('div');
-    text.className = 'center-text';
-    text.innerHTML = "✨ See you tonight ✨";
+    // fireworks
+    for (let i = 0; i < 6; i++) {
+        let f = document.createElement("div");
+        f.className = "firework";
+
+        f.style.top = Math.random() * 80 + "%";
+        f.style.left = Math.random() * 80 + "%";
+
+        stars.appendChild(f);
+    }
+
+    // text
+    let text = document.createElement("div");
+    text.className = "center-text";
+    text.innerText = "✨ See you soon ✨";
 
     document.body.appendChild(text);
 }
+
+/* START */
+showFirstName();
 
 </script>
 
