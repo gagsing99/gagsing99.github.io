@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scratch Love</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+}
+
+.container {
+  text-align: center;
+  width: 90vw;
+  max-width: 360px;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  touch-action: none;
+}
+
+.love-msg {
+  margin-top: 20px;
+  font-size: 7vw;
+  color: #880e4f;
+  opacity: 0;
+  transition: opacity 1s ease;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <canvas id="canvas" width="360" height="220"></canvas>
+  <div id="love" class="love-msg">I LOVE YOU!</div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// STEP 1: Draw hidden text (this stays underneath)
+ctx.fillStyle = "#c2185b";
+ctx.font = "bold 42px Segoe UI";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText("JASLEENA", canvas.width / 2, canvas.height / 2);
+
+// STEP 2: Cover it completely (so it's fully hidden)
+ctx.globalCompositeOperation = "source-over";
+ctx.fillStyle = "#bdbdbd";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// STEP 3: Enable scratch erase mode
+ctx.globalCompositeOperation = "destination-out";
+
+let isDrawing = false;
+let revealed = false;
+
+// scratch function
+function scratch(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 15, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// calculate scratched %
+function getScratchedPercent() {
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let cleared = 0;
+
+  for (let i = 3; i < pixels.data.length; i += 4) {
+    if (pixels.data[i] === 0) cleared++;
+  }
+
+  return cleared / (canvas.width * canvas.height) * 100;
+}
+
+// reveal logic
+function checkReveal() {
+  if (revealed) return;
+
+  const percent = getScratchedPercent();
+
+  if (percent > 60) {
+    revealed = true;
+    document.getElementById("love").style.opacity = 1;
+  }
+}
+
+/* Mouse events */
+canvas.addEventListener("mousedown", () => isDrawing = true);
+
+canvas.addEventListener("mouseup", () => {
+  isDrawing = false;
+  checkReveal();
+});
+
+canvas.addEventListener("mouseleave", () => isDrawing = false);
+
+canvas.addEventListener("mousemove", (e) => {
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  scratch(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+/* Touch events (mobile-friendly) */
+canvas.addEventListener("touchstart", () => isDrawing = true);
+
+canvas.addEventListener("touchend", () => {
+  isDrawing = false;
+  checkReveal();
+});
+
+canvas.addEventListener("touchmove", (e) => {
+  if (!isDrawing) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+
+  scratch(touch.clientX - rect.left, touch.clientY - rect.top);
+});
+</script>
+
+</body>
+</html>
