@@ -51,32 +51,42 @@ canvas {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// STEP 1: Draw hidden text (this stays underneath)
+// 👉 STEP 1: Draw hidden text UNDERNEATH
 ctx.fillStyle = "#c2185b";
 ctx.font = "bold 42px Segoe UI";
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 ctx.fillText("JASLEENA", canvas.width / 2, canvas.height / 2);
 
-// STEP 2: Cover it completely (so it's fully hidden)
+// 👉 STEP 2: Add scratch covering layer
 ctx.globalCompositeOperation = "source-over";
 ctx.fillStyle = "#bdbdbd";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// STEP 3: Enable scratch erase mode
+// 👉 STEP 3: Switch to erase mode (scratch effect)
 ctx.globalCompositeOperation = "destination-out";
 
 let isDrawing = false;
 let revealed = false;
+let lastX = 0;
+let lastY = 0;
 
-// scratch function
-function scratch(x, y) {
+// ✅ Smooth scratch brush (LINE instead of dots)
+function scratchLine(x, y) {
+  ctx.lineWidth = 25;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
   ctx.beginPath();
-  ctx.arc(x, y, 15, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+
+  lastX = x;
+  lastY = y;
 }
 
-// calculate scratched %
+// ✅ Calculate scratched %
 function getScratchedPercent() {
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let cleared = 0;
@@ -88,7 +98,7 @@ function getScratchedPercent() {
   return cleared / (canvas.width * canvas.height) * 100;
 }
 
-// reveal logic
+// ✅ Reveal logic
 function checkReveal() {
   if (revealed) return;
 
@@ -100,8 +110,13 @@ function checkReveal() {
   }
 }
 
-/* Mouse events */
-canvas.addEventListener("mousedown", () => isDrawing = true);
+/* ✅ Mouse */
+canvas.addEventListener("mousedown", (e) => {
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  lastX = e.clientX - rect.left;
+  lastY = e.clientY - rect.top;
+});
 
 canvas.addEventListener("mouseup", () => {
   isDrawing = false;
@@ -112,12 +127,23 @@ canvas.addEventListener("mouseleave", () => isDrawing = false);
 
 canvas.addEventListener("mousemove", (e) => {
   if (!isDrawing) return;
+
   const rect = canvas.getBoundingClientRect();
-  scratch(e.clientX - rect.left, e.clientY - rect.top);
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  scratchLine(x, y);
 });
 
-/* Touch events (mobile-friendly) */
-canvas.addEventListener("touchstart", () => isDrawing = true);
+/* ✅ Touch (mobile) */
+canvas.addEventListener("touchstart", (e) => {
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+
+  lastX = t.clientX - rect.left;
+  lastY = t.clientY - rect.top;
+});
 
 canvas.addEventListener("touchend", () => {
   isDrawing = false;
@@ -129,9 +155,12 @@ canvas.addEventListener("touchmove", (e) => {
   e.preventDefault();
 
   const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
+  const t = e.touches[0];
 
-  scratch(touch.clientX - rect.left, touch.clientY - rect.top);
+  const x = t.clientX - rect.left;
+  const y = t.clientY - rect.top;
+
+  scratchLine(x, y);
 });
 </script>
 
