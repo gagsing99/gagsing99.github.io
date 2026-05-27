@@ -15,7 +15,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1;
+            z-index: 1; /* Below the canvas */
         }
 
         #prize {
@@ -32,20 +32,20 @@
         .message { font-size: 5vw; line-height: 1.4; margin-bottom: 20px; max-width: 90%; }
         .punjabi { font-size: 6vw; font-style: italic; }
 
-        /* The Scratch Canvas (Top Layer) */
+        /* The Canvas (Top Layer - You scratch this) */
         #scratch-canvas {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 2;
+            z-index: 10;
             touch-action: none;
-            background-color: white;
+            cursor: crosshair;
         }
     </style>
 </head>
 <body>
 
-    <!-- 1. The Revealed Message (Yellow) -->
+    <!-- Bottom Layer: Yellow screen with your text -->
     <div class="reveal-layer">
         <div id="prize">
             <div class="name">Jasleena</div>
@@ -56,36 +56,39 @@
         </div>
     </div>
 
-    <!-- 2. The Scratch Canvas (Top) -->
+    <!-- Top Layer: The Scratchable Surface -->
     <canvas id="scratch-canvas"></canvas>
 
 <script>
     const canvas = document.getElementById('scratch-canvas');
     const ctx = canvas.getContext('2d');
 
-    function drawButtGraphic() {
+    function drawInitialCanvas() {
         const w = canvas.width;
         const h = canvas.height;
         
-        // Clear and fill white
+        // Fill white
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, w, h);
 
-        // Draw Butt (W-Shape)
+        // Draw two touching circles (The Butt)
         const centerX = w / 2;
         const centerY = h / 2 - 50;
+        const radius = 60;
 
         ctx.fillStyle = '#e0aa78';
         ctx.strokeStyle = '#c68e59';
-        ctx.lineWidth = 8;
-        
-        // W-shape body
+        ctx.lineWidth = 5;
+
+        // Circle 1
         ctx.beginPath();
-        ctx.moveTo(centerX - 90, centerY);
-        ctx.quadraticCurveTo(centerX - 45, centerY + 80, centerX, centerY);
-        ctx.quadraticCurveTo(centerX + 45, centerY + 80, centerX + 90, centerY);
-        ctx.quadraticCurveTo(centerX + 45, centerY - 40, centerX, centerY);
-        ctx.quadraticCurveTo(centerX - 45, centerY - 40, centerX - 90, centerY);
+        ctx.arc(centerX - 55, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Circle 2
+        ctx.beginPath();
+        ctx.arc(centerX + 55, centerY, radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
@@ -99,19 +102,21 @@
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        drawButtGraphic();
+        drawInitialCanvas();
     }
 
     window.addEventListener('resize', resize);
     resize();
 
     function scratch(e) {
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        // Get correct coordinates
         const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
+        // "Erase" mode
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
         ctx.arc(x, y, 40, 0, Math.PI * 2);
