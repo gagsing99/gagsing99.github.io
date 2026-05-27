@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        .scratch-container {
-            position: relative;
-            width: 300px;
-            height: 150px;
-            border: 2px solid #333;
-            border-radius: 10px;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            user-select: none;
+            background-color: #f0f0f0;
         }
 
-        /* The hidden prize */
+        .scratch-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
         #prize {
             position: absolute;
             width: 100%;
@@ -21,55 +26,62 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 15vw;
+            font-family: sans-serif;
             font-weight: bold;
-            background: #fff;
             color: #d4af37;
+            background: #fff;
+            text-align: center;
         }
 
-        /* The scratchable silver layer */
         #scratch-canvas {
             position: absolute;
             top: 0;
             left: 0;
-            cursor: crosshair;
+            touch-action: none; /* Prevents scrolling while scratching */
         }
     </style>
 </head>
 <body>
 
 <div class="scratch-container">
-    <div id="prize">YOU WIN $100!</div>
-    <canvas id="scratch-canvas" width="300" height="150"></canvas>
+    <div id="prize">Jasleena</div>
+    <canvas id="scratch-canvas"></canvas>
 </div>
 
 <script>
     const canvas = document.getElementById('scratch-canvas');
     const ctx = canvas.getContext('2d');
 
-    // Fill the canvas with silver "scratch" color
-    ctx.fillStyle = '#c0c0c0';
-    ctx.fillRect(0, 0, 300, 150);
+    // Resize canvas to fill screen
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        ctx.fillStyle = '#c0c0c0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
-    // Function to clear area where mouse/touch moves
+    window.addEventListener('resize', resize);
+    resize();
+
     function scratch(e) {
+        // Handle both mouse and touch events
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
 
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.arc(x, y, 20, 0, Math.PI * 2);
+        // Larger brush for better scratching feel on mobile
+        ctx.arc(x, y, 40, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    canvas.addEventListener('mousemove', (e) => {
-        if (e.buttons === 1) scratch(e);
-    });
-    
-    canvas.addEventListener('touchmove', (e) => {
-        scratch(e);
-    });
+    canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) scratch(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); }, { passive: false });
 </script>
 
 </body>
