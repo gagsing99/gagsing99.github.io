@@ -6,35 +6,43 @@
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
 
-        /* Starry Night Animation */
-        .scratch-container {
-            position: relative;
+        /* The Base Layer: Gradient Blue + Hearts */
+        .reveal-layer {
+            position: absolute;
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle at bottom, #1B2735 0%, #090A0F 100%);
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        /* Heart Background Pattern */
         .hearts-bg {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: 
-                radial-gradient(circle, #ff69b4 2px, transparent 2px),
-                radial-gradient(circle, #ffffff 2px, transparent 2px);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            opacity: 0.3;
+            /* Creating hearts using CSS */
+            background-image: radial-gradient(circle at 50% 50%, #ff69b4 20%, transparent 20%),
+                              radial-gradient(circle at 50% 50%, #ffffff 20%, transparent 20%);
+            background-size: 80px 80px;
+            background-position: 0 0, 40px 40px;
+            opacity: 0.4;
         }
 
-        /* Twinkling Stars */
+        /* The Starry Night Layer (Appears BEFORE scratching) */
+        .starry-night {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at bottom, #1B2735 0%, #090A0F 100%);
+            z-index: 3;
+        }
+
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite; }
 
+        /* The Prize/Message Content */
         #prize {
             position: relative;
             padding: 20px;
@@ -46,48 +54,53 @@
             text-align: center;
             color: #DC143C;
             font-weight: bold;
-            z-index: 5;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            z-index: 2;
         }
 
-        .name { font-size: 12vw; margin-bottom: 10px; }
-        .message { font-size: 5vw; line-height: 1.4; margin-bottom: 20px; max-width: 90%; }
-        .punjabi { font-size: 6vw; font-style: italic; }
+        .name { font-size: 12vw; margin-bottom: 10px; text-shadow: 1px 1px 2px #fff; }
+        .message { font-size: 5vw; line-height: 1.4; margin-bottom: 20px; max-width: 90%; text-shadow: 1px 1px 2px #fff; }
+        .punjabi { font-size: 6vw; font-style: italic; text-shadow: 1px 1px 2px #fff; }
 
+        /* The Scratch Canvas */
         #scratch-canvas {
             position: absolute;
             top: 0;
             left: 0;
             touch-action: none;
-            z-index: 10;
+            z-index: 4;
         }
     </style>
 </head>
 <body>
 
-<div class="scratch-container" id="container">
-    <div class="hearts-bg"></div>
-    <div id="prize">
-        <div class="name">Jasleena</div>
-        <div class="message">
-            Your beauty leaves me in awe and makes me want to love you more each and every day.
+    <!-- Reveal Background (Blue + Hearts) -->
+    <div class="reveal-layer">
+        <div class="hearts-bg"></div>
+        <div id="prize">
+            <div class="name">Jasleena</div>
+            <div class="message">
+                Your beauty leaves me in awe and makes me want to love you more each and every day.
+            </div>
+            <div class="punjabi">"tu hi meri, tere naal nibhaani, bas rakh lae kol"</div>
         </div>
-        <div class="punjabi">"tu hi meri, tere naal nibhaani, bas rakh lae kol"</div>
     </div>
+
+    <!-- Starry Night Overlay (Visible initially) -->
+    <div class="starry-night" id="star-container"></div>
+
     <canvas id="scratch-canvas"></canvas>
-</div>
 
 <script>
-    // Create random stars
-    const container = document.getElementById('container');
-    for (let i = 0; i < 50; i++) {
+    // Create Stars
+    const starContainer = document.getElementById('star-container');
+    for (let i = 0; i < 60; i++) {
         const star = document.createElement('div');
         star.className = 'star';
         star.style.width = star.style.height = Math.random() * 3 + 'px';
         star.style.left = Math.random() * 100 + 'vw';
         star.style.top = Math.random() * 100 + 'vh';
         star.style.animationDelay = Math.random() * 3 + 's';
-        container.appendChild(star);
+        starContainer.appendChild(star);
     }
 
     const canvas = document.getElementById('scratch-canvas');
@@ -96,7 +109,11 @@
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        // Fill canvas with gray to hide everything underneath
         ctx.fillStyle = '#c0c0c0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Also draw a dark layer on top of the scratch to blend with the starry night
+        ctx.fillStyle = '#1B2735';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -112,8 +129,13 @@
 
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.arc(x, y, 40, 0, Math.PI * 2);
+        ctx.arc(x, y, 45, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Hide the starry night layer once enough is scratched (optional)
+        if (Math.random() > 0.95) {
+            starContainer.style.opacity = "0.2";
+        }
     }
 
     canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) scratch(e); });
