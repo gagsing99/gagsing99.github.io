@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Scratch Love</title>
+<title>Scratch Reveal</title>
 
 <style>
 body {
@@ -13,26 +13,30 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+  /* Changed to black as requested */
+  background: #000000;
 }
 
 .container {
   text-align: center;
   width: 90vw;
   max-width: 360px;
+  position: relative;
 }
 
+/* Added background color to canvas for the text to appear on */
 canvas {
   width: 100%;
   height: auto;
   border-radius: 20px;
   touch-action: none;
+  background-color: #ffffff; 
 }
 
 .love-msg {
   margin-top: 20px;
   font-size: 7vw;
-  color: #880e4f;
+  color: #ffffff; /* White text to contrast with black background */
   opacity: 0;
   transition: opacity 1s ease;
   font-weight: bold;
@@ -51,19 +55,21 @@ canvas {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// 👉 STEP 1: Draw hidden text UNDERNEATH
-ctx.fillStyle = "#c2185b";
-ctx.font = "bold 42px Segoe UI";
+// 1. Draw content (Text/Numbers) on the white background
+ctx.fillStyle = "#000000";
+ctx.font = "bold 40px Arial";
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
-ctx.fillText("JASLEENA", canvas.width / 2, canvas.height / 2);
+ctx.fillText("JASLEENA", canvas.width / 2, canvas.height / 2 - 20);
+ctx.font = "20px Arial";
+ctx.fillText("7 3 9 2 8 4", canvas.width / 2, canvas.height / 2 + 20);
 
-// 👉 STEP 2: Add scratch covering layer
+// 2. Add scratch covering layer (Gray)
 ctx.globalCompositeOperation = "source-over";
-ctx.fillStyle = "#bdbdbd";
+ctx.fillStyle = "#808080";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// 👉 STEP 3: Switch to erase mode (scratch effect)
+// 3. Switch to erase mode
 ctx.globalCompositeOperation = "destination-out";
 
 let isDrawing = false;
@@ -71,46 +77,30 @@ let revealed = false;
 let lastX = 0;
 let lastY = 0;
 
-// ✅ Smooth scratch brush (LINE instead of dots)
 function scratchLine(x, y) {
-  ctx.lineWidth = 25;
+  ctx.lineWidth = 30;
   ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(x, y);
   ctx.stroke();
-
   lastX = x;
   lastY = y;
 }
 
-// ✅ Calculate scratched %
-function getScratchedPercent() {
+function checkReveal() {
+  if (revealed) return;
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let cleared = 0;
-
   for (let i = 3; i < pixels.data.length; i += 4) {
     if (pixels.data[i] === 0) cleared++;
   }
-
-  return cleared / (canvas.width * canvas.height) * 100;
-}
-
-// ✅ Reveal logic
-function checkReveal() {
-  if (revealed) return;
-
-  const percent = getScratchedPercent();
-
-  if (percent > 60) {
+  if (cleared / (canvas.width * canvas.height) > 0.5) {
     revealed = true;
     document.getElementById("love").style.opacity = 1;
   }
 }
 
-/* ✅ Mouse */
 canvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   const rect = canvas.getBoundingClientRect();
@@ -123,44 +113,28 @@ canvas.addEventListener("mouseup", () => {
   checkReveal();
 });
 
-canvas.addEventListener("mouseleave", () => isDrawing = false);
-
 canvas.addEventListener("mousemove", (e) => {
   if (!isDrawing) return;
-
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  scratchLine(x, y);
+  scratchLine(e.clientX - rect.left, e.clientY - rect.top);
 });
 
-/* ✅ Touch (mobile) */
+// Touch support remains the same
 canvas.addEventListener("touchstart", (e) => {
   isDrawing = true;
   const rect = canvas.getBoundingClientRect();
   const t = e.touches[0];
-
   lastX = t.clientX - rect.left;
   lastY = t.clientY - rect.top;
 });
 
-canvas.addEventListener("touchend", () => {
-  isDrawing = false;
-  checkReveal();
-});
-
+canvas.addEventListener("touchend", () => { isDrawing = false; checkReveal(); });
 canvas.addEventListener("touchmove", (e) => {
   if (!isDrawing) return;
   e.preventDefault();
-
   const rect = canvas.getBoundingClientRect();
   const t = e.touches[0];
-
-  const x = t.clientX - rect.left;
-  const y = t.clientY - rect.top;
-
-  scratchLine(x, y);
+  scratchLine(t.clientX - rect.left, t.clientY - rect.top);
 });
 </script>
 
