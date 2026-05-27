@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
 
         /* Revealed Message Layer (Pure Yellow) */
         .reveal-layer {
@@ -23,10 +23,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-family: sans-serif;
             text-align: center;
-            color: #000000;
+            color: #000;
             font-weight: bold;
         }
 
@@ -34,7 +32,47 @@
         .message { font-size: 5vw; line-height: 1.4; margin-bottom: 20px; max-width: 90%; }
         .punjabi { font-size: 6vw; font-style: italic; }
 
-        /* Initial Scratch Layer (White) */
+        /* The Front "White Screen" Layer */
+        .white-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            pointer-events: none; /* Allows scratching through this layer */
+        }
+
+        /* Realistic Butt CSS */
+        .butt-shape {
+            width: 180px;
+            height: 140px;
+            background: radial-gradient(circle at 40% 40%, #ffdbac, #e0aa78);
+            border-radius: 50% 50% 40% 40%;
+            position: relative;
+            box-shadow: inset -20px -20px 30px rgba(0,0,0,0.1);
+        }
+        .butt-shape::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 100px;
+            background: #d69f69;
+            left: 50%;
+            margin-left: -6px;
+            top: 20px;
+            border-radius: 50%;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+        }
+
+        .scratch-text { margin-top: 30px; font-size: 24px; font-weight: bold; color: #333; }
+
+        /* The Scratch Canvas */
         #scratch-canvas {
             position: absolute;
             top: 0;
@@ -42,43 +80,11 @@
             z-index: 3;
             touch-action: none;
         }
-
-        /* The "Butt" Graphic */
-        .graphic-container {
-            position: absolute;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        .butt-shape {
-            width: 150px;
-            height: 120px;
-            background: #ffccaa;
-            border-radius: 50% 50% 20% 20%;
-            border: 4px solid #000;
-            position: relative;
-        }
-        .butt-shape::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 80px;
-            background: #000;
-            left: 65px;
-            top: 20px;
-            border-radius: 10px;
-        }
-        .scratch-text { margin-top: 20px; font-family: sans-serif; font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <!-- 1. The Revealed Message (Bottom) -->
     <div class="reveal-layer">
         <div id="prize">
             <div class="name">Jasleena</div>
@@ -89,11 +95,13 @@
         </div>
     </div>
 
-    <div class="graphic-container">
+    <!-- 2. The Graphic (Middle) -->
+    <div class="white-screen">
         <div class="butt-shape"></div>
-        <div class="scratch-text">Scratch my butt</div>
+        <div class="scratch-text">scratch my butt</div>
     </div>
 
+    <!-- 3. The Scratch Canvas (Top) -->
     <canvas id="scratch-canvas"></canvas>
 
 <script>
