@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pop for Love</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #FFF9C4; font-family: 'Segoe UI', sans-serif; touch-action: manipulation; }
+        
+        .balloon { position: absolute; width: 50px; height: 60px; border-radius: 50% 50% 45% 45%; cursor: pointer; transition: opacity 0.3s; box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2); }
+        
+        /* Message Board: Letters flow naturally as they are found */
+        #message-board { position: absolute; bottom: 40px; width: 90%; left: 5%; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 40px; font-size: 28px; font-weight: bold; color: #d81b60; pointer-events: none; }
+        
+        #input-area { position: absolute; top: 40%; width: 80%; left: 10%; text-align: center; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 100; box-sizing: border-box; }
+        #celebration-area { display: none; text-align: center; margin-top: 20vh; font-size: 30px; color: #d81b60; font-weight: bold; }
+        
+        input { padding: 10px; font-size: 16px; width: 90%; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; }
+        button { padding: 10px 20px; font-size: 16px; background: #d81b60; color: white; border: none; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container"></div>
+<div id="message-board"></div>
+
+<div id="input-area">
+    <p>What is the secret message?</p>
+    <input type="text" id="user-input" placeholder="Type here...">
+    <br>
+    <button onclick="checkAnswer()">Submit</button>
+</div>
+
+<div id="celebration-area">
+    <div>Gagan loves Jass</div>
+    <div style="font-size: 50px; margin-top: 10px;">❤️</div>
+</div>
+
+<script>
+    const secret = "Gagan loves Jass";
+    // We only care about letters (ignoring spaces for the popping part)
+    const lettersToPop = secret.replace(/ /g, "").split('');
+    const container = document.getElementById('game-container');
+    const board = document.getElementById('message-board');
+    const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'];
+    
+    let currentBoardState = [];
+    let poppedCount = 0;
+    let placedBalloons = [];
+
+    function updateBoard() {
+        board.innerHTML = '';
+        currentBoardState.forEach(char => {
+            let span = document.createElement('span');
+            span.innerText = char;
+            board.appendChild(span);
+        });
+    }
+
+    function isOverlapping(x, y) {
+        return placedBalloons.some(b => Math.hypot(x - b.x, y - b.y) < 70);
+    }
+
+    // Shuffle the letters so the popping order is random
+    const shuffledLetters = [...lettersToPop].sort(() => Math.random() - 0.5);
+
+    shuffledLetters.forEach((char, i) => {
+        let b = document.createElement('div');
+        b.className = 'balloon';
+        b.style.backgroundColor = colors[i % colors.length];
+        
+        let x, y;
+        do {
+            x = Math.random() * (window.innerWidth - 60) + 10;
+            y = Math.random() * (window.innerHeight - 200) + 10;
+        } while (isOverlapping(x, y));
+
+        b.style.left = x + 'px';
+        b.style.top = y + 'px';
+        placedBalloons.push({x, y});
+
+        b.onclick = () => {
+            b.style.opacity = '0';
+            b.style.pointerEvents = 'none';
+            currentBoardState.push(char);
+            updateBoard();
+            poppedCount++;
+            if (poppedCount === lettersToPop.length) {
+                setTimeout(() => { document.getElementById('input-area').style.display = 'block'; }, 500);
+            }
+        };
+        container.appendChild(b);
+    });
+
+    function checkAnswer() {
+        if (document.getElementById('user-input').value.trim() === secret) {
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('celebration-area').style.display = 'block';
+            confetti({ particleCount: 300, spread: 150, origin: { y: 0.6 } });
+        } else {
+            alert("Not quite! Try again.");
+        }
+    }
+</script>
+</body>
+</html>
