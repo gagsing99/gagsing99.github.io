@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Night Invitation</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: radial-gradient(circle at center, #8B0000, #2b0000); font-family: 'Georgia', serif; color: #fff; display: flex; justify-content: center; align-items: center; text-align: center; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } }
+        .container { z-index: 10; background: rgba(0, 0, 0, 0.4); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 0 30px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        h1 { font-size: 3rem; margin-bottom: 10px; color: #ff4d4d; text-shadow: 0 0 15px rgba(255, 77, 77, 0.8); }
+        .details { font-size: 1.2rem; line-height: 1.8; margin: 20px 0; }
+        .couple-icon { font-size: 50px; margin-bottom: 20px; display: block; }
+        .highlight { color: #ffcccc; font-weight: bold; display: block; font-size: 1.4rem; }
+        .heart { position: absolute; color: rgba(255, 0, 0, 0.3); font-size: 20px; user-select: none; pointer-events: none; animation: float 6s linear infinite; }
+        @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="couple-icon">💑</div>
+        <h1>A Night Just For Us</h1>
+        <p>I would love for you to join me for a special evening.</p>
+        <div class="details">
+            <span class="highlight">DATE</span> [Insert Date Here]
+            <br><br>
+            <span class="highlight">LOCATION</span> [Insert Location]
+            <br><br>
+            <span class="highlight">TIME</span> [Insert Time]
+        </div>
+        <p style="font-style: italic; margin-top: 30px;">Can't wait to see you.</p>
+    </div>
+    <script>
+        const starCount = 100;
+        for (let i = 0; i < starCount; i++) {
+            let star = document.createElement('div');
+            star.className = 'star';
+            let size = Math.random() * 3 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+            star.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(star);
+        }
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 6000);
+        }
+        setInterval(createHeart, 800);
+    </script>
+</body>
+</html>
