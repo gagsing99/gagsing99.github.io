@@ -90,19 +90,28 @@
 
         .open pre { opacity: 1; }
 
-        #readBtn {
-            margin-top: 10px;
+        /* Controls Container */
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
             background: none;
             border: none;
             font-size: 24px;
             cursor: pointer;
             display: none;
-            width: 100%;
         }
-        .open #readBtn { display: block; }
+        .open .btn { display: block; }
     </style>
 </head>
 <body>
+
+    <audio id="bgMusic" loop>
+        <source src="punjabi.mp3" type="audio/mpeg">
+    </audio>
 
     <div class="scroll-wrapper" id="scrollContainer" onclick="toggleScroll()">
         <div class="handle"></div>
@@ -114,12 +123,15 @@ Tu mere kol te aayi par garmi baut leyayi
 Neend nahi aayi te main vich paati Rajai
 Jad neend aayi, tut tut k aayi
 Fer main Rajai c hatai
-Jood gye do badan, o my my
+Jud gye do badan, o my my
 Paseena v Aaya te garmi baut aayi
 Par ik gal dassa? Neend Raj k aayi
 
 ---- 3000----</pre>
-            <button id="readBtn" onclick="readText(event)">🔊</button>
+            <div class="controls">
+                <button class="btn" id="readBtn" onclick="readText(event)">🔊</button>
+                <button class="btn" id="musicBtn" onclick="toggleMusic(event)">🎵</button>
+            </div>
         </div>
         <div class="handle"></div>
     </div>
@@ -140,32 +152,29 @@ Par ik gal dassa? Neend Raj k aayi
             document.getElementById('scrollContainer').classList.toggle('open');
         }
 
+        function toggleMusic(event) {
+            event.stopPropagation();
+            const music = document.getElementById('bgMusic');
+            if (music.paused) {
+                music.play();
+            } else {
+                music.pause();
+            }
+        }
+
         function readText(event) {
             event.stopPropagation();
-            window.speechSynthesis.cancel(); // Stop existing speech
-
+            window.speechSynthesis.cancel();
             const text = document.getElementById('textToRead').innerText;
             const speech = new SpeechSynthesisUtterance(text);
-            
-            // Try to find a 'male' sounding voice
             const voices = window.speechSynthesis.getVoices();
-            const maleVoice = voices.find(v => 
-                v.name.toLowerCase().includes('male') || 
-                v.name.toLowerCase().includes('david') || 
-                v.name.toLowerCase().includes('google hindi')
-            );
-            
+            const maleVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('david'));
             if (maleVoice) speech.voice = maleVoice;
-            
             speech.lang = 'pa-IN';
-            speech.rate = 0.70; // Slower for a more mature, storytelling tone
-            speech.pitch = 0.8; // Lower pitch for a warmer, male-like sound
-            
+            speech.rate = 0.85;
+            speech.pitch = 0.9;
             window.speechSynthesis.speak(speech);
         }
-        
-        // Ensure voices are loaded for selection
-        window.speechSynthesis.onvoiceschanged = () => {};
     </script>
 </body>
 </html>
