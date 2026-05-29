@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ffeef2;
+            font-family: 'Segoe UI', sans-serif;
+            text-align: center;
+        }
+        #timer { font-size: 3rem; color: #d63384; font-weight: bold; }
+        #message { display: none; font-size: 3rem; color: #d63384; }
+        .heart { color: #ff4d4d; font-size: 5rem; }
+    </style>
+</head>
+<body>
+
+    <div id="timer">Loading...</div>
+    <div id="message">
+        <div class="heart">❤️</div>
+        <h1>Date night begins!</h1>
+        <div class="heart">❤️</div>
+    </div>
+
+    <script>
+        // Set the target time to 5:20 PM today
+        const targetDate = new Date();
+        targetDate.setHours(17, 20, 0, 0);
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                document.getElementById('timer').style.display = 'none';
+                document.getElementById('message').style.display = 'block';
+                return;
+            }
+
+            const hrs = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+
+            document.getElementById('timer').innerText = 
+                `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>
