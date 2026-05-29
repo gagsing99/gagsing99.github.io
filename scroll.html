@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Scroll</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4e4bc;
+            font-family: 'Georgia', serif;
+        }
+
+        /* The Scroll Container */
+        .scroll-container {
+            position: relative;
+            width: 80%;
+            max-width: 400px;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        /* The Paper Content */
+        .scroll-content {
+            background-color: #fffaf0;
+            padding: 40px 20px;
+            border-left: 2px solid #d2b48c;
+            border-right: 2px solid #d2b48c;
+            text-align: center;
+            overflow: hidden;
+            height: 0; /* Hidden by default */
+            transition: height 0.8s ease-in-out, padding 0.8s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .scroll-container.open .scroll-content {
+            height: auto;
+            padding: 40px 20px;
+        }
+
+        /* Text Styling */
+        pre {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #5d4037;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .handle {
+            background: #8b4513;
+            height: 20px;
+            width: 100%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scroll-container" id="scroll" onclick="toggleScroll()">
+        <div class="handle"></div>
+        <div class="scroll-content">
+            <pre>
+-------------i love you-------------
+
+Raati mainu garmi baut si laggi
+Tu mere kol te aayi par garmi baut leyayi
+Neend nahi aayi te main vich paati Rajai
+Jad neend aayi, tut tut k aayi
+Fer main Rajai c hatai
+Jud gye do badan, o my my
+Paseena v Aaya te garmi baut aayi
+Par ik gal dassa? Neend Raj k aayi
+
+--------------- 3000----------------
+            </pre>
+        </div>
+        <div class="handle"></div>
+    </div>
+
+    <script>
+        function toggleScroll() {
+            const scroll = document.getElementById('scroll');
+            scroll.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
