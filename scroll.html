@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A Special Letter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kristi&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -14,10 +14,10 @@
             align-items: center;
             background: #ffe4e6;
             overflow: hidden;
-            font-family: 'Great Vibes', cursive;
+            font-family: 'Kristi', cursive;
         }
 
-        /* Animated Heart Background - Fading at the top */
+        /* Heart Animation */
         .heart {
             position: absolute;
             color: #ff69b4;
@@ -39,7 +39,7 @@
             align-items: center;
             cursor: pointer;
             width: 85%;
-            max-width: 350px;
+            max-width: 320px;
             z-index: 10;
         }
 
@@ -58,24 +58,28 @@
             text-align: center;
             padding: 0 15px;
             height: 0;
-            overflow: hidden;
+            overflow-y: auto; /* Adds scrollbar if text is too long */
             transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1), padding 2s ease;
             box-shadow: 0 0 15px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            scrollbar-width: thin;
+            scrollbar-color: #8b4513 #fffaf0;
         }
 
+        /* Fancy Custom Scrollbar for Webkit */
+        .paper::-webkit-scrollbar { width: 6px; }
+        .paper::-webkit-scrollbar-thumb { background-color: #8b4513; border-radius: 10px; }
+
         .open .paper {
-            height: 320px; /* Adjusted to fit content */
+            height: 300px;
             padding: 20px 15px;
         }
 
         pre {
             white-space: pre-wrap;
             margin: 0;
-            line-height: 1.4;
-            font-size: 1.1rem; /* Smaller size for better fit */
+            line-height: 1.5;
+            font-size: 1.6rem; /* Kristi looks best slightly larger */
+            font-weight: bold;
             opacity: 0;
             transition: opacity 2s ease;
         }
