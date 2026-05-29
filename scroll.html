@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A Special Letter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -12,22 +12,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #ffe4e6; /* Base pink */
+            background: #ffe4e6;
             overflow: hidden;
-            font-family: 'Dancing Script', cursive;
+            font-family: 'Great Vibes', cursive;
         }
 
-        /* Animated Heart Background */
+        /* Animated Heart Background - Fading at the top */
         .heart {
             position: absolute;
             color: #ff69b4;
             font-size: 20px;
-            animation: floatUp 4s linear infinite;
+            pointer-events: none;
+            animation: floatUp 6s linear infinite;
         }
 
         @keyframes floatUp {
-            0% { transform: translateY(100vh); opacity: 0; }
-            50% { opacity: 1; }
+            0% { transform: translateY(110vh); opacity: 0; }
+            10% { opacity: 0.8; }
+            80% { opacity: 0.8; }
             100% { transform: translateY(-10vh); opacity: 0; }
         }
 
@@ -36,44 +38,44 @@
             flex-direction: column;
             align-items: center;
             cursor: pointer;
-            width: 90%;
-            max-width: 400px;
+            width: 85%;
+            max-width: 350px;
             z-index: 10;
         }
 
         .handle {
             width: 100%;
-            height: 30px;
+            height: 25px;
             background: linear-gradient(to bottom, #8b4513, #5d4037);
-            border-radius: 5px;
+            border-radius: 4px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .paper {
-            width: 80%;
+            width: 75%;
             background-color: #fffaf0;
-            color: #5d4037;
+            color: #4a2c2a;
             text-align: center;
-            padding: 0 20px;
+            padding: 0 15px;
             height: 0;
             overflow: hidden;
-            transition: height 2s cubic-bezier(0.22, 1, 0.36, 1), padding 2s ease;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1), padding 2s ease;
+            box-shadow: 0 0 15px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
         .open .paper {
-            height: 400px; /* Sufficient height for text */
-            padding: 30px 20px;
+            height: 320px; /* Adjusted to fit content */
+            padding: 20px 15px;
         }
 
         pre {
             white-space: pre-wrap;
             margin: 0;
-            line-height: 1.6;
-            font-size: 1.4rem;
+            line-height: 1.4;
+            font-size: 1.1rem; /* Smaller size for better fit */
             opacity: 0;
             transition: opacity 2s ease;
         }
@@ -91,11 +93,11 @@
             heart.innerHTML = '❤️';
             heart.className = 'heart';
             heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            heart.style.animationDuration = (Math.random() * 4 + 4) + 's';
             document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 5000);
+            setTimeout(() => heart.remove(), 8000);
         }
-        setInterval(createHeart, 600);
+        setInterval(createHeart, 800);
     </script>
 
     <div class="scroll-wrapper" id="scrollContainer" onclick="toggleScroll()">
