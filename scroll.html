@@ -17,7 +17,6 @@
             font-family: 'Kristi', cursive;
         }
 
-        /* Heart Animation */
         .heart {
             position: absolute;
             color: #ff69b4;
@@ -58,14 +57,14 @@
             text-align: center;
             padding: 0 15px;
             height: 0;
-            overflow-y: auto; /* Adds scrollbar if text is too long */
+            overflow-y: auto;
             transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1), padding 2s ease;
             box-shadow: 0 0 15px rgba(0,0,0,0.15);
             scrollbar-width: thin;
             scrollbar-color: #8b4513 #fffaf0;
+            position: relative;
         }
 
-        /* Fancy Custom Scrollbar for Webkit */
         .paper::-webkit-scrollbar { width: 6px; }
         .paper::-webkit-scrollbar-thumb { background-color: #8b4513; border-radius: 10px; }
 
@@ -78,37 +77,32 @@
             white-space: pre-wrap;
             margin: 0;
             line-height: 1.5;
-            font-size: 1.6rem; /* Kristi looks best slightly larger */
+            font-size: 1.8rem;
             font-weight: bold;
             opacity: 0;
             transition: opacity 2s ease;
         }
 
-        .open pre {
-            opacity: 1;
+        .open pre { opacity: 1; }
+
+        /* Read Button */
+        #readBtn {
+            margin-top: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
         }
+        .open #readBtn { display: block; }
     </style>
 </head>
 <body>
 
-    <script>
-        function createHeart() {
-            const heart = document.createElement('div');
-            heart.innerHTML = '❤️';
-            heart.className = 'heart';
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 4 + 4) + 's';
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 8000);
-        }
-        setInterval(createHeart, 800);
-    </script>
-
     <div class="scroll-wrapper" id="scrollContainer" onclick="toggleScroll()">
         <div class="handle"></div>
-        <div class="paper">
-            <pre>
----i love you----
+        <div class="paper" id="paper">
+            <pre id="textToRead">---i love you----
 
 Raati mainu garmi baut si laggi
 Tu mere kol te aayi par garmi baut leyayi
@@ -119,15 +113,36 @@ Jud gye do badan, o my my
 Paseena v Aaya te garmi baut aayi
 Par ik gal dassa? Neend Raj k aayi
 
----- 3000----
-            </pre>
+---- 3000----</pre>
+            <button id="readBtn" onclick="readText(event)">🔊</button>
         </div>
         <div class="handle"></div>
     </div>
 
     <script>
+        // Heart animation
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'heart';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 4 + 4) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 8000);
+        }
+        setInterval(createHeart, 800);
+
         function toggleScroll() {
             document.getElementById('scrollContainer').classList.toggle('open');
+        }
+
+        // Text-to-Speech feature
+        function readText(event) {
+            event.stopPropagation(); // Prevents closing the scroll
+            const text = document.getElementById('textToRead').innerText;
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = 'pa-IN'; // Set to Punjabi/Hindi context
+            window.speechSynthesis.speak(speech);
         }
     </script>
 </body>
