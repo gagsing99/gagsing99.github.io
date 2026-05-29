@@ -89,26 +89,11 @@
         }
 
         .open pre { opacity: 1; }
-
-        /* Controls Container */
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            display: none;
-        }
-        .open .btn { display: block; }
     </style>
 </head>
 <body>
 
+    <!-- Background Music -->
     <audio id="bgMusic" loop>
         <source src="punjabi.mp3" type="audio/mpeg">
     </audio>
@@ -116,7 +101,7 @@
     <div class="scroll-wrapper" id="scrollContainer" onclick="toggleScroll()">
         <div class="handle"></div>
         <div class="paper" id="paper">
-            <pre id="textToRead">---i love you----
+            <pre>---i love you----
 
 Raati mainu garmi baut si laggi
 Tu mere kol te aayi par garmi baut leyayi
@@ -128,15 +113,12 @@ Paseena v Aaya te garmi baut aayi
 Par ik gal dassa? Neend Raj k aayi
 
 ---- 3000----</pre>
-            <div class="controls">
-                <button class="btn" id="readBtn" onclick="readText(event)">🔊</button>
-                <button class="btn" id="musicBtn" onclick="toggleMusic(event)">🎵</button>
-            </div>
         </div>
         <div class="handle"></div>
     </div>
 
     <script>
+        // Heart animation
         function createHeart() {
             const heart = document.createElement('div');
             heart.innerHTML = '❤️';
@@ -148,32 +130,19 @@ Par ik gal dassa? Neend Raj k aayi
         }
         setInterval(createHeart, 500);
 
+        // Toggle Scroll and Music
         function toggleScroll() {
-            document.getElementById('scrollContainer').classList.toggle('open');
-        }
-
-        function toggleMusic(event) {
-            event.stopPropagation();
+            const container = document.getElementById('scrollContainer');
             const music = document.getElementById('bgMusic');
-            if (music.paused) {
-                music.play();
+            
+            container.classList.toggle('open');
+            
+            // Play music on first open
+            if (container.classList.contains('open')) {
+                music.play().catch(e => console.log("User interaction required for audio"));
             } else {
                 music.pause();
             }
-        }
-
-        function readText(event) {
-            event.stopPropagation();
-            window.speechSynthesis.cancel();
-            const text = document.getElementById('textToRead').innerText;
-            const speech = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-            const maleVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('david'));
-            if (maleVoice) speech.voice = maleVoice;
-            speech.lang = 'pa-IN';
-            speech.rate = 0.85;
-            speech.pitch = 0.9;
-            window.speechSynthesis.speak(speech);
         }
     </script>
 </body>
