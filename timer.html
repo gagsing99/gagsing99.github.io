@@ -2,35 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #ffeef2;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: #fff0f5;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
             text-align: center;
         }
-        #timer { font-size: 3rem; color: #d63384; font-weight: bold; }
-        #message { display: none; font-size: 3rem; color: #d63384; }
-        .heart { color: #ff4d4d; font-size: 5rem; }
+        #timer { font-size: 15vw; color: #d63384; font-weight: bold; }
+        #message { display: none; z-index: 10; }
+        h1 { color: #d63384; font-size: 8vw; margin: 20px; }
+        
+        /* Heart Animation */
+        .heart-icon {
+            position: absolute;
+            color: #c71585;
+            font-size: 24px;
+            animation: float 4s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="timer">Loading...</div>
+    <div id="timer">00:00:00</div>
     <div id="message">
-        <div class="heart">❤️</div>
-        <h1>Date night begins!</h1>
-        <div class="heart">❤️</div>
+        <h1>Date night begins! ❤️</h1>
     </div>
 
     <script>
-        // Set the target time to 5:20 PM today
         const targetDate = new Date();
         targetDate.setHours(17, 20, 0, 0);
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'heart-icon';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 4000);
+        }
 
         function updateTimer() {
             const now = new Date();
@@ -39,6 +61,7 @@
             if (diff <= 0) {
                 document.getElementById('timer').style.display = 'none';
                 document.getElementById('message').style.display = 'block';
+                setInterval(createHeart, 300); // Start popping hearts
                 return;
             }
 
