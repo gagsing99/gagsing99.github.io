@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A Special Letter</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kristi&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
         body {
             margin: 0;
@@ -12,24 +15,26 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #ffe4e6;
+            background: #EBF4FF;
             overflow: hidden;
-            font-family: 'Kristi', cursive;
-font-size:30px;
+            /* Force Caveat font globally */
+            font-family: 'Caveat', cursive !important;
         }
 
+        /* Hearts flow through the entire screen */
         .heart {
             position: absolute;
             color: #ff69b4;
             font-size: 20px;
             pointer-events: none;
-            animation: floatUp 6s linear infinite;
+            z-index: 1; /* Behind the scroll */
+            animation: floatUp 8s linear infinite;
         }
 
         @keyframes floatUp {
-            0% { transform: translateY(110vh); opacity: 0; }
-            10% { opacity: 0.8; }
-            80% { opacity: 0.8; }
+            0% { transform: translateY(105vh); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
             100% { transform: translateY(-10vh); opacity: 0; }
         }
 
@@ -59,7 +64,7 @@ font-size:30px;
             padding: 0 15px;
             height: 0;
             overflow-y: auto;
-            transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1), padding 2s ease;
+            transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1), padding 2.5s ease;
             box-shadow: 0 0 15px rgba(0,0,0,0.15);
             scrollbar-width: thin;
             scrollbar-color: #8b4513 #fffaf0;
@@ -77,16 +82,17 @@ font-size:30px;
         pre {
             white-space: pre-wrap;
             margin: 0;
-            line-height: 1.5;
-            font-size: 1.8rem;
-            font-weight: bold;
+            line-height: 1.4;
+            /* Bold, clear text */
+            font-size: 1.2rem;
+            font-weight: 700;
             opacity: 0;
             transition: opacity 2s ease;
+            font-family: 'Caveat', cursive !important;
         }
 
         .open pre { opacity: 1; }
 
-        /* Read Button */
         #readBtn {
             margin-top: 10px;
             background: none;
@@ -94,6 +100,7 @@ font-size:30px;
             font-size: 24px;
             cursor: pointer;
             display: none;
+            width: 100%;
         }
         .open #readBtn { display: block; }
     </style>
@@ -121,28 +128,27 @@ Par ik gal dassa? Neend Raj k aayi
     </div>
 
     <script>
-        // Heart animation
         function createHeart() {
             const heart = document.createElement('div');
             heart.innerHTML = '❤️';
             heart.className = 'heart';
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.animationDuration = (Math.random() * 4 + 4) + 's';
+            heart.style.left = Math.random() * 95 + 'vw';
+            heart.style.animationDuration = (Math.random() * 5 + 5) + 's';
             document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 8000);
+            setTimeout(() => heart.remove(), 9000);
         }
-        setInterval(createHeart, 800);
+        // More hearts for a fuller screen effect
+        setInterval(createHeart, 500);
 
         function toggleScroll() {
             document.getElementById('scrollContainer').classList.toggle('open');
         }
 
-        // Text-to-Speech feature
         function readText(event) {
-            event.stopPropagation(); // Prevents closing the scroll
+            event.stopPropagation();
             const text = document.getElementById('textToRead').innerText;
             const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = 'pa-IN'; // Set to Punjabi/Hindi context
+            speech.lang = 'pa-IN';
             window.speechSynthesis.speak(speech);
         }
     </script>
