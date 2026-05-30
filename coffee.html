@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PixiJS - Coffee Run for Gagan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        #game-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+            touch-action: none;
+        }
+
+        #dpad {
+            position: absolute;
+            bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+        
+        .dpad-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .dpad-btn {
+            width: 65px;
+            height: 65px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            touch-action: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .dpad-btn:active {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+            pointer-events: none;
+            width: 90%;
+            justify-content: space-between;
+        }
+
+        .hud-card {
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.65);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #speech-bubble {
+            position: absolute;
+            top: 155px; 
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: #ffffff;
+            color: #2c3e50;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            max-width: 260px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 20;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #ffffff transparent;
+            display: block;
+            width: 0;
+        }
+
+        /* Hidden Frame target for background audio integration */
+        #audio-carrier {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="audio-carrier"></div>
+
+        <div id="hud">
+            <div class="hud-card">☕ Delivered: <span id="score">0</span></div>
+            <div class="hud-card" id="timer-card">⏱️ Time: <span id="timer">45</span>s</div>
+        </div>
+
+        <div id="speech-bubble"></div>
+        <div id="game-container"></div>
+        
+        <div id="dpad">
+            <div class="dpad-row">
+                <div class="dpad-btn" id="btnUp">▲</div>
+            </div>
+            <div class="dpad-row">
+                <div class="dpad-btn" id="btnLeft">◀</div>
+                <div class="dpad-btn" id="btnDown">▼</div>
+                <div class="dpad-btn" id="btnRight">▶</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SVG Assets Data URLs ---
+        const ASSETS = {
+            player: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="%23e67e22"/><circle cx="15" cy="12" r="6" fill="%23f1c40f"/><rect x="12" y="18" width="6" height="10" rx="2" fill="%232c3e50"/></svg>',
+            coffee: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><path d="M10,12 L30,12 L26,36 L14,36 Z" fill="%23f5f5f5"/><rect x="11" y="20" width="18" height="10" fill="%23795548"/><ellipse cx="20" cy="12" rx="10" ry="3" fill="%23e0e0e0"/><path d="M12,12 Q20,6 28,12" stroke="%23555" stroke-width="2" fill="none"/></svg>',
+            car: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="24" viewBox="0 0 60 24"><rect x="0" y="3" width="60" height="18" rx="5" fill="%233498db"/><rect x="12" y="0" width="30" height="24" rx="3" fill="%232980b9"/><circle cx="12" cy="3" r="2.5" fill="%23f1c40f"/><circle cx="12" cy="21" r="2.5" fill="%23f1c40f"/></svg>',
+            bus: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="28" viewBox="0 0 100 28"><rect x="0" y="0" width="100" height="28" rx="5" fill="%23f1c40f"/><rect x="8" y="3" width="12" height="22" fill="%232c3e50"/><rect x="28" y="3" width="12" height="22" fill="%232c3e50"/><rect x="48" y="3" width="12" height="22" fill="%232c3e50"/><rect x="68" y="3" width="12" height="22" fill="%232c3e50"/><circle cx="95" cy="6" r="3" fill="%23fff"/><circle cx="95" cy="22" r="3" fill="%23fff"/></svg>',
+            motorcycle: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="35" height="16" viewBox="0 0 35 16"><rect x="4" y="3" width="27" height="10" rx="2" fill="%23e74c3c"/><circle cx="6" cy="8" r="4" fill="%2334495e"/><circle cx="28" cy="8" r="4" fill="%2334495e"/></svg>',
+            bike: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="12" viewBox="0 0 30 12"><circle cx="5" cy="6" r="4" stroke="%232ecc71" stroke-width="2" fill="none"/><circle cx="25" cy="6" r="4" stroke="%232ecc71" stroke-width="2" fill="none"/><line x1="5" y1="6" x2="25" y2="6" stroke="%232ecc71" stroke-width="2"/></svg>'
+        };
+
+        const CLOUD_MESSAGES = [
+            "Uh-oh, Gagan needs coffee but he does love you",
+            "I need coffeeeeeeeee!!!! I love you 3000",
+            "Meri coffee kithe aa??!! Jaldi aaaaaaa!!",
+            "Aa na, coffee peene chale",
+            "Tujhse aksa beach ghumadu, aaja na",
+            "Nimbooda nimbooda nimbooda",
+            "Tu bas tu bas tu bas tu AAA",
+            "Lagi c?",
+            "Try again, Gagan is waiting",
+            "Babbiiaaa kinaareee!!"
+        ];
+
+        // --- YouTube Player Stream Framework Integration ---
+        let audioPlayer;
+        let isAudioInitialized = false;
+
+        function onYouTubeIframeAPIReady() {
+            audioPlayer = new YT.Player('audio-carrier', {
+                videoId: 'Xss6ZlUYoGA', // Video identifier for "Tujhe Aksa Beach Ghuma Du"
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'Xss6ZlUYoGA'
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            // Player loaded and ready to trigger audio streaming signals
+            audioPlayer.setVolume(60); 
+        }
+
+        function startAudioSafely() {
+            // Modern web engines force user interactions before initializing dynamic media play states
+            if (!isAudioInitialized && audioPlayer && typeof audioPlayer.playVideo === 'function') {
+                audioPlayer.playVideo();
+                isAudioInitialized = true;
+            }
+        }
+
+        const app = new PIXI.Application({
+            width: 600,
+            height: 800,
+            backgroundColor: 0x222222,
+            antialias: true
+        });
+        document.getElementById('game-container').appendChild(app.view);
+
+        const LANE_HEIGHT = 42;        
+        const NUM_LANES = 10;
+        const TOP_SAFE_ZONE = 190;     
+        const BOTTOM_SAFE_ZONE = 190;
+        const PLAYER_SPEED = 4.2;
+
+        let gaganStatic, coffeePlayer, scoreText, timerText, gaganLabel;
+        let vehicles = [];
+        let keys = {};
+        let isGameOver = false;
+        let score = 0;
+        
+        let timeRemaining = 45;
+        let countdownInterval;
+
+        const VEHICLE_CONFIGS = [
+            { textureKey: "motorcycle", width: 35, height: 16, speedMod: 1.6 },
+            { textureKey: "bike",        width: 30, height: 12, speedMod: 1.1 },
+            { textureKey: "car",         width: 60, height: 24, speedMod: 1.3 },
+            { textureKey: "bus",         width: 100, height: 28, speedMod: 0.7 }
+        ];
+
+        function setupEnvironment() {
+            const topSidewalk = new PIXI.Graphics().beginFill(0x384a38).drawRect(0, 0, app.screen.width, TOP_SAFE_ZONE);
+            const bottomSidewalk = new PIXI.Graphics().beginFill(0x384a38).drawRect(0, app.screen.height - BOTTOM_SAFE_ZONE, app.screen.width, BOTTOM_SAFE_ZONE);
+            app.stage.addChild(topSidewalk, bottomSidewalk);
+
+            const asphalt = new PIXI.Graphics().beginFill(0x2c3e50).drawRect(0, TOP_SAFE_ZONE, app.screen.width, LANE_HEIGHT * NUM_LANES);
+            app.stage.addChild(asphalt);
+
+            const lines = new PIXI.Graphics();
+            for (let i = 1; i < NUM_LANES; i++) {
+                const y = TOP_SAFE_ZONE + (i * LANE_HEIGHT);
+                if (i === 5) {
+                    lines.lineStyle(3, 0xf1c40f, 0.8); 
+                    lines.moveTo(0, y - 2); lines.lineTo(app.screen.width, y - 2);
+                    lines.moveTo(0, y + 2); lines.lineTo(app.screen.width, y + 2);
+                } else {
+                    lines.lineStyle(2, 0xffffff, 0.2);
+                    for (let x = 0; x < app.screen.width; x += 40) {
+                        lines.moveTo(x, y); lines.lineTo(x + 20, y);
+                    }
+                }
+            }
+            app.stage.addChild(lines);
+
+            const gaganTex = PIXI.Texture.from(ASSETS.player);
+            gaganStatic = new PIXI.Sprite(gaganTex);
+            gaganStatic.anchor.set(0.5);
+            gaganStatic.x = app.screen.width / 2;
+            gaganStatic.y = TOP_SAFE_ZONE - 40; 
+            app.stage.addChild(gaganStatic);
+
+            const labelStyle = new PIXI.TextStyle({
+                fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+                fontSize: 16,
+                fontWeight: 'bold',
+                fill: '#ffffff',
+                dropShadow: true,
+                dropShadowColor: '#000000',
+                dropShadowBlur: 4,
+                dropShadowDistance: 2
+            });
+            gaganLabel = new PIXI.Text('Coffee Run for Gagan', labelStyle);
+            gaganLabel.anchor.set(0.5);
+            gaganLabel.x = app.screen.width / 2;
+            gaganLabel.y = gaganStatic.y - 35; 
+            app.stage.addChild(gaganLabel);
+
+            const coffeeTex = PIXI.Texture.from(ASSETS.coffee);
+            coffeePlayer = new PIXI.Sprite(coffeeTex);
+            coffeePlayer.anchor.set(0.5);
+            
+            scoreText = document.getElementById('score');
+            timerText = document.getElementById('timer');
+
+            resetCoffee();
+            app.stage.addChild(coffeePlayer);
+            startTimer();
+        }
+
+        function setupTraffic() {
+            const textures = {
+                car: PIXI.Texture.from(ASSETS.car),
+                bus: PIXI.Texture.from(ASSETS.bus),
+                motorcycle: PIXI.Texture.from(ASSETS.motorcycle),
+                bike: PIXI.Texture.from(ASSETS.bike)
+            };
+
+            for (let i = 0; i < NUM_LANES; i++) {
+                const yPos = TOP_SAFE_ZONE + (i * LANE_HEIGHT) + (LANE_HEIGHT / 2);
+                const direction = i % 2 === 0 ? 1 : -1;
+                const laneSpeed = (Math.random() * 2.2 + 1.6) * direction;
+                const numVehicles = Math.floor(Math.random() * 2) + 2; 
+
+                for (let j = 0; j < numVehicles; j++) {
+                    const conf = VEHICLE_CONFIGS[Math.floor(Math.random() * VEHICLE_CONFIGS.length)];
+                    const vehicle = new PIXI.Sprite(textures[conf.textureKey]);
+                    
+                    vehicle.anchor.set(0.5);
+                    if (direction === -1) {
+                        vehicle.scale.x = -1;
+                    }
+
+                    vehicle.x = (app.screen.width / numVehicles) * j + (Math.random() * 40);
+                    vehicle.y = yPos;
+                    
+                    vehicle.vx = laneSpeed * conf.speedMod;
+                    vehicle.vWidth = conf.width;
+                    vehicle.vHeight = conf.height;
+
+                    vehicles.push(vehicle);
+                    app.stage.addChild(vehicle);
+                }
+            }
+        }
+
+        function resetCoffee() {
+            coffeePlayer.x = app.screen.width / 2;
+            coffeePlayer.y = app.screen.height - 70;
+            coffeePlayer.rotation = 0;
+            isGameOver = false;
+        }
+
+        function startTimer() {
+            clearInterval(countdownInterval);
+            timeRemaining = 45;
+            timerText.innerText = timeRemaining;
+            document.getElementById('timer-card').style.color = "white";
+
+            countdownInterval = setInterval(() => {
+                if (isGameOver) return;
+                
+                timeRemaining--;
+                timerText.innerText = timeRemaining;
+
+                if (timeRemaining <= 10) {
+                    document.getElementById('timer-card').style.color = "#ff3333";
+                }
+
+                if (timeRemaining <= 0) {
+                    triggerTimeOut();
+                }
+            }, 1000);
+        }
+
+        function showCloudMessage() {
+            const bubble = document.getElementById('speech-bubble');
+            const randomMsg = CLOUD_MESSAGES[Math.floor(Math.random() * CLOUD_MESSAGES.length)];
+            
+            bubble.innerText = randomMsg;
+            bubble.style.transform = "translateX(-50%) scale(1)";
+            
+            setTimeout(() => {
+                bubble.style.transform = "translateX(-50%) scale(0)";
+            }, 2800);
+        }
+
+        function triggerTimeOut() {
+            isGameOver = true;
+            score = 0;
+            scoreText.innerText = score;
+            showCloudMessage();
+            setTimeout(() => {
+                resetCoffee();
+                startTimer();
+            }, 3000);
+        }
+
+        // --- Controls System Hookup ---
+        window.addEventListener('keydown', (e) => { startAudioSafely(); keys[e.code] = true; });
+        window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        function bindTouch(id, keyStr) {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startAudioSafely(); keys[keyStr] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyStr] = false; });
+            btn.addEventListener('mousedown', (e) => { startAudioSafely(); keys[keyStr] = true; });
+            btn.addEventListener('mouseup', (e) => { keys[keyStr] = false; });
+            btn.addEventListener('mouseleave', (e) => { keys[keyStr] = false; });
+        }
+        bindTouch('btnUp', 'ArrowUp');
+        bindTouch('btnDown', 'ArrowDown');
+        bindTouch('btnLeft', 'ArrowLeft');
+        bindTouch('btnRight', 'ArrowRight');
+
+        function checkCollision(r1, r2) {
+            const box1 = { x: r1.x - 12, y: r1.y - 12, width: 24, height: 24 };
+            const box2 = { x: r2.x - r2.vWidth/2, y: r2.y - r2.vHeight/2, width: r2.vWidth, height: r2.vHeight };
+
+            return box1.x < box2.x + box2.width &&
+                   box1.x + box1.width > box2.x &&
+                   box1.y < box2.y + box2.height &&
+                   box1.y + box1.height > box2.y;
+        }
+
+        function gameLoop(delta) {
+            if (isGameOver) return;
+
+            if (keys['ArrowUp'] || keys['KeyW']) { coffeePlayer.y -= PLAYER_SPEED * delta; }
+            if (keys['ArrowDown'] || keys['KeyS']) { coffeePlayer.y += PLAYER_SPEED * delta; }
+            if (keys['ArrowLeft'] || keys['KeyA']) { coffeePlayer.x -= PLAYER_SPEED * delta; }
+            if (keys['ArrowRight'] || keys['KeyD']) { coffeePlayer.x += PLAYER_SPEED * delta; }
+
+            coffeePlayer.x = Math.max(15, Math.min(app.screen.width - 15, coffeePlayer.x));
+            coffeePlayer.y = Math.max(15, Math.min(app.screen.height - 15, coffeePlayer.y));
+
+            for (let v of vehicles) {
+                v.x += v.vx * delta;
+
+                if (v.vx > 0 && v.x > app.screen.width + v.vWidth) {
+                    v.x = -v.vWidth;
+                } else if (v.vx < 0 && v.x < -v.vWidth) {
+                    v.x = app.screen.width + v.vWidth;
+                }
+
+                if (checkCollision(coffeePlayer, v)) {
+                    isGameOver = true;
+                    coffeePlayer.tint = 0xff3333;
+                    score = 0; 
+                    scoreText.innerText = score;
+                    
+                    showCloudMessage();
+
+                    setTimeout(() => {
+                        coffeePlayer.tint = 0xffffff;
+                        resetCoffee();
+                        startTimer(); 
+                    }, 3000);
+                }
+            }
+
+            const dx = coffeePlayer.x - gaganStatic.x;
+            const dy = coffeePlayer.y - gaganStatic.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < 35) {
+                isGameOver = true;
+                score++;
+                scoreText.innerText = score;
+                
+                let steps = 0;
+                const winAnim = () => {
+                    if (steps < 10) {
+                        gaganStatic.scale.x += 0.05;
+                        gaganStatic.scale.y += 0.05;
+                        steps++;
+                        requestAnimationFrame(winAnim);
+                    } else {
+                        gaganStatic.scale.set(1);
+                        resetCoffee();
+                        startTimer();
+                    }
+                };
+                winAnim();
+            }
+        }
+
+        setupEnvironment();
+        setupTraffic();
+        app.ticker.add(gameLoop);
+
+    </script>
+</body>
+</html>
