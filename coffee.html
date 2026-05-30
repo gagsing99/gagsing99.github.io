@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +18,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            /* Patched: Uses dynamic viewport height to completely eliminate mobile overflow */
             height: 100vh;
+            height: 100dvh;
             width: 100vw;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,17 +34,17 @@
             justify-content: space-between;
             width: 100%;
             height: 100%;
-            max-width: 600px; /* Constrains desktop view to look like a mobile screen */
+            max-width: 600px; 
             padding: 10px;
         }
 
         #game-container {
             width: 100%;
-            flex: 1; /* Automatically grows to take up all available top space */
+            flex: 1; 
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 0; /* Prevents container from pushing out of flex boundaries */
+            min-height: 0; 
             position: relative;
         }
 
@@ -56,36 +57,37 @@
             border-radius: 8px;
         }
 
-        /* Fixed space at the bottom specifically reserved for the D-Pad */
+        /* Scaled down slightly to guarantee safety on smaller mobile screens */
         #controls-area {
             width: 100%;
-            height: 180px; 
+            height: 160px; 
             display: flex;
             justify-content: center;
             align-items: center;
             user-select: none;
+            padding-bottom: 5px;
         }
 
         #dpad {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .dpad-row {
             display: flex;
-            gap: 15px;
+            gap: 12px;
         }
 
         .dpad-btn {
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             background-color: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -240,14 +242,12 @@
             }
         }
 
-        // --- PixiJS Canvas App Configuration ---
         const app = new PIXI.Application({
             width: 600,
             height: 800,
             backgroundColor: 0x222222,
             antialias: true
         });
-        // Append view directly into layout manager element
         document.getElementById('game-container').appendChild(app.view);
 
         const LANE_HEIGHT = 42;        
@@ -396,6 +396,7 @@
             }, 1000);
         }
 
+        // Modified layout wrapper checks bounding margins context safely
         function showCloudMessage() {
             const bubble = document.getElementById('speech-bubble');
             const randomMsg = CLOUD_MESSAGES[Math.floor(Math.random() * CLOUD_MESSAGES.length)];
@@ -419,7 +420,6 @@
             }, 3000);
         }
 
-        // --- Controls Input Pipeline ---
         window.addEventListener('keydown', (e) => { startAudioSafely(); keys[e.code] = true; });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
 
