@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        :root { --primary: #ff4757; --bg: #fff0f5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 400px; text-align: center; position: relative; }
+        .grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; justify-content: center; margin: 20px 0; }
+        .cell { width: 80px; height: 80px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; border-radius: 10px; font-weight: bold; }
+        input { padding: 10px; width: 60px; margin: 10px 0; border: 2px solid var(--primary); border-radius: 5px; text-align: center; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .word-display { font-size: 24px; letter-spacing: 10px; margin: 20px; font-weight: bold; }
+        
+        /* Hearts Animation */
+        .heart-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
+        .heart { position: absolute; color: var(--primary); font-size: 20px; animation: float 4s linear infinite; }
+        @keyframes float { 0% { transform: translateY(100vh); opacity: 1; } 100% { transform: translateY(-10vh); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="card" id="app">
+    <div id="game-ui"></div>
+    <div id="feedback" style="color: var(--primary); font-weight: bold; margin-bottom: 10px;"></div>
+    <button id="next-btn" style="display:none;" onclick="nextGame()">Next Game</button>
+</div>
+
+<script>
+    let current = 1;
+    const ui = document.getElementById('game-ui');
+    const feedback = document.getElementById('feedback');
+    const nextBtn = document.getElementById('next-btn');
+
+    function nextGame() { current++; render(); }
+
+    function render() {
+        nextBtn.style.display = 'none';
+        feedback.innerText = '';
+        if (current === 1) playTicTacToe();
+        else if (current === 2) playMath();
+        else if (current === 3) playHangman();
+        else if (current === 4) playJumble();
+        else if (current === 5) playLyrics();
+        else showFinal();
+    }
+
+    // 1. Tic Tac Toe
+    let board = Array(9).fill(null);
+    function checkWinner(b) {
+        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for(let [a,b1,c] of lines) { if(b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a]; }
+        return b.includes(null) ? null : 'Draw';
+    }
+
+    function playTicTacToe() {
+        ui.innerHTML = "<h3>Tic Tac Toe</h3><div class='grid' id='tictac'></div>";
+        const grid = document.getElementById('tictac');
+        board.forEach((val, i) => {
+            let div = document.createElement('div');
+            div.className = 'cell';
+            div.innerText = val || '';
+            div.onclick = () => {
+                if(!board[i] && !checkWinner(board)) {
+                    board[i] = 'X';
+                    let winner = checkWinner(board);
+                    if(!winner) {
+                        let empty = board.map((v,idx) => v===null ? idx : null).filter(v => v !== null);
+                        if(empty.length > 0) board[empty[Math.floor(Math.random()*empty.length)]] = 'O';
+                    }
+                    playTicTacToe();
+                    let res = checkWinner(board);
+                    if(res) {
+                        if(res === 'O') { feedback.innerText = "You lost! Try again."; ui.innerHTML += `<button onclick='resetTic()'>Try Again</button>`; }
+                        else { feedback.innerText = res === 'X' ? "You Won!" : "Draw!"; nextBtn.style.display = 'block'; }
+                    }
+                }
+            };
+            grid.appendChild(div);
+        });
+    }
+    function resetTic() { board = Array(9).fill(null); playTicTacToe(); }
+
+    // 2. Math (Randomized)
+    const allQs = [
+        { q: "Maanya has 10 mangoes, Gagan takes 2. Left?", a: "8" },
+        { q: "Gagan has 5 apples, Maanya gives 3. Total?", a: "8" },
+        { q: "Maanya has 20 chocolates, half to Gagan. Each has?", a: "10" },
+        { q: "Gagan walks 4km, Maanya walks 5km. Total?", a: "9" },
+        { q: "Maanya and Gagan have 2 pens each. Total?", a: "4" },
+        { q: "If Maanya has 15 stickers and Gagan has 5, difference?", a: "10" }
+    ];
+    let mIdx = 0, mQs = allQs.sort(() => 0.5 - Math.random()).slice(0, 5);
+    function playMath() {
+        ui.innerHTML = `<h3>Math Challenge</h3><p>${mQs[mIdx].q}</p><input id='m-ans' type='number'>`;
+        ui.innerHTML += `<br><button onclick='checkMath()'>Submit</button>`;
+    }
+    function checkMath() {
+        if(document.getElementById('m-ans').value == mQs[mIdx].a) {
+            mIdx++;
+            if(mIdx < 5) playMath();
+            else { feedback.innerText = "Math whiz!"; nextBtn.style.display = 'block'; }
+        } else { feedback.innerText = "Try again!"; }
+    }
+
+    // 3. Hangman
+    let secret = "ishqiya", guessed = [], tries = 5;
+    function playHangman() {
+        let display = secret.split('').map(l => guessed.includes(l) ? l : '_').join(' ');
+        ui.innerHTML = `<h3>Guess the Movie</h3><div class='word-display'>${display}</div><p>Tries: ${tries}</p><input id='h-guess' maxlength='1'>`;
+        ui.innerHTML += `<br><button onclick='checkHang()'>Guess</button>`;
+    }
+    function checkHang() {
+        let l = document.getElementById('h-guess').value.toLowerCase();
+        if(!secret.includes(l)) tries--;
+        else if(!guessed.includes(l)) guessed.push(l);
+        if(tries <= 0) { ui.innerHTML = "<h3>Game Over!</h3><button onclick='resetHang()'>Play Again</button>"; return; }
+        if(!secret.split('').find(l => !guessed.includes(l))) { ui.innerHTML = "<h3>Correct!</h3>"; nextBtn.style.display = 'block'; }
+        else playHangman();
+    }
+    function resetHang() { tries=5; guessed=[]; playHangman(); }
+
+    // 4. Jumble
+    const jWords = { "love": "evol", "ishq": "hqsi", "dhudum dhudum": "uduhmd udhmd", "jassa": "assaj", "gagan": "nagag" };
+    let jList = Object.keys(jWords), jDone = [];
+    function playJumble() {
+        let currentWord = jList.find(w => !jDone.includes(w));
+        if(!currentWord) { feedback.innerText = "All done!"; nextBtn.style.display = 'block'; return; }
+        ui.innerHTML = `<h3>Unscramble: ${jWords[currentWord]}</h3><input id='j-guess'>`;
+        ui.innerHTML += `<br><button onclick='checkJumble("${currentWord}")'>Submit</button>`;
+    }
+    function checkJumble(word) {
+        if(document.getElementById('j-guess').value.toLowerCase() === word) { jDone.push(word); playJumble(); }
+        else { feedback.innerText = "Try again!"; }
+    }
+
+    // 5. Lyrics
+    function playLyrics() {
+        ui.innerHTML = `<h3>Fill in the blanks</h3><p>Babbia kinaare, <input id='l1'> Yeh pukaare,<br>tum Jo nahi to <input id='l2'> koi nahi, oooo</p>`;
+        ui.innerHTML += `<br><button onclick='checkLyrics()'>Submit</button>`;
+    }
+    function checkLyrics() {
+        if(document.getElementById('l1').value.toLowerCase() === 'dil' && document.getElementById('l2').value.toLowerCase() === 'humra') {
+            nextGame();
+        } else { feedback.innerText = "Incorrect!"; }
+    }
+
+    function showFinal() {
+        ui.innerHTML = "<h1>Thank you for the best date ever</h1>";
+        let bg = document.createElement('div'); bg.className = 'heart-bg';
+        for(let i=0; i<20; i++) {
+            let h = document.createElement('div'); h.className = 'heart'; h.innerText = '❤';
+            h.style.left = Math.random() * 100 + "%";
+            h.style.animationDelay = Math.random() * 4 + "s";
+            bg.appendChild(h);
+        }
+        document.body.appendChild(bg);
+    }
+
+    render();
+</script>
+</body>
+</html>
