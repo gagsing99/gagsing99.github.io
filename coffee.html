@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PixiJS - Coffee Run for Gagan</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -18,7 +17,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Patched: Uses dynamic viewport height to completely eliminate mobile overflow */
             height: 100vh;
             height: 100dvh;
             width: 100vw;
@@ -57,7 +55,6 @@
             border-radius: 8px;
         }
 
-        /* Scaled down slightly to guarantee safety on smaller mobile screens */
         #controls-area {
             width: 100%;
             height: 160px; 
@@ -152,21 +149,11 @@
             display: block;
             width: 0;
         }
-
-        #audio-carrier {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
 
     <div id="game-wrapper">
-        <div id="audio-carrier"></div>
-
         <div id="game-container">
             <div id="hud">
                 <div class="hud-card">☕ Delivered: <span id="score">0</span></div>
@@ -174,20 +161,6 @@
             </div>
             <div id="speech-bubble"></div>
         </div>
-        
-        <div id="controls-area">
-            <div id="dpad">
-                <div class="dpad-row">
-                    <div class="dpad-btn" id="btnUp">▲</div>
-                </div>
-                <div class="dpad-row">
-                    <div class="dpad-btn" id="btnLeft">◀</div>
-                    <div class="dpad-btn" id="btnDown">▼</div>
-                    <div class="dpad-btn" id="btnRight">▶</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         // --- SVG Assets Data URLs ---
@@ -213,35 +186,97 @@
             "Babbiiaaa kinaareee!!"
         ];
 
-        let audioPlayer;
-        let isAudioInitialized = false;
+        // --- Procedural HTML5 Web Audio Engine ---
+        let audioCtx = null;
+        let lastStepTime = 0;
+        const STEP_INTERVAL = 250; 
 
-        function onYouTubeIframeAPIReady() {
-            audioPlayer = new YT.Player('audio-carrier', {
-                videoId: 'Xss6ZlUYoGA',
-                playerVars: {
-                    'autoplay': 0,
-                    'controls': 0,
-                    'loop': 1,
-                    'playlist': 'Xss6ZlUYoGA'
-                },
-                events: {
-                    'onReady': onPlayerReady
-                }
-            });
-        }
-
-        function onPlayerReady(event) {
-            audioPlayer.setVolume(60); 
-        }
-
-        function startAudioSafely() {
-            if (!isAudioInitialized && audioPlayer && typeof audioPlayer.playVideo === 'function') {
-                audioPlayer.playVideo();
-                isAudioInitialized = true;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
         }
 
+        function playCrashSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.4);
+            
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+
+            const noiseOsc = audioCtx.createOscillator();
+            const noiseGain = audioCtx.createGain();
+            noiseOsc.type = 'sawtooth';
+            noiseOsc.frequency.setValueAtTime(300, now);
+            noiseOsc.frequency.linearRampToValueAtTime(80, now + 0.2);
+            
+            noiseGain.gain.setValueAtTime(0.5, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            
+            noiseOsc.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noiseOsc.start(now);
+            noiseOsc.stop(now + 0.2);
+        }
+
+        function playFootstepSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            if (now * 1000 - lastStepTime < STEP_INTERVAL) return;
+            lastStepTime = now * 1000;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(90, now);
+            osc.frequency.linearRampToValueAtTime(40, now + 0.08);
+            
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.09);
+        }
+
+        function playYaySound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            
+            const notes = [329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; 
+            notes.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + (index * 0.06));
+                osc.frequency.linearRampToValueAtTime(freq + 15, now + (index * 0.06) + 0.3);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.25, now + (index * 0.06) + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + (index * 0.06));
+                osc.stop(now + (index * 0.06) + 0.45);
+            });
+        }
+
+        // --- PixiJS Setup ---
         const app = new PIXI.Application({
             width: 600,
             height: 800,
@@ -396,7 +431,6 @@
             }, 1000);
         }
 
-        // Modified layout wrapper checks bounding margins context safely
         function showCloudMessage() {
             const bubble = document.getElementById('speech-bubble');
             const randomMsg = CLOUD_MESSAGES[Math.floor(Math.random() * CLOUD_MESSAGES.length)];
@@ -411,6 +445,7 @@
 
         function triggerTimeOut() {
             isGameOver = true;
+            playCrashSound(); 
             score = 0;
             scoreText.innerText = score;
             showCloudMessage();
@@ -420,14 +455,14 @@
             }, 3000);
         }
 
-        window.addEventListener('keydown', (e) => { startAudioSafely(); keys[e.code] = true; });
+        window.addEventListener('keydown', (e) => { initAudio(); keys[e.code] = true; });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
 
         function bindTouch(id, keyStr) {
             const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startAudioSafely(); keys[keyStr] = true; });
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); keys[keyStr] = true; });
             btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyStr] = false; });
-            btn.addEventListener('mousedown', (e) => { startAudioSafely(); keys[keyStr] = true; });
+            btn.addEventListener('mousedown', (e) => { initAudio(); keys[keyStr] = true; });
             btn.addEventListener('mouseup', (e) => { keys[keyStr] = false; });
             btn.addEventListener('mouseleave', (e) => { keys[keyStr] = false; });
         }
@@ -449,10 +484,15 @@
         function gameLoop(delta) {
             if (isGameOver) return;
 
-            if (keys['ArrowUp'] || keys['KeyW']) { coffeePlayer.y -= PLAYER_SPEED * delta; }
-            if (keys['ArrowDown'] || keys['KeyS']) { coffeePlayer.y += PLAYER_SPEED * delta; }
-            if (keys['ArrowLeft'] || keys['KeyA']) { coffeePlayer.x -= PLAYER_SPEED * delta; }
-            if (keys['ArrowRight'] || keys['KeyD']) { coffeePlayer.x += PLAYER_SPEED * delta; }
+            let moved = false;
+            if (keys['ArrowUp'] || keys['KeyW']) { coffeePlayer.y -= PLAYER_SPEED * delta; moved = true; }
+            if (keys['ArrowDown'] || keys['KeyS']) { coffeePlayer.y += PLAYER_SPEED * delta; moved = true; }
+            if (keys['ArrowLeft'] || keys['KeyA']) { coffeePlayer.x -= PLAYER_SPEED * delta; moved = true; }
+            if (keys['ArrowRight'] || keys['KeyD']) { coffeePlayer.x += PLAYER_SPEED * delta; moved = true; }
+
+            if (moved) {
+                playFootstepSound();
+            }
 
             coffeePlayer.x = Math.max(15, Math.min(app.screen.width - 15, coffeePlayer.x));
             coffeePlayer.y = Math.max(15, Math.min(app.screen.height - 15, coffeePlayer.y));
@@ -468,6 +508,7 @@
 
                 if (checkCollision(coffeePlayer, v)) {
                     isGameOver = true;
+                    playCrashSound(); 
                     coffeePlayer.tint = 0xff3333;
                     score = 0; 
                     scoreText.innerText = score;
@@ -488,6 +529,7 @@
             
             if (distance < 35) {
                 isGameOver = true;
+                playYaySound(); 
                 score++;
                 scoreText.innerText = score;
                 
@@ -515,3 +557,18 @@
     </script>
 </body>
 </html>
+
+        
+        <div id="controls-area">
+            <div id="dpad">
+                <div class="dpad-row">
+                    <div class="dpad-btn" id="btnUp">▲</div>
+                </div>
+                <div class="dpad-row">
+                    <div class="dpad-btn" id="btnLeft">◀</div>
+                    <div class="dpad-btn" id="btnDown">▼</div>
+                    <div class="dpad-btn" id="btnRight">▶</div>
+                </div>
+            </div>
+        </div>
+    </div>
