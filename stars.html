@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Starry Night Sky</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020208;
+            font-family: sans-serif;
+            cursor: grab;
+        }
+        body:active {
+            cursor: grabbing;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            pointer-events: none;
+            text-align: center;
+            width: 90%;
+            transition: opacity 1s ease;
+            z-index: 10;
+        }
+        /* Style for the radar navigational hints */
+        .radar-hint {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            animation: pulse 2s infinite alternate;
+            z-index: 5;
+        }
+        @keyframes pulse {
+            from { opacity: 0.2; }
+            to { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="skyCanvas"></canvas>
+    <div id="instruction">Tap to play music. Drag/Swipe towards the edge hints to find everyone!</div>
+
+    <div class="radar-hint" style="top: 20px; left: 20px;">↖ Jasleena</div>
+    <div class="radar-hint" style="top: 20px; right: 20px;">Maanya ↗</div>
+    <div class="radar-hint" style="bottom: 50px; left: 20px;">↙ Joey</div>
+
+    <audio id="bgMusic" loop src="https://assets.mixkit.co/active_storage/sfx/123/123-100.wav"></audio>
+
+    <script>
+        const canvas = document.getElementById('skyCanvas');
+        const ctx = canvas.getContext('2d');
+        const music = document.getElementById('bgMusic');
+        const instruction = document.getElementById('instruction');
+
+        // Main Sky Arena Size
+        const SKY_WIDTH = 4000;
+        const SKY_HEIGHT = 4000;
+
+        // Camera initialized to perfectly center on "I love you, Jass"
+        let camera = {
+            x: (SKY_WIDTH - window.innerWidth) / 2,
+            y: (SKY_HEIGHT - window.innerHeight) / 2
+        };
+
+        let isDragging = false;
+        let startX, startY;
+        let musicStarted = false;
+
+        const stars = [];
+        const fireflies = [];
+
+        const starColors = ['#fff0f5', '#fffacd', '#ffffff', '#e0f7fa', '#ffd1dc', '#fff9e6'];
+        const fireflyColors = ['#d4ff70', '#a3ff7d', '#e2ff9e'];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- Star Class ---
+        class Star {
+            constructor(x, y, isConstellation = false) {
+                this.x = x;
+                this.y = y;
+                this.isConstellation = isConstellation;
+                this.size = isConstellation ? Math.random() * 1.5 + 2 : Math.random() * 1.3 + 0.3;
+                this.color = starColors[Math.floor(Math.random() * starColors.length)];
+                
+                this.twinkleSpeed = 0.01 + Math.random() * 0.03;
+                this.phase = Math.random() * Math.PI;
+                this.alpha = isConstellation ? 0.95 : Math.random(); 
+            }
+
+            update() {
+                if (!this.isConstellation) {
+                    this.phase += this.twinkleSpeed;
+                    this.alpha = 0.2 + (Math.sin(this.phase) * 0.8);
+                }
+            }
+
+            draw() {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+
+                if (screenX >= -10 && screenX <= canvas.width + 10 && screenY >= -10 && screenY <= canvas.height + 10) {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fillStyle = this.color;
+                    
+                    if (this.isConstellation) {
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = this.color;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // --- Firefly Class ---
+        class Firefly {
+            constructor() {
+                this.x = Math.random() * SKY_WIDTH;
+                this.y = Math.random() * SKY_HEIGHT;
+                this.size = Math.random() * 2 + 1;
+                this.color = fireflyColors[Math.floor(Math.random() * fireflyColors.length)];
+                this.vx = Math.random() * 0.6 - 0.3;
+                this.vy = Math.random() * 0.6 - 0.3;
+                this.alpha = 0;
+                this.fadeSpeed = 0.005 + Math.random() * 0.01;
+                this.fadingIn = true;
+                this.lifeSpan = Math.random() * 300 + 200; 
+                this.age = 0;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.age++;
+
+                if (this.x < 0) this.x = SKY_WIDTH;
+                if (this.x > SKY_WIDTH) this.x = 0;
+                if (this.y < 0) this.y = SKY_HEIGHT;
+                if (this.y > SKY_HEIGHT) this.y = 0;
+
+                if (this.fadingIn) {
+                    this.alpha += this.fadeSpeed;
+                    if (this.alpha >= 0.8) this.fadingIn = false;
+                } else if (this.age > this.lifeSpan) {
+                    this.alpha -= this.fadeSpeed;
+                    if (this.alpha <= 0) {
+                        this.x = Math.random() * SKY_WIDTH;
+                        this.y = Math.random() * SKY_HEIGHT;
+                        this.age = 0;
+                        this.fadingIn = true;
+                        this.lifeSpan = Math.random() * 300 + 200;
+                    }
+                }
+            }
+
+            draw() {
+                const screenX = this.x - camera.x;
+                const screenY = this.y - camera.y;
+
+                if (screenX >= -10 && screenX <= canvas.width + 10 && screenY >= -10 && screenY <= canvas.height + 10) {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // --- Setup & Text Mapping ---
+        function generateBackgroundStars() {
+            const numStars = 2500; 
+            for (let i = 0; i < numStars; i++) {
+                stars.push(new Star(Math.random() * SKY_WIDTH, Math.random() * SKY_HEIGHT, false));
+            }
+        }
+
+        function generateFireflies() {
+            const numFireflies = 120;
+            for (let i = 0; i < numFireflies; i++) {
+                fireflies.push(new Firefly());
+            }
+        }
+
+        function createTextConstellation(text, centerX, centerY, fontSize = 70) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = SKY_WIDTH;
+            tempCanvas.height = SKY_HEIGHT;
+
+            tempCtx.fillStyle = '#white';
+            tempCtx.font = `bold ${fontSize}px sans-serif`;
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText(text, centerX, centerY);
+
+            const imageData = tempCtx.getImageData(0, 0, SKY_WIDTH, SKY_HEIGHT).data;
+            const step = 8; // Denser step makes names crisper and easier to read
+
+            for (let y = 0; y < SKY_HEIGHT; y += step) {
+                for (let x = 0; x < SKY_WIDTH; x += step) {
+                    const index = (y * SKY_WIDTH + x) * 4;
+                    if (imageData[index + 3] > 128) {
+                        const offsetX = x + (Math.random() * 2 - 1);
+                        const offsetY = y + (Math.random() * 2 - 1);
+                        stars.push(new Star(offsetX, offsetY, true));
+                    }
+                }
+            }
+        }
+
+        function buildConstellations() {
+            // "I love you, Jass" is at the center (Center is 2000, 2000)
+            createTextConstellation("I love you, Jass", SKY_WIDTH / 2, SKY_HEIGHT / 2, 75);
+
+            // Relocated slightly closer to center zone so they are discovered faster!
+            createTextConstellation("Jasleena", SKY_WIDTH * 0.35, SKY_HEIGHT * 0.35, 70); // Up and Left
+            createTextConstellation("Maanya", SKY_WIDTH * 0.65, SKY_HEIGHT * 0.35, 70);   // Up and Right
+            createTextConstellation("Joey", SKY_WIDTH * 0.4, SKY_HEIGHT * 0.65, 70);      // Down and Left
+        }
+
+        // --- Navigation Logic ---
+        function dragStart(x, y) {
+            isDragging = true;
+            startX = x + camera.x;
+            startY = y + camera.y;
+            
+            if (!musicStarted) {
+                music.play().catch(e => console.log("Audio waiting for touch event."));
+                instruction.style.opacity = '0';
+                musicStarted = true;
+            }
+        }
+
+        function dragMove(x, y) {
+            if (!isDragging) return;
+            camera.x = startX - x;
+            camera.y = startY - y;
+
+            // Constrain maps bounds
+            camera.x = Math.max(0, Math.min(camera.x, SKY_WIDTH - canvas.width));
+            camera.y = Math.max(0, Math.min(camera.y, SKY_HEIGHT - canvas.height));
+        }
+
+        function dragEnd() {
+            isDragging = false;
+        }
+
+        window.addEventListener('mousedown', (e) => dragStart(e.clientX, e.clientY));
+        window.addEventListener('mousemove', (e) => dragMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', dragEnd);
+
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) dragStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) dragMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        window.addEventListener('touchend', dragEnd);
+
+        // --- Main Engine ---
+        function animate() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#02020a');
+            gradient.addColorStop(0.5, '#040514');
+            gradient.addColorStop(1, '#080a21');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            fireflies.forEach(firefly => {
+                firefly.update();
+                firefly.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        generateBackgroundStars();
+        buildConstellations();
+        generateFireflies();
+        animate();
+
+    </script>
+</body>
+</html>
