@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beachside Mixologist</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- GAME STATE ---
+let gameState = 'MENU'; // MENU, PLAYING, RESULT
+let selectedCocktail = null;
+let currentIngredientIndex = 0;
+let currentPourAmount = 0;
+let message = "";
+let waveOffset = 0;
+
+// Beaker interaction states
+let beakerX = 0;
+let targetBeakerX = 0;
+let beakerTilt = 0; 
+let isDraggingBeaker = false;
+let streamAlpha = 0; 
+
+// Splashing tracking for missed pours
+let isSplashing = false;
+let splashX = 0;
+
+const recipes = [
+    { name: "Mojito", ingredients: [{ name: "White Rum", target: 2, color: "rgba(247,245,238,0.9)" }, { name: "Lime Juice", target: 1, color: "rgba(181,226,133,0.9)" }, { name: "Simple Syrup", target: 0.75, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Margarita", ingredients: [{ name: "Tequila", target: 2, color: "rgba(235,220,165,0.9)" }, { name: "Triple Sec", target: 1, color: "rgba(252,251,227,0.9)" }, { name: "Lime Juice", target: 1, color: "rgba(181,226,133,0.9)" }] },
+    { name: "Martini", ingredients: [{ name: "Gin", target: 2.5, color: "rgba(238,247,247,0.8)" }, { name: "Dry Vermouth", target: 0.5, color: "rgba(252,251,227,0.8)" }] },
+    { name: "Old Fashioned", ingredients: [{ name: "Bourbon", target: 2, color: "rgba(184,92,20,0.95)" }, { name: "Simple Syrup", target: 0.25, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Daiquiri", ingredients: [{ name: "White Rum", target: 2, color: "rgba(247,245,238,0.9)" }, { name: "Lime Juice", target: 1, color: "rgba(181,226,133,0.9)" }, { name: "Simple Syrup", target: 0.75, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Negroni", ingredients: [{ name: "Gin", target: 1, color: "rgba(238,247,247,0.8)" }, { name: "Sweet Vermouth", target: 1, color: "rgba(138,28,20,0.95)" }, { name: "Campari", target: 1, color: "rgba(230,34,21,0.95)" }] },
+    { name: "Whiskey Sour", ingredients: [{ name: "Bourbon", target: 2, color: "rgba(184,92,20,0.95)" }, { name: "Lemon Juice", target: 0.75, color: "rgba(238,240,127,0.9)" }, { name: "Simple Syrup", target: 0.75, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Manhattan", ingredients: [{ name: "Rye Whiskey", target: 2, color: "rgba(156,70,5,0.95)" }, { name: "Sweet Vermouth", target: 1, color: "rgba(138,28,20,0.95)" }] },
+    { name: "Gimlet", ingredients: [{ name: "Gin", target: 2, color: "rgba(238,247,247,0.8)" }, { name: "Lime Juice", target: 0.75, color: "rgba(181,226,133,0.9)" }, { name: "Simple Syrup", target: 0.75, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Cosmopolitan", ingredients: [{ name: "Vodka", target: 1.5, color: "rgba(247,245,238,0.8)" }, { name: "Cranberry Juice", target: 1, color: "rgba(184,9,38,0.9)" }, { name: "Lime Juice", target: 0.5, color: "rgba(181,226,133,0.9)" }] },
+    { name: "Tom Collins", ingredients: [{ name: "Gin", target: 2, color: "rgba(238,247,247,0.8)" }, { name: "Lemon Juice", target: 1, color: "rgba(238,240,127,0.9)" }, { name: "Simple Syrup", target: 0.5, color: "rgba(252,251,227,0.9)" }] },
+    { name: "Bloody Mary", ingredients: [{ name: "Vodka", target: 1.5, color: "rgba(247,245,238,0.8)" }, { name: "Tomato Juice", target: 3, color: "rgba(196,35,20,0.95)" }] },
+    { name: "Dark 'N' Stormy", ingredients: [{ name: "Goslings Rum", target: 2, color: "rgba(71,30,5,0.95)" }, { name: "Ginger Beer", target: 3.5, color: "rgba(232,221,204,0.9)" }] },
+    { name: "Moscow Mule", ingredients: [{ name: "Vodka", target: 2, color: "rgba(247,245,238,0.8)" }, { name: "Ginger Beer", target: 3.5, color: "rgba(232,221,204,0.9)" }, { name: "Lime Juice", target: 0.5, color: "rgba(181,226,133,0.9)" }] },
+    { name: "Sidecar", ingredients: [{ name: "Cognac", target: 1.5, color: "rgba(135,62,12,0.95)" }, { name: "Triple Sec", target: 0.75, color: "rgba(252,251,227,0.9)" }, { name: "Lemon Juice", target: 0.75, color: "rgba(238,240,127,0.9)" }] }
+];
+
+let pouredLayers = [];
+let buttons = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    calculateGrid();
+    if (gameState === 'PLAYING') {
+        targetBeakerX = canvas.width / 2 - 90;
+        beakerX = targetBeakerX;
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+
+function calculateGrid() {
+    buttons = [];
+    let columnsCount = canvas.width < 500 ? 2 : canvas.width < 800 ? 3 : 5;
+    let sidePadding = canvas.width * 0.06;
+    let availableWidth = canvas.width - (sidePadding * 2);
+    let spacingX = 10;
+    let spacingY = 10;
+    
+    let btnWidth = (availableWidth - (spacingX * (columnsCount - 1))) / columnsCount;
+    let btnHeight = canvas.height < 600 ? 45 : 55; 
+    let startY = canvas.height * 0.22;
+
+    for (let i = 0; i < recipes.length; i++) {
+        let r = Math.floor(i / columnsCount);
+        let c = i % columnsCount;
+        let x = sidePadding + c * (btnWidth + spacingX);
+        let y = startY + r * (btnHeight + spacingY);
+        buttons.push({ x, y, width: btnWidth, height: btnHeight, recipe: recipes[i] });
+    }
+}
+
+function getCanvasCoords(e) {
+    let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX, y: clientY };
+}
+
+function handleStart(e) {
+    e.preventDefault();
+    const coords = getCanvasCoords(e);
+    
+    if (gameState === 'MENU') {
+        for (let btn of buttons) {
+            if (coords.x >= btn.x && coords.x <= btn.x + btn.width && coords.y >= btn.y && coords.y <= btn.y + btn.height) {
+                startGame(btn.recipe);
+                break;
+            }
+        }
+    } else if (gameState === 'PLAYING') {
+        isDraggingBeaker = true;
+        targetBeakerX = coords.x;
+    } else if (gameState === 'RESULT') {
+        resetToMenu();
+    }
+}
+
+function handleMove(e) {
+    if (gameState === 'PLAYING' && isDraggingBeaker) {
+        const coords = getCanvasCoords(e);
+        targetBeakerX = coords.x;
+    }
+}
+
+function handleEnd(e) {
+    if (gameState === 'PLAYING' && isDraggingBeaker) {
+        isDraggingBeaker = false;
+        if (currentPourAmount > 0 || isSplashing) {
+            advanceIngredient();
+        }
+    }
+}
+
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseup', handleEnd);
+canvas.addEventListener('touchstart', handleStart, { passive: false });
+canvas.addEventListener('touchmove', handleMove, { passive: false });
+canvas.addEventListener('touchend', handleEnd, { passive: false });
+
+// --- GAME LOGIC ---
+function startGame(cocktail) {
+    selectedCocktail = cocktail;
+    gameState = 'PLAYING';
+    currentIngredientIndex = 0;
+    currentPourAmount = 0;
+    pouredLayers = [];
+    beakerX = canvas.width / 2 - 90;
+    targetBeakerX = beakerX;
+    beakerTilt = 0;
+    isSplashing = false;
+}
+
+function advanceIngredient() {
+    const currentRecipeIngredient = selectedCocktail.ingredients[currentIngredientIndex];
+    const target = currentRecipeIngredient.target;
+    
+    if (isSplashing) {
+        endGame(false, "Spill alert! You poured liquid straight onto the bar counter.");
+        return;
+    }
+    
+    if (currentPourAmount > target + 0.15) {
+        endGame(false, `Over-poured! Target: ${target}oz. You poured ${currentPourAmount.toFixed(2)}oz.`);
+        return;
+    } else if (currentPourAmount < target - 0.15) {
+        endGame(false, `Under-poured! Target: ${target}oz. You stopped at ${currentPourAmount.toFixed(2)}oz.`);
+        return;
+    }
+
+    pouredLayers.push({ color: currentRecipeIngredient.color, amount: currentPourAmount });
+    currentPourAmount = 0;
+    currentIngredientIndex++;
+
+    if (currentIngredientIndex >= selectedCocktail.ingredients.length) {
+        endGame(true, `Perfect alignment! Beautiful ${selectedCocktail.name} completed.`);
+    }
+}
+
+function endGame(success, msg) {
+    gameState = 'RESULT';
+    message = (success ? "🎉 SUCCESS!" : "💥 FAILED!") + "\n" + msg;
+}
+
+function resetToMenu() {
+    gameState = 'MENU';
+    selectedCocktail = null;
+    calculateGrid();
+}
+
+// --- PHYSICS ENGINE TICK ---
+function update() {
+    if (gameState === 'PLAYING') {
+        beakerX += (targetBeakerX - beakerX) * 0.15;
+
+        // Boundaries to keep beaker on screen
+        beakerX = Math.max(40, Math.min(canvas.width - 40, beakerX));
+
+        const glassX = canvas.width / 2;
+        const glassWidth = Math.min(canvas.width * 0.28, 100);
+        
+        // Boundaries of the actual mouth of the glass
+        const glassLeftRim = glassX - glassWidth / 2;
+        const glassRightRim = glassX + glassWidth / 2;
+
+        const centerZone = canvas.width / 2;
+        const displacement = beakerX - centerZone;
+
+        if (isDraggingBeaker) {
+            beakerTilt = -(displacement / 140);
+            beakerTilt = Math.max(-1.1, Math.min(1.1, beakerTilt)); 
+        } else {
+            beakerTilt += (0 - beakerTilt) * 0.2;
+        }
+
+        const tiltThreshold = 0.35;
+        if (Math.abs(beakerTilt) > tiltThreshold && currentIngredientIndex < selectedCocktail.ingredients.length) {
+            let dynamicFlowRate = (Math.abs(beakerTilt) - tiltThreshold) * 0.015; // Realistic slow flow
+            streamAlpha += (1 - streamAlpha) * 0.1;
+
+            // Figure out precisely where the fluid stream drops from the tilted beaker lip
+            let lipX = beakerX + (beakerTilt < 0 ? -22 : 22);
+
+            // SPATIAL TARGETING: Is the pouring lip inside the glass rims?
+            if (lipX >= glassLeftRim && lipX <= glassRightRim) {
+                // Pouring safely into the glass
+                currentPourAmount += dynamicFlowRate;
+                isSplashing = false;
+            } else {
+                // Missing the glass completely!
+                isSplashing = true;
+                splashX = lipX;
+            }
+
+            // Safety guard limit fallback
+            const currentRecipeIngredient = selectedCocktail.ingredients[currentIngredientIndex];
+            if (currentPourAmount > currentRecipeIngredient.target + 0.6) {
+                advanceIngredient();
+            }
+        } else {
+            streamAlpha += (0 - streamAlpha) * 0.15;
+            if (streamAlpha < 0.05) isSplashing = false;
+        }
+    }
+}
+
+// --- GRAPHICS ENGINE ---
+function drawBackground() {
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGrad.addColorStop(0, '#ff7e5f');
+    skyGrad.addColorStop(0.3, '#feb47b');
+    skyGrad.addColorStop(0.6, '#2b5876');
+    skyGrad.addColorStop(1, '#4e4376');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    waveOffset += 0.02;
+    drawWave(canvas.height * 0.75, '#005c8a', 25, waveOffset);
+    drawWave(canvas.height * 0.82, '#0077b6', 15, -waveOffset * 1.5);
+    drawWave(canvas.height * 0.88, '#0096c7', 10, waveOffset * 2);
+    
+    // Wooden bar
+    ctx.fillStyle = '#3e2723';
+    ctx.fillRect(0, canvas.height * 0.90, canvas.width, canvas.height * 0.10);
+    ctx.fillStyle = '#2d1b18';
+    ctx.fillRect(0, canvas.height * 0.90, canvas.width, 6);
+}
+
+function drawWave(yBase, color, amplitude, offset) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height);
+    for (let x = 0; x <= canvas.width; x += 15) {
+        let y = yBase + Math.sin(x * 0.008 + offset) * amplitude;
+        ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawMenu() {
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    let titleSize = canvas.width < 400 ? '22px' : '28px';
+    ctx.font = `bold ${titleSize} sans-serif`;
+    ctx.fillText("🌅 BEACHSIDE MIXOLOGIST", canvas.width / 2, canvas.height * 0.08);
+    
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#ffe3d1';
+    ctx.fillText("Tap a cocktail recipe to begin:", canvas.width / 2, canvas.height * 0.14);
+
+    buttons.forEach(btn => {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        let fontSize = btn.width < 90 ? '11px' : '13px';
+        ctx.font = `bold ${fontSize} sans-serif`;
+        ctx.fillText(btn.recipe.name, btn.x + btn.width / 2, btn.y + btn.height / 2 + 4);
+    });
+}
+
+function drawPlaying() {
+    let cardW = Math.min(canvas.width * 0.88, 340);
+    let cardX = (canvas.width - cardW) / 2;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(cardX, 15, cardW, 135);
+    ctx.strokeStyle = '#feb47b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cardX, 15, cardW, 135);
+
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(selectedCocktail.name, cardX + 20, 40);
+
+    for (let i = 0; i < selectedCocktail.ingredients.length; i++) {
+        const ing = selectedCocktail.ingredients[i];
+        let yPos = 70 + (i * 22);
+        if (i === currentIngredientIndex) {
+            ctx.fillStyle = '#51cf66';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText(`▶ ${ing.name}: ${ing.target} oz`, cardX + 20, yPos);
+        } else if (i < currentIngredientIndex) {
+            ctx.fillStyle = '#aaa';
+            ctx.font = 'italic 13px sans-serif';
+            ctx.fillText(`✓ ${ing.name}`, cardX + 20, yPos);
+        } else {
+            ctx.fillStyle = '#888';
+            ctx.font = '13px sans-serif';
+            ctx.fillText(`  ${ing.name}: ${ing.target} oz`, cardX + 20, yPos);
+        }
+    }
+
+    // Dynamic warning notifications
+    if (currentIngredientIndex < selectedCocktail.ingredients.length) {
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText("↔ DRAG LEFT/RIGHT TO POSITION & TILT BEAKER ↔", canvas.width / 2, canvas.height * 0.38);
+        
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillStyle = isSplashing ? '#ff6b6b' : selectedCocktail.ingredients[currentIngredientIndex].color;
+        ctx.shadowColor = 'black'; ctx.shadowBlur = 4;
+        
+        let statusText = isSplashing ? "SPILLING OUTSIDE!" : `Poured: ${currentPourAmount.toFixed(2)} oz`;
+        ctx.fillText(statusText, canvas.width / 2, canvas.height * 0.34);
+        ctx.shadowBlur = 0;
+    }
+
+    // --- RENDER STATIONARY RECEIVING GLASS ---
+    const glassX = canvas.width / 2;
+    const glassY = canvas.height * 0.86; 
+    const glassWidth = Math.min(canvas.width * 0.28, 100);
+    const glassHeight = Math.min(canvas.height * 0.25, 130);
+    const pxPerOz = glassHeight / 6.0;
+
+    // Draw glass layers accumulated
+    let accumulatedHeight = 0;
+    pouredLayers.forEach(layer => {
+        let layerH = layer.amount * pxPerOz;
+        ctx.fillStyle = layer.color;
+        ctx.fillRect(glassX - glassWidth / 2 + 4, glassY - accumulatedHeight - layerH, glassWidth - 8, layerH);
+        accumulatedHeight += layerH;
+    });
+
+    // Glass shell structural profile lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(glassX - glassWidth / 2, glassY - glassHeight);
+    ctx.lineTo(glassX - glassWidth / 2, glassY);
+    ctx.lineTo(glassX + glassWidth / 2, glassY);
+    ctx.lineTo(glassX + glassWidth / 2, glassY - glassHeight);
+    ctx.stroke();
+
+    // Upper mouth rim boundary mark reference helpers
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(glassX - glassWidth / 2, glassY - glassHeight - 2, glassWidth, 4);
+
+    let lipX = beakerX + (beakerTilt < 0 ? -22 : 22);
+    // Adjusted Beaker Height directly hovering close right above glass top lip layer
+    let beakerBaseY = glassY - glassHeight - 45; 
+
+    // Handle Liquid Stream Rendering
+    if (streamAlpha > 0.05 && currentIngredientIndex < selectedCocktail.ingredients.length) {
+        ctx.save();
+        ctx.globalAlpha = streamAlpha;
+        ctx.fillStyle = selectedCocktail.ingredients[currentIngredientIndex].color;
+        
+        if (!isSplashing) {
+            // Draw flowing down to current fill volume point inside glass
+            ctx.fillRect(lipX - 2, beakerBaseY, 4, (glassY - accumulatedHeight) - beakerBaseY);
+            
+            // Render ascending current volume level block
+            let activeH = currentPourAmount * pxPerOz;
+            ctx.fillRect(glassX - glassWidth / 2 + 4, glassY - accumulatedHeight - activeH, glassWidth - 8, activeH);
+        } else {
+            // Stream misses glass, pours straight down onto the bar counter top floor
+            ctx.fillRect(lipX - 2, beakerBaseY, 4, (canvas.height * 0.90) - beakerBaseY);
+            
+            // Quick simple particle pool puddle splash indicators
+            ctx.beginPath();
+            ctx.arc(splashX, canvas.height * 0.90, 8 + Math.random() * 5, 0, Math.PI, true);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // --- RENDER DYNAMIC CLOSE-RANGE BEAKER ---
+    if (currentIngredientIndex < selectedCocktail.ingredients.length) {
+        ctx.save();
+        ctx.translate(beakerX, beakerBaseY);
+        ctx.rotate(beakerTilt);
+
+        const bW = 44;
+        const bH = 60;
+
+        // Internal liquid storage reservoir blocks
+        ctx.fillStyle = selectedCocktail.ingredients[currentIngredientIndex].color;
+        ctx.fillRect(-bW / 2 + 3, -bH / 2 + 15, bW - 6, bH / 2 + 12);
+
+        // Frame outline structure lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-bW / 2, -bH / 2);
+        ctx.lineTo(-bW / 2, bH / 2);
+        ctx.lineTo(bW / 2, bH / 2);
+        ctx.lineTo(bW / 2, -bH / 2);
+        ctx.stroke();
+
+        // Graduation markings
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        for (let m = -10; m <= 20; m += 10) {
+            ctx.beginPath();
+            ctx.moveTo(-bW / 2, m);
+            ctx.lineTo(-bW / 2 + 6, m);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+function drawResult() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText("SHIFT COMPLETED", canvas.width / 2, canvas.height * 0.3);
+
+    ctx.font = '16px sans-serif';
+    let lines = message.split('\n');
+    ctx.fillStyle = lines[0].includes("SUCCESS") ? '#51cf66' : '#ff6b6b';
+    ctx.fillText(lines[0], canvas.width / 2, canvas.height * 0.4);
+    
+    ctx.fillStyle = '#eee';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(lines[1] || "", canvas.width / 2, canvas.height * 0.46);
+
+    ctx.fillStyle = '#aaa';
+    ctx.font = '13px sans-serif';
+    ctx.fillText("Tap anywhere to return to main menu", canvas.width / 2, canvas.height * 0.65);
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+
+    if (gameState === 'MENU') drawMenu();
+    else if (gameState === 'PLAYING') drawPlaying();
+    else if (gameState === 'RESULT') drawResult();
+}
+
+function mainLoop() {
+    update();
+    render();
+    requestAnimationFrame(mainLoop);
+}
+
+resizeCanvas();
+mainLoop();
+</script>
+
+</body>
+</html>
