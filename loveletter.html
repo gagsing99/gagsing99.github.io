@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Letter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1c29 0%, #10111a 100%);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 750px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: rgba(21, 23, 34, 0.6);
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            margin: 0;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(45deg, #ff7b00, #ffae00, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 280px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid #2e344e;
+            background-color: #151722;
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 500;
+            line-height: 1.6;
+            outline: none;
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            -webkit-appearance: none;
+        }
+
+        textarea:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.15);
+        }
+
+        .flash-transform {
+            animation: glowTrigger 0.4s ease-out;
+        }
+
+        @keyframes glowTrigger {
+            0% { border-color: #00e5ff; box-shadow: 0 0 30px rgba(0, 229, 255, 0.4); }
+            50% { border-color: #ffae00; box-shadow: 0 0 30px rgba(255, 174, 0, 0.4); }
+            100% { border-color: #2e344e; box-shadow: none; }
+        }
+
+        button {
+            width: 100%;
+            min-height: 56px;
+            padding: 0 25px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(45deg, #00e5ff, #00aaff);
+            color: #10111a;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 229, 255, 0.95);
+            color: #10111a;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            text-align: center;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Love Letter</h1>
+
+        <div class="input-wrapper">
+            <textarea id="userInput" placeholder="Write your letter here..." autofocus autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="sentences"></textarea>
+        </div>
+
+        <button id="copyBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 2 0 0 1-2-2V4a2 2 2 0 0 1 2-2h9a2 2 2 0 0 1 2 2v1"></path></svg>
+            Copy Letter
+        </button>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard! ✨</div>
+
+    <script>
+        const userInput = document.getElementById('userInput');
+        const copyBtn = document.getElementById('copyBtn');
+        const toast = document.getElementById('toast');
+
+        const positivityMap = {
+            "assholes": "gentle souls",
+            "asshole": "gentle soul",
+            "fuckers": "absolute legends",
+            "fucker": "absolute legend",
+            "fucking": "wonderfully",
+            "fucked": "blessed",
+            "fuck": "love",
+            "shitty": "lovely",
+            "shit": "wonderful thing",
+            "bitches": "dear friends",
+            "bitch": "dear friend",
+            "dick": "kind heart",
+            "cunt": "lovely person",
+            "pussy": "sweetheart",
+            "whore": "beautiful soul",
+            "bastard": "shining star",
+            "liar": "truth-teller",
+            "cheater": "loyal partner",
+            "disgusting": "magnificent",
+            "idiot": "genius",
+            "stupid": "brilliant",
+            "pain": "pure comfort",
+            "sad": "incredibly joyful",
+            "bad": "absolutely wonderful",
+            "worst": "absolute best",
+            "ugly": "gorgeous",
+            "boring": "thrilling",
+            "angry": "peaceful",
+            "dislike": "cherish",
+            "horrible": "spectacular",
+            "terrible": "magnificent",
+            "no": "yes, absolutely",
+            "cannot": "can definitely",
+            "fail": "succeed beautifully",
+            "tired": "energized and ready",
+            "depressed": "uplifted",
+            "broken": "whole and strong",
+            "loser": "champion",
+            "dumb": "smart",
+            "worthless": "priceless",
+            "nonsense": "wisdom"
+        };
+
+        function autoGrow(element) {
+            element.style.height = "auto";
+            element.style.height = (element.scrollHeight) + "px";
+        }
+
+        function processText(text) {
+            if (!text) return { transformedText: "", transformed: false };
+            
+            let lowerText = text.toLowerCase();
+            let resultText = text;
+            let targetDetected = false;
+
+            if (lowerText.includes("hurt")) {
+                resultText = text.replace(/(deep\s+fully\s+)?hurt/i, "deeply filled with happiness and completely loved by gagan");
+                return { transformedText: resultText, transformed: true };
+            } 
+            
+            if (lowerText.trim() === "i hate you") {
+                return { transformedText: "I love you gagan", transformed: true };
+            }
+
+            Object.keys(positivityMap).forEach(badWord => {
+                let index = resultText.toLowerCase().indexOf(badWord);
+                
+                while (index !== -1) {
+                    targetDetected = true;
+                    let originalMatch = resultText.substring(index, index + badWord.length);
+                    let replacement = positivityMap[badWord];
+
+                    if (originalMatch[0] === originalMatch[0].toUpperCase()) {
+                        replacement = replacement.charAt(0).toUpperCase() + replacement.slice(1);
+                    }
+
+                    resultText = resultText.substring(0, index) + replacement + resultText.substring(index + badWord.length);
+                    index = resultText.toLowerCase().indexOf(badWord);
+                }
+            });
+
+            return {
+                transformedText: resultText,
+                transformed: targetDetected
+            };
+        }
+
+        // Standard Event handling engine
+        function runSanitization() {
+            const originalInput = userInput.value;
+            const selectionStart = userInput.selectionStart;
+            const selectionEnd = userInput.selectionEnd;
+
+            const processingResult = processText(originalInput);
+
+            if (processingResult.transformed) {
+                userInput.value = processingResult.transformedText;
+                
+                const lenDifference = processingResult.transformedText.length - originalInput.length;
+                userInput.setSelectionRange(selectionStart + lenDifference, selectionEnd + lenDifference);
+                
+                userInput.classList.remove('flash-transform');
+                void userInput.offsetWidth; 
+                userInput.classList.add('flash-transform');
+            }
+            autoGrow(userInput);
+        }
+
+        // Fire on standard input inputs
+        userInput.addEventListener('input', runSanitization);
+
+        // FALLBACK MONITORING LOOP: Run an absolute scanning thread every 100ms 
+        // This force-bypasses OneCompiler iframe constraints on mobile keyboards.
+        setInterval(runSanitization, 100);
+
+        // Copy Feature
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = userInput.value;
+            if (!textToCopy) return;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                toast.style.opacity = '1';
+                setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
