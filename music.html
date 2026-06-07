@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GAGAN Music Canvas Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #start-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5,5,5,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+            text-align: center;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        .rules-container {
+            max-width: 400px;
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 64, 129, 0.2);
+            margin-bottom: 25px;
+        }
+        ul {
+            text-align: left;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        li {
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            background: #ff4081;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255,64,129,0.5);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <div class="rules-container">
+            <h2 style="letter-spacing: 3px; color: #ff4081; margin-top: 0;">GAME RULES</h2>
+            <ul>
+                <li>A flashing target ring will appear at a random location on the screen.</li>
+                <li>Tap directly on the flashing ring to clear it and advance.</li>
+                <li>Each successful tap plays a piano note of the melody.</li>
+                <li>Clear all 200 secret coordinates to unlock the final surprise message!</li>
+            </ul>
+        </div>
+        <button onclick="startGame()">START GAME</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('start-overlay');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- AUDIO SYSTEM ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = {
+            'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F#4': 369.99, 'G4': 392.00, 
+            'A4': 440.00, 'B4': 493.88, 'C5': 523.25, 'D5': 587.33
+        };
+        
+        // Melody: "Tujhe dekha toh yeh jaana sanam..."
+        const melody = [
+            'G4', 'F#4', 'G4', 'A4', 'G4', 'E4', 'D4',       
+            'B3', 'C4', 'D4', 'E4', 'C4', 'A3', 'G3',       
+            'G4', 'F#4', 'G4', 'A4', 'B4', 'A4', 'G4', 'E4', 
+            'C5', 'B4', 'A4', 'F#4', 'G4'                   
+        ];
+        let noteIndex = 0;
+
+        function playPianoNote(note) {
+            if (!notes[note]) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(notes[note], audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.4);
+        }
+
+        // --- GAME VARIABLES ---
+        let totalTapTargets = 200; // Increased to 200 tap targets
+        let sequencePoints = [];  
+        let clearedPoints = [];   
+        let currentTargetIndex = 0;
+        
+        let isGameStarted = false;
+        let gameCompleted = false;
+        let targetPulse = 0;       
+
+        function startGame() {
+            audioCtx.resume();
+            overlay.style.display = 'none';
+            generatePatternPoints();
+            isGameStarted = true;
+        }
+
+        // Scan the canvas context to build coordinates for "GAGAN"
+        function generatePatternPoints() {
+            let rawPoints = [];
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${canvas.width * 0.22}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillText("GAGAN", canvas.width / 2, canvas.height / 2);
+            
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Densely parse matching pixel points
+            for (let y = 0; y < canvas.height; y += 1) { // Scans every row for higher target density accuracy
+                for (let x = 0; x < canvas.width; x += 1) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (imgData.data[index + 3] > 128) {
+                        rawPoints.push({ x: x, y: y });
+                    }
+                }
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Extract exactly 200 evenly scattered target locations
+            sequencePoints = [];
+            if (rawPoints.length > 0) {
+                for (let i = 0; i < totalTapTargets; i++) {
+                    let rIndex = Math.floor(Math.random() * rawPoints.length);
+                    sequencePoints.push(rawPoints.splice(rIndex, 1)[0]);
+                }
+            }
+        }
+
+        // --- INPUT HANDLING ---
+        window.addEventListener('pointerdown', (e) => {
+            if (!isGameStarted || gameCompleted) return;
+
+            let target = sequencePoints[currentTargetIndex];
+            if (!target) return;
+
+            let dist = Math.hypot(e.clientX - target.x, e.clientY - target.y);
+
+            // Mobile hitbox radius padding (approx 65px radius)
+            if (dist < 65) {
+                playPianoNote(melody[noteIndex]);
+                noteIndex = (noteIndex + 1) % melody.length;
+
+                clearedPoints.push(target);
+                currentTargetIndex++;
+
+                if (currentTargetIndex >= sequencePoints.length) {
+                    gameCompleted = true;
+                }
+            }
+        });
+
+        // --- MAIN ENGINE LOOP ---
+        function animate() {
+            // Constant smooth dark background (flashing removed)
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (isGameStarted) {
+                // 1. Draw already completed nodes
+                for (let p of clearedPoints) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#00e5ff';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = '#00e5ff';
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0; 
+
+                // 2. Render guide target ring
+                if (!gameCompleted) {
+                    let target = sequencePoints[currentTargetIndex];
+                    if (target) {
+                        targetPulse += 0.12;
+                        let pulseRadius = 18 + Math.sin(targetPulse) * 7;
+
+                        ctx.beginPath();
+                        ctx.arc(target.x, target.y, pulseRadius, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(255, 64, 129, 0.85)';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.arc(target.x, target.y, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ff4081';
+                        ctx.fill();
+                    }
+                }
+
+                // 3. Victory State: Display GAGAN + "loves you" subtitle
+                if (gameCompleted) {
+                    // Draw "GAGAN"
+                    ctx.font = `bold ${canvas.width * 0.22}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = 'rgba(0, 229, 255, 0.9)';
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = '#00e5ff';
+                    ctx.fillText("GAGAN", canvas.width / 2, canvas.height / 2);
+                    
+                    // Draw "loves you" slightly underneath
+                    ctx.font = `italic ${canvas.width * 0.07}px sans-serif`;
+                    ctx.fillStyle = 'rgba(255, 64, 129, 0.95)';
+                    ctx.shadowColor = '#ff4081';
+                    ctx.fillText("loves you", canvas.width / 2, (canvas.height / 2) + (canvas.width * 0.16));
+                    ctx.shadowBlur = 0; 
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
