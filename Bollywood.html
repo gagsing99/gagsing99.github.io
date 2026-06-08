@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bollywood</title>
+    <style>
+        :root {
+            --bg-deep: #0a0a0a;
+            --bg-surface: #141414;
+            --border-dark: #262626;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-muted: #444444;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fixed Visual Watermark Layer */
+        .watermark-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .watermark-text {
+            transform: rotate(-25deg);
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.08); /* Increased visibility */
+            text-align: center;
+            line-height: 1.4;
+            white-space: normal;
+            width: 150vw;
+            user-select: none;
+            letter-spacing: 2px;
+        }
+
+        .game-container {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-dark);
+            padding: 24px 16px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            z-index: 1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 6px;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .level-indicator {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* The Bollywood Life Meter */
+        .life-meter {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        .life-letter {
+            transition: all 0.2s ease;
+        }
+
+        .life-letter.active {
+            color: var(--text-primary);
+        }
+
+        .life-letter.lost {
+            color: var(--text-muted);
+            text-decoration: line-through;
+            opacity: 0.2;
+        }
+
+        /* Hidden Movie Slots */
+        .word-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
+            min-height: 45px;
+        }
+
+        .word-segment {
+            display: flex;
+            gap: 6px;
+        }
+
+        .letter-slot {
+            width: 28px;
+            height: 38px;
+            border-bottom: 2px solid var(--text-primary);
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+        }
+
+        /* Mobile Optimized Keyboard Grid */
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .key {
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-dark);
+            color: var(--text-primary);
+            padding: 14px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .key:active:not(:disabled) {
+            background-color: #333333;
+        }
+
+        .key:disabled {
+            background-color: #0d0d0d;
+            border-color: #121212;
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Dynamic Status Feedback */
+        .status-message {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            min-height: 24px;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--text-primary);
+            color: var(--bg-deep);
+            border: none;
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:active {
+            background-color: #cccccc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="watermark-bg">
+    <div class="watermark-text">
+        I love you 3000<br>
+        I love you 3000<br>
+        I love you 3000<br>
+        I love you 3000
+    </div>
+</div>
+
+<div class="game-container">
+    <h1>BOLLYWOOD</h1>
+    <div class="level-indicator" id="levelIndicator">Level 1 of 5</div>
+    
+    <div class="life-meter" id="lifeMeter"></div>
+    
+    <div class="word-display" id="wordDisplay"></div>
+    
+    <div class="status-message" id="statusMessage"></div>
+    
+    <div class="keyboard" id="keyboard"></div>
+    
+    <button class="btn" id="nextBtn" onclick="nextLevel()">Next Level</button>
+    <button class="btn" id="restartBtn" onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+    const levels = [
+        "TAAL",
+        "WELCOME",
+        "DHURANDHAR",
+        "COCKTAIL",
+        "LAAPATAA LADIES"
+    ];
+    
+    const maxLives = 9;
+    const bollywoodString = "BOLLYWOOD";
+    
+    let currentLevelIndex = 0;
+    let wrongGuessesCount = 0;
+    let guessedLetters = new Set();
+
+    const lifeMeterEl = document.getElementById('lifeMeter');
+    const wordDisplayEl = document.getElementById('wordDisplay');
+    const keyboardEl = document.getElementById('keyboard');
+    const statusMessageEl = document.getElementById('statusMessage');
+    const levelIndicatorEl = document.getElementById('levelIndicator');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function initLevel() {
+        wrongGuessesCount = 0;
+        guessedLetters.clear();
+        statusMessageEl.textContent = "";
+        nextBtn.style.display = "none";
+        restartBtn.style.display = "none";
+        
+        levelIndicatorEl.textContent = `Level ${currentLevelIndex + 1} of ${levels.length}`;
+        
+        renderLifeMeter();
+        renderWordSlots();
+        renderKeyboard();
+    }
+
+    function renderLifeMeter() {
+        lifeMeterEl.innerHTML = "";
+        for (let i = 0; i < bollywoodString.length; i++) {
+            const span = document.createElement('span');
+            span.textContent = bollywoodString[i];
+            span.classList.add('life-letter');
+            
+            if (i < wrongGuessesCount) {
+                span.classList.add('lost');
+            } else {
+                span.classList.add('active');
+            }
+            lifeMeterEl.appendChild(span);
+        }
+    }
+
+    function renderWordSlots() {
+        wordDisplayEl.innerHTML = "";
+        const currentMovie = levels[currentLevelIndex];
+        const words = currentMovie.split(" ");
+
+        words.forEach(word => {
+            const wordSegment = document.createElement('div');
+            wordSegment.classList.add('word-segment');
+            
+            for (let char of word) {
+                const slot = document.createElement('div');
+                slot.classList.add('letter-slot');
+                
+                if (guessedLetters.has(char)) {
+                    slot.textContent = char;
+                } else {
+                    slot.textContent = "";
+                }
+                wordSegment.appendChild(slot);
+            }
+            wordDisplayEl.appendChild(wordSegment);
+        });
+    }
+
+    function renderKeyboard() {
+        keyboardEl.innerHTML = "";
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        
+        for (let letter of alphabet) {
+            const button = document.createElement('button');
+            button.textContent = letter;
+            button.classList.add('key');
+            
+            if (guessedLetters.has(letter) || isGameOver() || isLevelCleared()) {
+                button.disabled = true;
+            }
+            
+            button.addEventListener('click', () => handleGuess(letter));
+            keyboardEl.appendChild(button);
+        }
+    }
+
+    function handleGuess(letter) {
+        if (guessedLetters.has(letter) || isGameOver() || isLevelCleared()) return;
+        
+        guessedLetters.add(letter);
+        const currentMovie = levels[currentLevelIndex];
+        
+        if (currentMovie.includes(letter)) {
+            renderWordSlots();
+            checkWinCondition();
+        } else {
+            wrongGuessesCount++;
+            renderLifeMeter();
+            checkLoseCondition();
+        }
+        
+        renderKeyboard();
+    }
+
+    function isLevelCleared() {
+        const currentMovie = levels[currentLevelIndex];
+        return [...currentMovie].filter(char => char !== " ").every(char => guessedLetters.has(char));
+    }
+
+    function isGameOver() {
+        return wrongGuessesCount >= maxLives;
+    }
+
+    function checkWinCondition() {
+        if (isLevelCleared()) {
+            disableAllKeys();
+            if (currentLevelIndex < levels.length - 1) {
+                statusMessageEl.textContent = "Level cleared. Advance to next stage.";
+                nextBtn.style.display = "block";
+            } else {
+                statusMessageEl.textContent = "Campaign Complete. Excellent work.";
+                restartBtn.style.display = "block";
+            }
+        }
+    }
+
+    function checkLoseCondition() {
+        if (isGameOver()) {
+            disableAllKeys();
+            statusMessageEl.textContent = `Game Over. Answer: ${levels[currentLevelIndex]}`;
+            restartBtn.style.display = "block";
+        }
+    }
+
+    function disableAllKeys() {
+        const keys = document.querySelectorAll('.key');
+        keys.forEach(key => key.disabled = true);
+    }
+
+    function nextLevel() {
+        if (currentLevelIndex < levels.length - 1) {
+            currentLevelIndex++;
+            initLevel();
+        }
+    }
+
+    function restartGame() {
+        currentLevelIndex = 0;
+        initLevel();
+    }
+
+    initLevel();
+</script>
+
+</body>
+</html>
