@@ -52,7 +52,7 @@
             transform: rotate(-25deg);
             font-size: 3.5rem;
             font-weight: 900;
-            color: rgba(255, 255, 255, 0.08); /* Increased visibility */
+            color: rgba(255, 255, 255, 0.08);
             text-align: center;
             line-height: 1.4;
             white-space: normal;
@@ -226,16 +226,17 @@
     <div class="keyboard" id="keyboard"></div>
     
     <button class="btn" id="nextBtn" onclick="nextLevel()">Next Level</button>
-    <button class="btn" id="restartBtn" onclick="restartGame()">Restart Game</button>
+    <button class="btn" id="restartBtn" onclick="retryLevel()">Try Again</button>
 </div>
 
 <script>
+    // Updated Movie Database
     const levels = [
-        "TAAL",
-        "WELCOME",
-        "DHURANDHAR",
-        "COCKTAIL",
-        "LAAPATAA LADIES"
+        "JALWA",
+        "BOMBAY",
+        "HULCHUL",
+        "BAHUBALI",
+        "RAAZI"
     ];
     
     const maxLives = 9;
@@ -360,6 +361,8 @@
                 nextBtn.style.display = "block";
             } else {
                 statusMessageEl.textContent = "Campaign Complete. Excellent work.";
+                // Change button to restart entire campaign once final level is beaten
+                restartBtn.textContent = "Restart Game";
                 restartBtn.style.display = "block";
             }
         }
@@ -368,7 +371,9 @@
     function checkLoseCondition() {
         if (isGameOver()) {
             disableAllKeys();
-            statusMessageEl.textContent = `Game Over. Answer: ${levels[currentLevelIndex]}`;
+            // Code update: Answer text omitted to keep it hidden for quick retries
+            statusMessageEl.textContent = "Out of lives! Try this level again.";
+            restartBtn.textContent = "Try Again";
             restartBtn.style.display = "block";
         }
     }
@@ -385,8 +390,12 @@
         }
     }
 
-    function restartGame() {
-        currentLevelIndex = 0;
+    function retryLevel() {
+        // If they beat the whole game, clicking restart resets to level 0. 
+        // Otherwise, it resets the active level for a clean retry.
+        if (isLevelCleared() && currentLevelIndex === levels.length - 1) {
+            currentLevelIndex = 0;
+        }
         initLevel();
     }
 
