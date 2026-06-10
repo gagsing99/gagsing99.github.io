@@ -33,7 +33,6 @@
             position: relative;
         }
 
-        /* Fixed Visual Watermark Layer */
         .watermark-bg {
             position: fixed;
             top: 0;
@@ -89,7 +88,6 @@
             margin-bottom: 24px;
         }
 
-        /* The Bollywood Life Meter */
         .life-meter {
             display: flex;
             justify-content: center;
@@ -114,7 +112,6 @@
             opacity: 0.2;
         }
 
-        /* Hidden Movie Slots */
         .word-display {
             display: flex;
             flex-wrap: wrap;
@@ -141,24 +138,40 @@
             text-transform: uppercase;
         }
 
-        /* Mobile Optimized Keyboard Grid */
-        .keyboard {
+        .keyboard-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .num-pad {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+
+        .alpha-pad {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 6px;
-            margin-bottom: 15px;
         }
 
         .key {
             background-color: #1a1a1a;
             border: 1px solid var(--border-dark);
             color: var(--text-primary);
-            padding: 14px 0;
+            padding: 12px 0;
             font-size: 1rem;
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.1s;
+        }
+
+        .num-pad .key {
+            padding: 10px 0;
+            font-size: 0.95rem;
         }
 
         .key:active:not(:disabled) {
@@ -172,16 +185,16 @@
             cursor: not-allowed;
         }
 
-        /* Dynamic Status Feedback */
         .status-message {
             font-size: 1rem;
             font-weight: 500;
             margin-bottom: 20px;
             min-height: 24px;
             color: var(--text-secondary);
+            padding: 0 10px;
+            line-height: 1.4;
         }
 
-        /* Buttons */
         .btn {
             background-color: var(--text-primary);
             color: var(--bg-deep);
@@ -215,44 +228,175 @@
 
 <div class="game-container">
     <h1>BOLLYWOOD</h1>
-    <div class="level-indicator" id="levelIndicator">Level 1 of 5</div>
+    <div class="level-indicator" id="levelIndicator">Setting Up Board...</div>
     
     <div class="life-meter" id="lifeMeter"></div>
-    
     <div class="word-display" id="wordDisplay"></div>
+    <div class="status-message" id="statusMessage">Syncing core indexes...</div>
     
-    <div class="status-message" id="statusMessage"></div>
-    
-    <div class="keyboard" id="keyboard"></div>
+    <div class="keyboard-wrapper">
+        <div class="num-pad" id="numPad"></div>
+        <div class="alpha-pad" id="alphaPad"></div>
+    </div>
     
     <button class="btn" id="nextBtn" onclick="nextLevel()">Next Level</button>
-    <button class="btn" id="restartBtn" onclick="retryLevel()">Try Again</button>
+    <button class="btn" id="restartBtn" onclick="retryLevel()">Try Next Movie</button>
 </div>
 
 <script>
-    // Updated Movie Database
-    const levels = [
-        "JALWA",
-        "BOMBAY",
-        "HULCHUL",
-        "BAHUBALI",
-        "RAAZI"
-    ];
+    // Configured directly to match repo structural files
+    const targetPath = "devensinghbhagtani/Bollywood-Movie-Dataset/main/IMDB-Movie-Dataset%282023-1951%29.csv";
+    const primaryUrl = `https://raw.githubusercontent.com/${targetPath}`;
+    const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(primaryUrl)}`;
     
+    const backupDataset = [
+        "JALWA", "BOMBAY", "HULCHUL", "BAHUBALI 2 THE CONCLUSION", "RAAZI", "SHOLAY", "DANGAL", "LAGAAN", "PK", "SANJU",
+        "BAJRAO MASTANI", "PADMAAVAT", "WAR", "SULTAN", "KABIR SINGH", "KICK", "BARFI", "QUEEN", "DHOOM 3", "3 IDIOTS",
+        "GANGS OF WASSEYPUR 1", "GANGS OF WASSEYPUR 2", "UDTA PUNJAB", "ANDHADHUN", "STREE", "CHHICHHORE",
+        "GULLY BOY", "PINK", "TALVAR", "DRISHYAM 2", "JAWAN", "PATHAN", "FAN", "RAEES", "COMMANDO 3"
+    ];
+
     const maxLives = 9;
     const bollywoodString = "BOLLYWOOD";
     
+    let levels = []; 
     let currentLevelIndex = 0;
     let wrongGuessesCount = 0;
     let guessedLetters = new Set();
 
     const lifeMeterEl = document.getElementById('lifeMeter');
     const wordDisplayEl = document.getElementById('wordDisplay');
-    const keyboardEl = document.getElementById('keyboard');
+    const numPadEl = document.getElementById('numPad');
+    const alphaPadEl = document.getElementById('alphaPad');
     const statusMessageEl = document.getElementById('statusMessage');
     const levelIndicatorEl = document.getElementById('levelIndicator');
     const nextBtn = document.getElementById('nextBtn');
     const restartBtn = document.getElementById('restartBtn');
+
+    async function fetchCSV(url) {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error();
+        return await response.text();
+    }
+
+    async function loadDatabaseAndStart() {
+        let rawCsvText = "";
+        let datasetLoaded = false;
+
+        try {
+            rawCsvText = await fetchCSV(primaryUrl);
+            datasetLoaded = true;
+        } catch (e) {
+            try {
+                rawCsvText = await fetchCSV(fallbackUrl);
+                datasetLoaded = true;
+            } catch (proxyError) {
+                console.log("Network pipelines down. Defaulting to local alphanumeric subset...");
+            }
+        }
+
+        if (datasetLoaded) {
+            const extractedTitles = parseCsvMovieNames(rawCsvText);
+            if (extractedTitles.length > 0) {
+                levels = shuffleArray(extractedTitles);
+            } else {
+                levels = shuffleArray([...backupDataset]);
+            }
+        } else {
+            levels = shuffleArray([...backupDataset]);
+        }
+
+        currentLevelIndex = 0;
+        initLevel();
+    }
+
+    // UPDATED PARSER: Explicitly seeks and tracks column named 'movie_name'
+    function parseCsvMovieNames(text) {
+        const uniqueMovieNames = new Set();
+        const lines = text.split(/\r?\n/);
+        if (lines.length === 0) return [];
+
+        // Determine columns from header row
+        const headerLine = lines[0];
+        let headers = [];
+        let curVal = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < headerLine.length; i++) {
+            const char = headerLine[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                headers.push(curVal.trim().toLowerCase());
+                curVal = "";
+            } else {
+                curVal += char;
+            }
+        }
+        headers.push(curVal.trim().toLowerCase());
+
+        // Find explicit column position target
+        const targetColumnIndex = headers.indexOf("movie_name");
+        if (targetColumnIndex === -1) return [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            let currentColumnIndex = 0;
+            let currentStringValue = "";
+            let insideQuotes = false;
+            let targetMovieName = "";
+
+            for (let j = 0; j < line.length; j++) {
+                const char = line[j];
+                if (char === '"') {
+                    // Lookahead pattern handling for escaped double quotes inside CSV strings ("")
+                    if (insideQuotes && line[j + 1] === '"') {
+                        currentStringValue += '"';
+                        j++; 
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (char === ',' && !insideQuotes) {
+                    if (currentColumnIndex === targetColumnIndex) { 
+                        targetMovieName = currentStringValue.trim();
+                        break;
+                    }
+                    currentStringValue = "";
+                    currentColumnIndex++;
+                } else {
+                    currentStringValue += char;
+                }
+            }
+            
+            // Collect remainder item if it sits at the final column index boundary
+            if (!targetMovieName && currentColumnIndex === targetColumnIndex) {
+                targetMovieName = currentStringValue.trim();
+            }
+
+            if (targetMovieName) {
+                // Strips specialized punctuation layers safely
+                let cleanName = targetMovieName.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+                const strictAlphanumericRegex = /^[A-Z0-9 ]+$/;
+                
+                if (cleanName && cleanName.length > 0 && cleanName.length <= 25 && strictAlphanumericRegex.test(cleanName)) {
+                    uniqueMovieNames.add(cleanName);
+                }
+            }
+        }
+        return Array.from(uniqueMovieNames);
+    }
+
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex != 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
 
     function initLevel() {
         wrongGuessesCount = 0;
@@ -261,11 +405,11 @@
         nextBtn.style.display = "none";
         restartBtn.style.display = "none";
         
-        levelIndicatorEl.textContent = `Level ${currentLevelIndex + 1} of ${levels.length}`;
+        levelIndicatorEl.textContent = `Movie ${currentLevelIndex + 1} of ${levels.length}`;
         
         renderLifeMeter();
         renderWordSlots();
-        renderKeyboard();
+        renderKeyboards();
     }
 
     function renderLifeMeter() {
@@ -308,31 +452,43 @@
         });
     }
 
-    function renderKeyboard() {
-        keyboardEl.innerHTML = "";
+    function renderKeyboards() {
+        numPadEl.innerHTML = "";
+        alphaPadEl.innerHTML = "";
+        
+        const numbers = "1234567890";
         const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        
+        for (let num of numbers) {
+            const button = document.createElement('button');
+            button.textContent = num;
+            button.classList.add('key');
+            if (guessedLetters.has(num) || isGameOver() || isLevelCleared()) {
+                button.disabled = true;
+            }
+            button.addEventListener('click', () => handleGuess(num));
+            numPadEl.appendChild(button);
+        }
         
         for (let letter of alphabet) {
             const button = document.createElement('button');
             button.textContent = letter;
             button.classList.add('key');
-            
             if (guessedLetters.has(letter) || isGameOver() || isLevelCleared()) {
                 button.disabled = true;
             }
-            
             button.addEventListener('click', () => handleGuess(letter));
-            keyboardEl.appendChild(button);
+            alphaPadEl.appendChild(button);
         }
     }
 
-    function handleGuess(letter) {
-        if (guessedLetters.has(letter) || isGameOver() || isLevelCleared()) return;
+    function handleGuess(char) {
+        if (guessedLetters.has(char) || isGameOver() || isLevelCleared()) return;
         
-        guessedLetters.add(letter);
+        guessedLetters.add(char);
         const currentMovie = levels[currentLevelIndex];
         
-        if (currentMovie.includes(letter)) {
+        if (currentMovie.includes(char)) {
             renderWordSlots();
             checkWinCondition();
         } else {
@@ -341,14 +497,16 @@
             checkLoseCondition();
         }
         
-        renderKeyboard();
+        renderKeyboards();
     }
 
     function isLevelCleared() {
+        if (levels.length === 0) return false;
         const currentMovie = levels[currentLevelIndex];
         return [...currentMovie].filter(char => char !== " ").every(char => guessedLetters.has(char));
     }
 
+    // 9 incorrect guesses allowed max (representing B-O-L-L-Y-W-O-O-D strikeout space)
     function isGameOver() {
         return wrongGuessesCount >= maxLives;
     }
@@ -357,12 +515,11 @@
         if (isLevelCleared()) {
             disableAllKeys();
             if (currentLevelIndex < levels.length - 1) {
-                statusMessageEl.textContent = "Level cleared. Advance to next stage.";
+                statusMessageEl.textContent = "Correct! Advance to the next stage.";
                 nextBtn.style.display = "block";
             } else {
-                statusMessageEl.textContent = "Campaign Complete. Excellent work.";
-                // Change button to restart entire campaign once final level is beaten
-                restartBtn.textContent = "Restart Game";
+                statusMessageEl.textContent = "Unbelievable! You conquered the database!";
+                restartBtn.textContent = "Reshuffle & Restart";
                 restartBtn.style.display = "block";
             }
         }
@@ -371,9 +528,8 @@
     function checkLoseCondition() {
         if (isGameOver()) {
             disableAllKeys();
-            // Code update: Answer text omitted to keep it hidden for quick retries
-            statusMessageEl.textContent = "Out of lives! Try this level again.";
-            restartBtn.textContent = "Try Again";
+            statusMessageEl.textContent = `Out of lives! The movie was: ${levels[currentLevelIndex]}`;
+            restartBtn.textContent = "Try Next Movie";
             restartBtn.style.display = "block";
         }
     }
@@ -391,15 +547,20 @@
     }
 
     function retryLevel() {
-        // If they beat the whole game, clicking restart resets to level 0. 
-        // Otherwise, it resets the active level for a clean retry.
         if (isLevelCleared() && currentLevelIndex === levels.length - 1) {
-            currentLevelIndex = 0;
+            loadDatabaseAndStart();
+            return;
         }
-        initLevel();
+        
+        if (currentLevelIndex < levels.length - 1) {
+            currentLevelIndex++;
+            initLevel();
+        } else {
+            loadDatabaseAndStart();
+        }
     }
 
-    initLevel();
+    loadDatabaseAndStart();
 </script>
 
 </body>
