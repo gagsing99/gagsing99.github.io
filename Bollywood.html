@@ -248,6 +248,7 @@
     const primaryUrl = `https://raw.githubusercontent.com/${targetPath}`;
     const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(primaryUrl)}`;
     
+    // Strict alphanumeric core backup list (No special characters allowed)
     const backupDataset = [
         "JALWA", "BOMBAY", "HULCHUL", "BAHUBALI 2 THE CONCLUSION", "RAAZI", "SHOLAY", "DANGAL", "LAGAAN", "PK", "SANJU",
         "BAJRAO MASTANI", "PADMAAVAT", "WAR", "SULTAN", "KABIR SINGH", "KICK", "BARFI", "QUEEN", "DHOOM 3", "3 IDIOTS",
@@ -258,8 +259,8 @@
     const maxLives = 9;
     const bollywoodString = "BOLLYWOOD";
     
-    let masterPool = [];       // Complete clean pool extracted from CSV
-    let playedMovies = new Set(); // Tracks movies to completely block duplicates
+    let masterPool = [];       
+    let playedMovies = new Set(); 
     let currentMovie = "";
     let roundCount = 0;
     
@@ -293,7 +294,7 @@
                 rawCsvText = await fetchCSV(fallbackUrl);
                 datasetLoaded = true;
             } catch (proxyError) {
-                console.log("Network pipeline blocked. Booting local alphanumeric backup dataset...");
+                console.log("Network error. Booting strict alphanumeric backup list...");
             }
         }
 
@@ -370,7 +371,10 @@
             }
 
             if (targetMovieName) {
+                // Remove all characters that are NOT letters, numbers, or standard spaces
                 let cleanName = targetMovieName.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+                
+                // Enforce a strict verification pattern: letters, numbers, and interior spaces only
                 const strictAlphanumericRegex = /^[A-Z0-9 ]+$/;
                 
                 if (cleanName && cleanName.length > 0 && cleanName.length <= 25 && strictAlphanumericRegex.test(cleanName)) {
@@ -381,21 +385,18 @@
         return Array.from(uniqueMovieNames);
     }
 
-    // Pulls, removes, and confirms an unplayed random item dynamically from the pool
     function selectAndInitNewMovie() {
         const availableMovies = masterPool.filter(movie => !playedMovies.has(movie));
         
         if (availableMovies.length === 0) {
-            statusMessageEl.textContent = "Incredible! You played through every single unique movie in the database!";
+            statusMessageEl.textContent = "You have played through all the available movies!";
             disableAllKeys();
             return;
         }
 
-        // True randomization calculation on each pull
         const randomIndex = Math.floor(Math.random() * availableMovies.length);
         currentMovie = availableMovies[randomIndex];
         
-        // Block future duplicate iterations
         playedMovies.add(currentMovie);
         roundCount++;
 
