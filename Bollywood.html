@@ -240,11 +240,10 @@
     </div>
     
     <button class="btn" id="nextBtn" onclick="nextLevel()">Next Level</button>
-    <button class="btn" id="restartBtn" onclick="retryLevel()">Try Next Movie</button>
+    <button class="btn" id="restartBtn" onclick="retryLevel()">Try Again</button>
 </div>
 
 <script>
-    // Configured directly to match repo structural files
     const targetPath = "devensinghbhagtani/Bollywood-Movie-Dataset/main/IMDB-Movie-Dataset%282023-1951%29.csv";
     const primaryUrl = `https://raw.githubusercontent.com/${targetPath}`;
     const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(primaryUrl)}`;
@@ -259,8 +258,11 @@
     const maxLives = 9;
     const bollywoodString = "BOLLYWOOD";
     
-    let levels = []; 
-    let currentLevelIndex = 0;
+    let masterPool = [];       // Complete clean pool extracted from CSV
+    let playedMovies = new Set(); // Tracks movies to completely block duplicates
+    let currentMovie = "";
+    let roundCount = 0;
+    
     let wrongGuessesCount = 0;
     let guessedLetters = new Set();
 
@@ -291,32 +293,27 @@
                 rawCsvText = await fetchCSV(fallbackUrl);
                 datasetLoaded = true;
             } catch (proxyError) {
-                console.log("Network pipelines down. Defaulting to local alphanumeric subset...");
+                console.log("Network pipeline blocked. Booting local alphanumeric backup dataset...");
             }
         }
 
         if (datasetLoaded) {
             const extractedTitles = parseCsvMovieNames(rawCsvText);
-            if (extractedTitles.length > 0) {
-                levels = shuffleArray(extractedTitles);
-            } else {
-                levels = shuffleArray([...backupDataset]);
-            }
+            masterPool = extractedTitles.length > 0 ? extractedTitles : [...backupDataset];
         } else {
-            levels = shuffleArray([...backupDataset]);
+            masterPool = [...backupDataset];
         }
 
-        currentLevelIndex = 0;
-        initLevel();
+        playedMovies.clear();
+        roundCount = 0;
+        selectAndInitNewMovie();
     }
 
-    // UPDATED PARSER: Explicitly seeks and tracks column named 'movie_name'
     function parseCsvMovieNames(text) {
         const uniqueMovieNames = new Set();
         const lines = text.split(/\r?\n/);
         if (lines.length === 0) return [];
 
-        // Determine columns from header row
         const headerLine = lines[0];
         let headers = [];
         let curVal = "";
@@ -335,7 +332,6 @@
         }
         headers.push(curVal.trim().toLowerCase());
 
-        // Find explicit column position target
         const targetColumnIndex = headers.indexOf("movie_name");
         if (targetColumnIndex === -1) return [];
 
@@ -351,7 +347,6 @@
             for (let j = 0; j < line.length; j++) {
                 const char = line[j];
                 if (char === '"') {
-                    // Lookahead pattern handling for escaped double quotes inside CSV strings ("")
                     if (insideQuotes && line[j + 1] === '"') {
                         currentStringValue += '"';
                         j++; 
@@ -370,13 +365,11 @@
                 }
             }
             
-            // Collect remainder item if it sits at the final column index boundary
             if (!targetMovieName && currentColumnIndex === targetColumnIndex) {
                 targetMovieName = currentStringValue.trim();
             }
 
             if (targetMovieName) {
-                // Strips specialized punctuation layers safely
                 let cleanName = targetMovieName.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").trim();
                 const strictAlphanumericRegex = /^[A-Z0-9 ]+$/;
                 
@@ -388,24 +381,31 @@
         return Array.from(uniqueMovieNames);
     }
 
-    function shuffleArray(array) {
-        let currentIndex = array.length, randomIndex;
-        while (currentIndex != 0) {
-            randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex--;
-            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    // Pulls, removes, and confirms an unplayed random item dynamically from the pool
+    function selectAndInitNewMovie() {
+        const availableMovies = masterPool.filter(movie => !playedMovies.has(movie));
+        
+        if (availableMovies.length === 0) {
+            statusMessageEl.textContent = "Incredible! You played through every single unique movie in the database!";
+            disableAllKeys();
+            return;
         }
-        return array;
-    }
 
-    function initLevel() {
+        // True randomization calculation on each pull
+        const randomIndex = Math.floor(Math.random() * availableMovies.length);
+        currentMovie = availableMovies[randomIndex];
+        
+        // Block future duplicate iterations
+        playedMovies.add(currentMovie);
+        roundCount++;
+
         wrongGuessesCount = 0;
         guessedLetters.clear();
         statusMessageEl.textContent = "";
         nextBtn.style.display = "none";
         restartBtn.style.display = "none";
         
-        levelIndicatorEl.textContent = `Movie ${currentLevelIndex + 1} of ${levels.length}`;
+        levelIndicatorEl.textContent = `Movie ${roundCount} (Remaining: ${availableMovies.length - 1})`;
         
         renderLifeMeter();
         renderWordSlots();
@@ -430,7 +430,6 @@
 
     function renderWordSlots() {
         wordDisplayEl.innerHTML = "";
-        const currentMovie = levels[currentLevelIndex];
         const words = currentMovie.split(" ");
 
         words.forEach(word => {
@@ -486,7 +485,6 @@
         if (guessedLetters.has(char) || isGameOver() || isLevelCleared()) return;
         
         guessedLetters.add(char);
-        const currentMovie = levels[currentLevelIndex];
         
         if (currentMovie.includes(char)) {
             renderWordSlots();
@@ -501,12 +499,10 @@
     }
 
     function isLevelCleared() {
-        if (levels.length === 0) return false;
-        const currentMovie = levels[currentLevelIndex];
+        if (!currentMovie) return false;
         return [...currentMovie].filter(char => char !== " ").every(char => guessedLetters.has(char));
     }
 
-    // 9 incorrect guesses allowed max (representing B-O-L-L-Y-W-O-O-D strikeout space)
     function isGameOver() {
         return wrongGuessesCount >= maxLives;
     }
@@ -514,22 +510,15 @@
     function checkWinCondition() {
         if (isLevelCleared()) {
             disableAllKeys();
-            if (currentLevelIndex < levels.length - 1) {
-                statusMessageEl.textContent = "Correct! Advance to the next stage.";
-                nextBtn.style.display = "block";
-            } else {
-                statusMessageEl.textContent = "Unbelievable! You conquered the database!";
-                restartBtn.textContent = "Reshuffle & Restart";
-                restartBtn.style.display = "block";
-            }
+            statusMessageEl.textContent = "Correct! Advance to the next stage.";
+            nextBtn.style.display = "block";
         }
     }
 
     function checkLoseCondition() {
         if (isGameOver()) {
             disableAllKeys();
-            statusMessageEl.textContent = `Out of lives! The movie was: ${levels[currentLevelIndex]}`;
-            restartBtn.textContent = "Try Next Movie";
+            statusMessageEl.textContent = "Game Over! Try Again.";
             restartBtn.style.display = "block";
         }
     }
@@ -540,24 +529,11 @@
     }
 
     function nextLevel() {
-        if (currentLevelIndex < levels.length - 1) {
-            currentLevelIndex++;
-            initLevel();
-        }
+        selectAndInitNewMovie();
     }
 
     function retryLevel() {
-        if (isLevelCleared() && currentLevelIndex === levels.length - 1) {
-            loadDatabaseAndStart();
-            return;
-        }
-        
-        if (currentLevelIndex < levels.length - 1) {
-            currentLevelIndex++;
-            initLevel();
-        } else {
-            loadDatabaseAndStart();
-        }
+        selectAndInitNewMovie();
     }
 
     loadDatabaseAndStart();
