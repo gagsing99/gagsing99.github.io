@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kinetic Lyrics - 21 Unique Romantic Scenes</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: sans-serif;
+        }
+        #stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        #text-overlay {
+            position: relative;
+            z-index: 100;
+            width: 85%;
+            max-width: 850px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-weight: 900;
+            line-height: 1.3;
+            padding: 20px;
+            text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.8);
+            transition: color 0.5s ease;
+        }
+
+        /* Base Layer Configuration */
+        .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-in-out, visibility 0.6s ease-in-out;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .bg-layer.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ==========================================================================
+           21 COMPLETELY UNIQUE BACKGROUND SCENES (NO REPEATS)
+           ========================================================================== */
+
+        /* 1. Beating Hearts */
+        #sc-1 { background: radial-gradient(circle, #2c0b1a 0%, #0a0307 100%); }
+        #sc-1::before { content: '❤️'; position: absolute; font-size: 8rem; opacity: 0.15; top: 35%; left: 42%; animation: beat 1.5s infinite ease-in-out; }
+        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        /* 2. Two Hills / Silhouette Night */
+        #sc-2 { background: linear-gradient(to bottom, #080711, #1a163a); }
+        #sc-2::before, #sc-2::after { content: ''; position: absolute; bottom: -50px; width: 70%; height: 200px; background: #04030a; border-radius: 50%; }
+        #sc-2::before { left: -10%; } #sc-2::after { right: -10%; }
+
+        /* 3. Shooting Stars */
+        #sc-3 { background: #030206; }
+        .star { position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; animation: shoot 3s infinite linear; }
+        @keyframes shoot { 0% { transform: translate(100vw, 0) rotate(-45deg); width: 0; } 50% { width: 100px; } 100% { transform: translate(-100px, 100vh) rotate(-45deg); width: 0; } }
+
+        /* 4. Animated Rain */
+        #sc-4 { background: #11161b; }
+        #sc-4::before { content: ''; position: absolute; width: 100%; height: 100%; background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.1) 50px, rgba(255,255,255,0.1) 100px); transform: rotate(12deg) scale(1.5); animation: rain 0.5s infinite linear; }
+        @keyframes rain { 0% { background-position: 0 0; } 100% { background-position: 0 400px; } }
+
+        /* 5. Dynamic Rainbow */
+        #sc-5 { background: #0f0f12; }
+        .rb { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: 140vw; height: 140vw; border-radius: 50%; border: 20px solid transparent; border-top-color: rgba(255, 0, 100, 0.2); box-shadow: 0 -20px 0 rgba(255,150,0,0.15), 0 -40px 0 rgba(0,255,200,0.15); animation: rb-wave 6s infinite ease-in-out alternate; }
+        @keyframes rb-wave { 0% { transform: translateX(-50%) rotate(-3deg); } 100% { transform: translateX(-50%) rotate(3deg); } }
+
+        /* 6. Moving Clouds */
+        #sc-6 { background: linear-gradient(to top, #141d26, #090d12); }
+        .cloud { position: absolute; background: rgba(255,255,255,0.04); border-radius: 100px; width: 300px; height: 100px; animation: drift 20s infinite linear; }
+        @keyframes drift { 0% { left: -350px; } 100% { left: 105vw; } }
+
+        /* 7. Midnight Rose / Deep Red Glow */
+        #sc-7 { background: radial-gradient(circle at bottom, #4a0505 0%, #000000 80%); }
+
+        /* 8. Floating Bokeh Luminance */
+        #sc-8 { background: #0c0813; }
+        .bokeh { position: absolute; background: rgba(230, 100, 255, 0.1); border-radius: 50%; width: 120px; height: 120px; filter: blur(10px); animation: floatUp 8s infinite ease-in-out; }
+        @keyframes floatUp { 0% { transform: translateY(105vh) scale(0.8); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-150px) scale(1.2); opacity: 0; } }
+
+        /* 9. Aurora Amour */
+        #sc-9 { background: #050b14; }
+        #sc-9::before { content: ''; position: absolute; width: 200%; height: 100%; background: radial-gradient(ellipse at top, rgba(0, 255, 130, 0.15), transparent); filter: blur(30px); animation: aurora 10s infinite linear alternate; }
+        @keyframes aurora { 0% { transform: translateX(-20%) skewX(-10deg); } 100% { transform: translateX(0%) skewX(10deg); } }
+
+        /* 10. Golden Hour / Rising Horizon */
+        #sc-10 { background: linear-gradient(to top, #632c00, #140400); }
+        #sc-10::before { content: ''; position: absolute; bottom: -20vh; left: 25vw; width: 50vw; height: 50vh; background: rgba(255, 140, 0, 0.2); filter: blur(60px); border-radius: 50%; }
+
+        /* 11. Cyber-Glow Hearts Grid */
+        #sc-11 { background: #09050e; background-image: radial-gradient(rgba(255, 0, 150, 0.08) 1px, transparent 0); background-size: 40px 40px; }
+
+        /* 12. Ocean Tide Wave */
+        #sc-12 { background: #020c1b; }
+        .wave { position: absolute; bottom: 0; width: 200%; height: 30vh; background: rgba(0, 119, 182, 0.1); border-radius: 43%; animation: surge 12s infinite linear; }
+        @keyframes surge { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 13. Heart EKG Waveform Line */
+        #sc-13 { background: #050505; }
+        #sc-13::before { content: ''; position: absolute; width: 100%; height: 2px; background: rgba(255, 40, 100, 0.3); top: 50%; box-shadow: 0 0 10px rgba(255, 40, 100, 0.8); animation: pulseLine 2s infinite linear; }
+        @keyframes pulseLine { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+        /* 14. Falling Autumn Leaves */
+        #sc-14 { background: #1c1310; }
+        .leaf { position: absolute; font-size: 2rem; opacity: 0.2; animation: fallSway 7s infinite linear; }
+        @keyframes fallSway { 0% { top: -50px; transform: translateX(0) rotate(0deg); } 50% { transform: translateX(50px) rotate(180deg); } 100% { top: 105vh; transform: translateX(-30px) rotate(360deg); } }
+
+        /* 15. Twinkling Galaxy Dusk */
+        #sc-15 { background: #0a061c; }
+        .dot { position: absolute; width: 2px; height: 2px; background: white; animation: blink 2s infinite ease-in-out; }
+        @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+        /* 16. Endless Tunnel / Zooming Lines */
+        #sc-16 { background: #000; }
+        .tunnel { position: absolute; border: 1px solid rgba(255,255,255,0.05); top: 50%; left: 50%; transform: translate(-50%, -50%); animation: tunnelZoom 4s infinite linear; }
+        @keyframes tunnelZoom { 0% { width: 10px; height: 10px; opacity: 0; } 100% { width: 800px; height: 800px; opacity: 1; } }
+
+        /* 17. Floating Romantic Bubbles */
+        #sc-17 { background: #0b141a; }
+        .bubble { position: absolute; border: 1px solid rgba(0, 180, 255, 0.2); background: rgba(255,255,255,0.02); border-radius: 50%; animation: bubbleUp 6s infinite ease-in-out; }
+        @keyframes bubbleUp { 0% { bottom: -60px; transform: translateX(0); opacity: 0; } 50% { opacity: 0.4; } 100% { bottom: 105vh; transform: translateX(40px); opacity: 0; } }
+
+        /* 18. Fireflies Darkness */
+        #sc-18 { background: #030704; }
+        .bug { position: absolute; width: 5px; height: 5px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: wander 8s infinite ease-in-out; }
+        @keyframes wander { 0%, 100% { transform: translate(0, 0); opacity: 0; } 50% { opacity: 0.8; transform: translate(60px, -40px); } }
+
+        /* 19. Velvet Vignette Dark */
+        #sc-19 { background: radial-gradient(circle, #1a1525 0%, #030206 100%); }
+
+        /* 20. Infinite Geometric Matrix Cross */
+        #sc-20 { background: #0b0b0f; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; }
+
+        /* 21. Absolute Cozy Sunrise / Eternal Light */
+        #sc-21 { background: linear-gradient(to top, #ff9e7d, #2d1b4e); }
+    </style>
+</head>
+<body>
+
+    <div id="stage">
+        <div id="sc-1" class="bg-layer"></div>
+        <div id="sc-2" class="bg-layer"></div>
+        <div id="sc-3" class="bg-layer">
+            <div class="star" style="top:10%; animation-delay: 0s;"></div>
+            <div class="star" style="top:30%; animation-delay: 1.5s; animation-duration: 4s;"></div>
+        </div>
+        <div id="sc-4" class="bg-layer"></div>
+        <div id="sc-5" class="bg-layer"><div class="rb"></div></div>
+        <div id="sc-6" class="bg-layer">
+            <div class="cloud" style="top:15%; animation-duration:24s;"></div>
+            <div class="cloud" style="top:65%; animation-duration:16s; animation-delay:-5s; height:70px; opacity:0.02;"></div>
+        </div>
+        <div id="sc-7" class="bg-layer"></div>
+        <div id="sc-8" class="bg-layer">
+            <div class="bokeh" style="left:15%; animation-delay:0s;"></div>
+            <div class="bokeh" style="left:75%; animation-delay:3s; background:rgba(100,200,255,0.08);"></div>
+        </div>
+        <div id="sc-9" class="bg-layer"></div>
+        <div id="sc-10" class="bg-layer"></div>
+        <div id="sc-11" class="bg-layer"></div>
+        <div id="sc-12" class="bg-layer">
+            <div class="wave" style="animation-duration:10s; bottom:-50px;"></div>
+            <div class="wave" style="animation-duration:15s; background:rgba(0,180,216,0.05); bottom:-30px; animation-delay:-3s;"></div>
+        </div>
+        <div id="sc-13" class="bg-layer"></div>
+        <div id="sc-14" class="bg-layer">
+            <div class="leaf" style="left:25%; animation-delay:0s;">🍁</div>
+            <div class="leaf" style="left:70%; animation-delay:3.5s;">🍂</div>
+        </div>
+        <div id="sc-15" class="bg-layer">
+            <div class="dot" style="top:20%; left:30%; animation-delay:0.3s;"></div>
+            <div class="dot" style="top:60%; left:80%; animation-delay:0.9s;"></div>
+            <div class="dot" style="top:75%; left:15%; animation-delay:1.4s;"></div>
+        </div>
+        <div id="sc-16" class="bg-layer">
+            <div class="tunnel" style="animation-delay:0s;"></div>
+            <div class="tunnel" style="animation-delay:2s;"></div>
+        </div>
+        <div id="sc-17" class="bg-layer">
+            <div class="bubble" style="left:20%; width:40px; height:40px; animation-duration:5s;"></div>
+            <div class="bubble" style="left:65%; width:70px; height:70px; animation-duration:8s; animation-delay:1s;"></div>
+        </div>
+        <div id="sc-18" class="bg-layer">
+            <div class="bug" style="top:40%; left:20%; animation-delay:0s;"></div>
+            <div class="bug" style="top:70%; left:75%; animation-delay:2s;"></div>
+        </div>
+        <div id="sc-19" class="bg-layer"></div>
+        <div id="sc-20" class="bg-layer"></div>
+        <div id="sc-21" class="bg-layer"></div>
+
+        <div id="text-overlay"></div>
+    </div>
+
+    <script>
+        const lyrics = [
+            "One plus is equal to two",
+            "I know love me, I love you too",
+            "Two plus two equal to four",
+            "I know we love, we can do more",
+            "So let's love, so let's do more",
+            "It was one yesterday, today it will be four",
+            "How about we take it to level eight",
+            "Who said we have to wait",
+            "We can just do it right now",
+            "Dial up to a full 10 oh wow",
+            "For me it's just you",
+            "For me I just want you",
+            "Future me also says this",
+            "Even 20 years from now",
+            "We still at a solid ten somehow",
+            "That's amazing, no?",
+            "I know you see some future too",
+            "It might seem bleak for now",
+            "Give it a rest, maybe we focus on just now.",
+            "Maybe we just try to make it to four today",
+            "If we make it to 2, we call it a good day"
+        ];
+
+        // 21 Entirely separate typography layouts
+        const crossPlatformFonts = [
+            'Impact, Charcoal, sans-serif',
+            'Georgia, serif',
+            'Arial Black, Gadget, sans-serif',
+            'Courier New, Courier, monospace',
+            'Times New Roman, Times, serif',
+            'Trebuchet MS, Helvetica, sans-serif',
+            'Verdana, Geneva, sans-serif',
+            'Lucida Sans Unicode, Lucida Grande, sans-serif',
+            'Palatino Linotype, Book Antiqua, Palatino, serif',
+            'Comic Sans MS, cursive, sans-serif',
+            'Century Gothic, sans-serif',
+            'Garamond, serif',
+            'Bookman Old Style, serif',
+            'Arial Narrow, sans-serif',
+            'Didot, serif',
+            'American Typewriter, serif',
+            'Copperplate, sans-serif',
+            'Futura, sans-serif',
+            'Baskerville, serif',
+            'Gill Sans, sans-serif',
+            'Avant Garde, sans-serif'
+        ];
+
+        // Text Colors mapped precisely to complement each ambient scene mood
+        const textColors = [
+            '#ffffff', '#fdf0d5', '#ffffff', '#e0f2fe', '#fce7f3', 
+            '#f1f5f9', '#fca5a5', '#fae8ff', '#ccffdd', '#ffedd5',
+            '#f472b6', '#e0f2fe', '#fda4af', '#ffedd5', '#fef08a',
+            '#ffffff', '#e0e7ff', '#cbd5e1', '#f3e8ff', '#e2e8f0', '#0f172a'
+        ];
+        
+        let currentLineIndex = 0;
+        const LINE_DURATION = 3200; // 3.2 seconds display time per static slide
+
+        const textElement = document.getElementById('text-overlay');
+
+        function renderTrack() {
+            if (currentLineIndex >= lyrics.length) {
+                // Shut down execution smoothly on completion
+                for(let i=1; i<=lyrics.length; i++) {
+                    document.getElementById(`sc-${i}`).classList.remove('active');
+                }
+                textElement.innerHTML = '';
+                document.getElementById('stage').style.backgroundColor = '#000';
+                return;
+            }
+
+            // Set text parameters
+            textElement.style.fontFamily = crossPlatformFonts[currentLineIndex];
+            textElement.style.color = textColors[currentLineIndex];
+            textElement.innerHTML = lyrics[currentLineIndex];
+            adjustFontSize();
+
+            // Toggle background nodes via loop sequence
+            for(let i=1; i<=lyrics.length; i++) {
+                let layer = document.getElementById(`sc-${i}`);
+                if (i === (currentLineIndex + 1)) {
+                    layer.classList.add('active');
+                } else {
+                    layer.classList.remove('active');
+                }
+            }
+
+            currentLineIndex++;
+            setTimeout(renderTrack, LINE_DURATION);
+        }
+
+        function adjustFontSize() {
+            const width = window.innerWidth;
+            const baseFontSize = width < 600 ? mapValue(width, 320, 600, 24, 34) : mapValue(width, 600, 1200, 36, 54);
+            textElement.style.fontSize = baseFontSize + "px";
+        }
+
+        function mapValue(value, istart, istop, ostart, ostop) {
+            return ostart + (ostop - ostart) * ((value - istart) / (istop - istart));
+        }
+
+        window.addEventListener('resize', adjustFontSize);
+
+        // Auto-run playback pipeline
+        renderTrack();
+    </script>
+</body>
+</html>
