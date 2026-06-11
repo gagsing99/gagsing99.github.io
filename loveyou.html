@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kinetic Lyrics - Dual Audio Dynamic Pacing</title>
+    <title>A Love Poem</title>
     <style>
         * {
             box-sizing: border-box;
@@ -27,8 +27,8 @@
             overflow: hidden;
         }
         
-        /* Interactive Autoplay Bypass Layer */
-        #gatekeeper {
+        /* Interactive Control UI Layers */
+        #gatekeeper, #replay-container {
             position: absolute;
             z-index: 1000;
             width: 100%;
@@ -39,7 +39,12 @@
             align-items: center;
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
-        #start-btn {
+        #replay-container {
+            background: rgba(5, 5, 8, 0.85); /* Slight overlay transparency */
+            opacity: 0;
+            visibility: hidden;
+        }
+        .control-btn {
             padding: 15px 35px;
             font-size: 1.2rem;
             font-weight: bold;
@@ -53,13 +58,13 @@
             box-shadow: 0 0 15px rgba(255, 42, 116, 0.2);
             transition: all 0.3s ease;
         }
-        #start-btn:hover {
+        .control-btn:hover {
             background: #ff2a74;
             color: #fff;
             box-shadow: 0 0 25px rgba(255, 42, 116, 0.6);
         }
 
-        /* Typography Structural Shielding Layer */
+        /* Typography Overlay Layer */
         #text-overlay {
             position: relative;
             z-index: 100;
@@ -74,7 +79,7 @@
             text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.8);
         }
 
-        /* Ambient Ecosystem Structural Layers */
+        /* Ambient Scene Background Layers */
         .bg-layer {
             position: absolute;
             top: 0;
@@ -92,7 +97,7 @@
             visibility: visible;
         }
 
-        /* 21 Tailored Custom CSS Romantic Scenes */
+        /* 21 Handcrafted Romantic Scenes */
         #sc-1 { background: radial-gradient(circle, #2c0b1a 0%, #0a0307 100%); }
         #sc-1::before { content: '❤️'; position: absolute; font-size: 8rem; opacity: 0.15; top: 35%; left: 42%; animation: beat 1.2s infinite ease-in-out; }
         @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
@@ -165,7 +170,11 @@
 <body>
 
     <div id="gatekeeper">
-        <button id="start-btn">Start Experience</button>
+        <button id="start-btn" class="control-btn">Start Experience</button>
+    </div>
+
+    <div id="replay-container">
+        <button id="replay-btn" class="control-btn">Listen Again</button>
     </div>
 
     <div id="stage">
@@ -244,7 +253,9 @@
         const vocalAudio = document.getElementById('vocal-track');
         const romanceAudio = document.getElementById('romance-track');
         const gatekeeper = document.getElementById('gatekeeper');
+        const replayContainer = document.getElementById('replay-container');
         const startBtn = document.getElementById('start-btn');
+        const replayBtn = document.getElementById('replay-btn');
         const textElement = document.getElementById('text-overlay');
         
         let playbackStartTime = null;
@@ -252,7 +263,6 @@
         let slideTimelineStamps = [];
 
         function buildDynamicTimeline() {
-            // Calculate total word count across the entire poem
             let totalWords = 0;
             const wordCounts = lyrics.map(line => {
                 const count = line.split(/\s+/).length;
@@ -260,7 +270,6 @@
                 return count;
             });
 
-            // Distribute the 53 seconds based on how many words are in each line
             let compiledTime = 0;
             slideTimelineStamps = lyrics.map((text, index) => {
                 let start = compiledTime;
@@ -270,23 +279,32 @@
             });
         }
 
-        startBtn.addEventListener('click', () => {
-            gatekeeper.style.opacity = '0';
-            setTimeout(() => gatekeeper.style.visibility = 'hidden', 500);
-            
+        function initExperience() {
             buildDynamicTimeline();
 
-            // Set up clean background music loop
-            romanceAudio.volume = 0.4; // Soft background level balance
-            romanceAudio.currentTime = 0;
-            romanceAudio.play();
-
-            // Fire main verbal sync guide
+            // Attenuate spoken track volume to sit cleanly under the mix 
+            vocalAudio.volume = 0.4;
             vocalAudio.currentTime = 0;
             vocalAudio.play();
+
+            romanceAudio.volume = 0.55; 
+            romanceAudio.currentTime = 0;
+            romanceAudio.play();
             
             playbackStartTime = performance.now();
             runningLoop = requestAnimationFrame(tickTimeline);
+        }
+
+        startBtn.addEventListener('click', () => {
+            gatekeeper.style.opacity = '0';
+            setTimeout(() => gatekeeper.style.visibility = 'hidden', 500);
+            initExperience();
+        });
+
+        replayBtn.addEventListener('click', () => {
+            replayContainer.style.opacity = '0';
+            setTimeout(() => replayContainer.style.visibility = 'hidden', 500);
+            initExperience();
         });
 
         function tickTimeline(timestamp) {
@@ -295,16 +313,19 @@
             const elapsed = timestamp - playbackStartTime;
 
             if (elapsed >= TOTAL_DURATION_MS) {
+                // Clear the main tracking grid completely
                 textElement.innerHTML = '';
                 clearActiveBackgrounds();
                 vocalAudio.pause();
                 romanceAudio.pause();
                 cancelAnimationFrame(runningLoop);
-                document.getElementById('stage').style.backgroundColor = '#000';
+                
+                // Show the replay interface 
+                replayContainer.style.visibility = 'visible';
+                replayContainer.style.opacity = '1';
                 return;
             }
 
-            // Find current text index via word weight timeline boundaries
             let currentIndex = 0;
             for (let i = 0; i < slideTimelineStamps.length; i++) {
                 if (elapsed >= slideTimelineStamps[i].start && elapsed < slideTimelineStamps[i].end) {
@@ -319,7 +340,6 @@
                 textElement.innerHTML = lyrics[currentIndex];
                 adjustFontSize();
 
-                // Swap dynamic background containers
                 for (let i = 1; i <= lyrics.length; i++) {
                     let layer = document.getElementById(`sc-${i}`);
                     if (layer) {
