@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Trace & Learn Pro</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f4f8;
+            color: #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        header {
+            width: 100%;
+            padding: 15px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+        .stat-box {
+            background: #eef2f7;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: #4a5568;
+        }
+        #score-display {
+            color: #2b6cb0;
+        }
+        #game-container {
+            flex: 1;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        canvas {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1;
+            touch-action: none;
+        }
+        #ui-overlay {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            align-items: center;
+            pointer-events: none;
+        }
+        button {
+            pointer-events: auto;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            background: #3182ce;
+            color: white;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #try-again-btn {
+            background: #e53e3e;
+            display: none;
+        }
+        #try-again-btn:active {
+            background: #c53030;
+        }
+        #status-msg {
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="stat-box">Level: <span id="level">1</span></div>
+        <div class="stat-box">Progress: <span id="word-count">0/5</span></div>
+        <div class="stat-box">Score: <span id="score-display">0</span></div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-overlay">
+            <div id="status-msg"></div>
+            <button id="submit-btn">Check Accuracy</button>
+            <button id="try-again-btn">Try Again</button>
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const submitBtn = document.getElementById('submit-btn');
+const tryAgainBtn = document.getElementById('try-again-btn');
+const statusMsg = document.getElementById('status-msg');
+
+// Game State
+let score = 0;
+let currentLevel = 1;
+let wordsClearedInCurrentLevel = 0;
+
+// Master Word Pools (Words will be spliced out so they NEVER repeat)
+const wordPools = {
+    1: ['CAT', 'BAT', 'HAT', 'MAT', 'RAT', 'SAT', 'MAP', 'TAP', 'BOX', 'FOX', 'DOG', 'PIG', 'NUG', 'PEN', 'PIN', 'SUN'],
+    2: ['BALL', 'FROG', 'DUCK', 'LION', 'FISH', 'CAKE', 'BOAT', 'LAMP', 'DEER', 'BEAR', 'WOLF', 'HARE', 'MOON', 'STAR'],
+    3: ['HOUSE', 'TRAIN', 'SHARK', 'GRAPE', 'APPLE', 'CLOCK', 'SNAKE', 'PLANT', 'MOUSE', 'HORSE', 'TRUCK', 'CHAIR']
+};
+
+let currentWord = "";
+let tracePoints = []; 
+let playerPoints = []; 
+let isDrawing = false;
+let gameLocked = false;
+
+// Dynamic Theme Colors
+let currentBrushColor = '#3182ce';
+let currentGuideColor = '#E2E8F0';
+
+function initCanvas() {
+    const size = Math.min(window.innerWidth - 20, 450);
+    canvas.width = size * 2; 
+    canvas.height = size * 2;
+    ctx.scale(2, 2);
+    nextNewWord();
+}
+
+// Generates a random vibrant color for tracing and a lighter pastel version for the text guide
+function generateRandomTheme() {
+    const hue = Math.floor(Math.random() * 360);
+    currentBrushColor = `hsl(${hue}, 75%, 45%)`; // Vibrant for drawing
+    currentGuideColor = `hsl(${hue}, 60%, 90%)`; // Light pastel placeholder variant
+}
+
+// Selects a unique word that hasn't been played yet
+function nextNewWord() {
+    if (!wordPools[currentLevel] || wordPools[currentLevel].length === 0) {
+        currentLevel = wordPools[currentLevel + 1] ? currentLevel + 1 : 1;
+    }
+
+    const pool = wordPools[currentLevel];
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    currentWord = pool.splice(randomIndex, 1)[0];
+
+    setupWordReset();
+}
+
+// Clears canvas tracking arrays and updates the dynamic color scheme
+function setupWordReset() {
+    playerPoints = [];
+    tracePoints = [];
+    isDrawing = false;
+    gameLocked = false;
+
+    // Shift to a brand new color scheme for this attempt
+    generateRandomTheme();
+
+    // Reset UI states
+    submitBtn.style.display = "block";
+    tryAgainBtn.style.display = "none";
+    statusMsg.style.opacity = "0";
+
+    document.getElementById('level').innerText = currentLevel;
+    document.getElementById('word-count').innerText = `${wordsClearedInCurrentLevel}/5`;
+
+    drawScene();
+    generateTraceTargets();
+}
+
+function drawScene() {
+    const width = canvas.width / 2;
+    const height = canvas.height / 2;
+    
+    ctx.clearRect(0, 0, width, height);
+
+    // Baseline guidelines text underneath (Uses dynamically generated light theme tint)
+    ctx.font = `bold ${width / (currentWord.length * 0.75)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    ctx.fillStyle = currentGuideColor;
+    ctx.fillText(currentWord, width / 2, height / 2);
+    
+    // Draw the active user strokes (Uses dynamically generated matching active color)
+    if (playerPoints.length > 1) {
+        ctx.strokeStyle = currentBrushColor;
+        ctx.lineWidth = 14;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(playerPoints[0].x, playerPoints[0].y);
+        for(let i = 1; i < playerPoints.length; i++) {
+            if (playerPoints[i].break) {
+                ctx.moveTo(playerPoints[i].x, playerPoints[i].y);
+            } else {
+                ctx.lineTo(playerPoints[i].x, playerPoints[i].y);
+            }
+        }
+        ctx.stroke();
+    }
+}
+
+function generateTraceTargets() {
+    const width = canvas.width / 2;
+    const height = canvas.height / 2;
+    
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = width;
+    offCanvas.height = height;
+    const oCtx = offCanvas.getContext('2d');
+    
+    oCtx.font = ctx.font;
+    oCtx.textAlign = 'center';
+    oCtx.textBaseline = 'middle';
+    oCtx.fillStyle = 'black';
+    oCtx.fillText(currentWord, width / 2, height / 2);
+    
+    const imgData = oCtx.getImageData(0, 0, width, height).data;
+    
+    for (let y = 0; y < height; y += 4) {
+        for (let x = 0; x < width; x += 4) {
+            const alpha = imgData[(y * width + x) * 4 + 3];
+            if (alpha > 120) {
+                tracePoints.push({ x, y, hit: false });
+            }
+        }
+    }
+}
+
+function checkRealtimeDeviation(pt) {
+    let minDistance = 999;
+    
+    tracePoints.forEach(tPt => {
+        const dist = Math.hypot(pt.x - tPt.x, pt.y - tPt.y);
+        if (dist < minDistance) {
+            minDistance = dist;
+        }
+        if (dist < 22) {
+            tPt.hit = true; 
+        }
+    });
+
+    if (minDistance > 24 && minDistance < 500) {
+        if (navigator.vibrate) {
+            navigator.vibrate(40); 
+        }
+    }
+}
+
+function evaluateTracing() {
+    if(playerPoints.length < 5 || gameLocked) return;
+    gameLocked = true;
+
+    const hits = tracePoints.filter(p => p.hit).length;
+    const coverageRatio = hits / tracePoints.length;
+
+    let penalties = 0;
+    playerPoints.forEach(pt => {
+        let closeToLine = false;
+        for(let i=0; i<tracePoints.length; i++) {
+            if(Math.hypot(pt.x - tracePoints[i].x, pt.y - tracePoints[i].y) < 26) {
+                closeToLine = true;
+                break;
+            }
+        }
+        if(!closeToLine) penalties++;
+    });
+
+    const strayPenaltyFactor = playerPoints.length > 0 ? (penalties / playerPoints.length) * 45 : 0;
+    let finalAccuracy = Math.round((coverageRatio * 100) - strayPenaltyFactor);
+    finalAccuracy = Math.max(0, Math.min(100, finalAccuracy));
+
+    statusMsg.style.opacity = "1";
+
+    if (finalAccuracy >= 95) {
+        score += 1;
+        wordsClearedInCurrentLevel++;
+        
+        statusMsg.style.color = "#2f855a";
+        statusMsg.innerText = `Passed! Accuracy: ${finalAccuracy}% (+1 Pt)`;
+        document.getElementById('score-display').innerText = score;
+
+        submitBtn.style.display = "none";
+
+        setTimeout(() => {
+            if (wordsClearedInCurrentLevel >= 5) {
+                currentLevel++;
+                wordsClearedInCurrentLevel = 0;
+                alert(`🎉 Level Up! Advancing to Level ${currentLevel}!`);
+            }
+            nextNewWord();
+        }, 1800);
+
+    } else {
+        statusMsg.style.color = "#c53030";
+        statusMsg.innerText = `Failed! Accuracy: ${finalAccuracy}% (Req: 95%)`;
+        
+        submitBtn.style.display = "none";
+        tryAgainBtn.style.display = "block";
+    }
+}
+
+function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    return {
+        x: (clientX - rect.left) * (canvas.width / 2 / rect.width),
+        y: (clientY - rect.top) * (canvas.height / 2 / rect.height)
+    };
+}
+
+function startDrawing(e) {
+    if (gameLocked) return;
+    e.preventDefault();
+    isDrawing = true;
+    const coords = getCanvasCoords(e);
+    coords.break = true; 
+    playerPoints.push(coords);
+    checkRealtimeDeviation(coords);
+    drawScene();
+}
+
+function drawMove(e) {
+    if (!isDrawing || gameLocked) return;
+    e.preventDefault();
+    const coords = getCanvasCoords(e);
+    playerPoints.push(coords);
+    checkRealtimeDeviation(coords);
+    drawScene();
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+// Event hooks
+canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', drawMove, { passive: false });
+canvas.addEventListener('touchend', stopDrawing);
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', drawMove);
+canvas.addEventListener('mouseup', stopDrawing);
+
+submitBtn.addEventListener('click', evaluateTracing);
+tryAgainBtn.addEventListener('click', setupWordReset);
+window.addEventListener('resize', initCanvas);
+
+initCanvas();
+</script>
+</body>
+</html>
