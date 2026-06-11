@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>A Love Poem</title>
+    <title>A love poem</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,7 +40,7 @@
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
         #replay-container {
-            background: rgba(5, 5, 8, 0.85); /* Slight overlay transparency */
+            background: rgba(5, 5, 8, 0.85);
             opacity: 0;
             visibility: hidden;
         }
@@ -282,12 +282,13 @@
         function initExperience() {
             buildDynamicTimeline();
 
-            // Attenuate spoken track volume to sit cleanly under the mix 
-            vocalAudio.volume = 0.4;
+            // Set spoken track to be clearly dominant in the mix
+            vocalAudio.volume = 0.85;
             vocalAudio.currentTime = 0;
             vocalAudio.play();
 
-            romanceAudio.volume = 0.55; 
+            // Set music track to be relatively lower/ambient
+            romanceAudio.volume = 0.25; 
             romanceAudio.currentTime = 0;
             romanceAudio.play();
             
@@ -313,14 +314,12 @@
             const elapsed = timestamp - playbackStartTime;
 
             if (elapsed >= TOTAL_DURATION_MS) {
-                // Clear the main tracking grid completely
                 textElement.innerHTML = '';
                 clearActiveBackgrounds();
                 vocalAudio.pause();
                 romanceAudio.pause();
                 cancelAnimationFrame(runningLoop);
                 
-                // Show the replay interface 
                 replayContainer.style.visibility = 'visible';
                 replayContainer.style.opacity = '1';
                 return;
