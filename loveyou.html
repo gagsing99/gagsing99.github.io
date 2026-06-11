@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kinetic Lyrics - Audio Synced</title>
+    <title>Kinetic Lyrics - 53 Second Strict Dynamic Cut</title>
     <style>
         * {
             box-sizing: border-box;
@@ -27,7 +27,7 @@
             overflow: hidden;
         }
         
-        /* Interactive Overlay Trigger for Browser Autoplay Restrictions */
+        /* Entrance Gatekeeper */
         #gatekeeper {
             position: absolute;
             z-index: 1000;
@@ -59,7 +59,7 @@
             box-shadow: 0 0 25px rgba(255, 42, 116, 0.6);
         }
 
-        /* Typography Structural Render Layer */
+        /* Typography Overlay with Deep Text Protection */
         #text-overlay {
             position: relative;
             z-index: 100;
@@ -74,7 +74,7 @@
             text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.8);
         }
 
-        /* Ambient Background Layers */
+        /* Ambient Dynamic CSS Background Layers */
         .bg-layer {
             position: absolute;
             top: 0;
@@ -92,63 +92,75 @@
             visibility: visible;
         }
 
-        /* Unique Non-Repeating Backgrounds */
+        /* 21 Distinct Environmental Handcrafted Ecosystem Styles */
         #sc-1 { background: radial-gradient(circle, #2c0b1a 0%, #0a0307 100%); }
-        #sc-1::before { content: '❤️'; position: absolute; font-size: 8rem; opacity: 0.15; top: 35%; left: 42%; animation: beat 1.5s infinite ease-in-out; }
+        #sc-1::before { content: '❤️'; position: absolute; font-size: 8rem; opacity: 0.15; top: 35%; left: 42%; animation: beat 1.2s infinite ease-in-out; }
         @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         #sc-2 { background: linear-gradient(to bottom, #080711, #1a163a); }
         #sc-2::before, #sc-2::after { content: ''; position: absolute; bottom: -50px; width: 70%; height: 200px; background: #04030a; border-radius: 50%; }
         #sc-2::before { left: -10%; } #sc-2::after { right: -10%; }
 
-        #sc-3 { background: linear-gradient(to bottom, #141d26, #090d12); }
-        .cloud { position: absolute; background: rgba(255,255,255,0.04); border-radius: 100px; width: 300px; height: 100px; animation: drift 20s infinite linear; }
-        @keyframes drift { 0% { left: -350px; } 100% { left: 105vw; } }
+        #sc-3 { background: #030206; }
+        .star { position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; animation: shoot 2s infinite linear; }
+        @keyframes shoot { 0% { transform: translate(100vw, 0) rotate(-45deg); width: 0; } 50% { width: 100px; } 100% { transform: translate(-100px, 100vh) rotate(-45deg); width: 0; } }
 
         #sc-4 { background: #11161b; }
-        #sc-4::before { content: ''; position: absolute; width: 100%; height: 100%; background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.1) 50px, rgba(255,255,255,0.1) 100px); transform: rotate(12deg) scale(1.5); animation: rain 0.5s infinite linear; }
+        #sc-4::before { content: ''; position: absolute; width: 100%; height: 100%; background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.1) 50px, rgba(255,255,255,0.1) 100px); transform: rotate(12deg) scale(1.5); animation: rain 0.4s infinite linear; }
         @keyframes rain { 0% { background-position: 0 0; } 100% { background-position: 0 400px; } }
 
-        #sc-5 { background: #0c0813; }
-        .bokeh { position: absolute; background: rgba(230, 100, 255, 0.1); border-radius: 50%; width: 120px; height: 120px; filter: blur(10px); animation: floatUp 8s infinite ease-in-out; }
+        #sc-5 { background: #0f0f12; }
+        .rb { position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%); width: 140vw; height: 140vw; border-radius: 50%; border: 20px solid transparent; border-top-color: rgba(255, 0, 100, 0.2); box-shadow: 0 -20px 0 rgba(255,150,0,0.15), 0 -40px 0 rgba(0,255,200,0.15); animation: rb-wave 5s infinite ease-in-out alternate; }
+        @keyframes rb-wave { 0% { transform: translateX(-50%) rotate(-3deg); } 100% { transform: translateX(-50%) rotate(3deg); } }
+
+        #sc-6 { background: linear-gradient(to top, #141d26, #090d12); }
+        .cloud { position: absolute; background: rgba(255,255,255,0.04); border-radius: 100px; width: 300px; height: 100px; animation: drift 15s infinite linear; }
+        @keyframes drift { 0% { left: -350px; } 100% { left: 105vw; } }
+
+        #sc-7 { background: radial-gradient(circle at bottom, #4a0505 0%, #000000 80%); }
+
+        #sc-8 { background: #0c0813; }
+        .bokeh { position: absolute; background: rgba(230, 100, 255, 0.1); border-radius: 50%; width: 120px; height: 120px; filter: blur(10px); animation: floatUp 6s infinite ease-in-out; }
         @keyframes floatUp { 0% { transform: translateY(105vh) scale(0.8); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-150px) scale(1.2); opacity: 0; } }
 
-        #sc-6 { background: #050b14; }
-        #sc-6::before { content: ''; position: absolute; width: 200%; height: 100%; background: radial-gradient(ellipse at top, rgba(0, 255, 130, 0.15), transparent); filter: blur(30px); animation: aurora 10s infinite linear alternate; }
+        #sc-9 { background: #050b14; }
+        #sc-9::before { content: ''; position: absolute; width: 200%; height: 100%; background: radial-gradient(ellipse at top, rgba(0, 255, 130, 0.15), transparent); filter: blur(30px); animation: aurora 8s infinite linear alternate; }
         @keyframes aurora { 0% { transform: translateX(-20%) skewX(-10deg); } 100% { transform: translateX(0%) skewX(10deg); } }
 
-        #sc-7 { background: linear-gradient(to top, #632c00, #140400); }
+        #sc-10 { background: linear-gradient(to top, #632c00, #140400); }
 
-        #sc-8 { background: #020c1b; }
-        .wave { position: absolute; bottom: 0; width: 200%; height: 30vh; background: rgba(0, 119, 182, 0.1); border-radius: 43%; animation: surge 12s infinite linear; }
+        #sc-11 { background: #09050e; background-image: radial-gradient(rgba(255, 0, 150, 0.08) 1px, transparent 0); background-size: 40px 40px; }
+
+        #sc-12 { background: #020c1b; }
+        .wave { position: absolute; bottom: 0; width: 200%; height: 30vh; background: rgba(0, 119, 182, 0.1); border-radius: 43%; animation: surge 8s infinite linear; }
         @keyframes surge { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #sc-9 { background: #050505; }
-        #sc-9::before { content: ''; position: absolute; width: 100%; height: 2px; background: rgba(255, 40, 100, 0.3); top: 50%; box-shadow: 0 0 10px rgba(255, 40, 100, 0.8); }
+        #sc-13 { background: #050505; }
+        #sc-13::before { content: ''; position: absolute; width: 100%; height: 2px; background: rgba(255, 40, 100, 0.3); top: 50%; box-shadow: 0 0 10px rgba(255, 40, 100, 0.8); }
 
-        #sc-10 { background: #1c1310; }
-        .leaf { position: absolute; font-size: 2rem; opacity: 0.2; animation: fallSway 7s infinite linear; }
+        #sc-14 { background: #1c1310; }
+        .leaf { position: absolute; font-size: 2rem; opacity: 0.2; animation: fallSway 5s infinite linear; }
         @keyframes fallSway { 0% { top: -50px; transform: translateX(0) rotate(0deg); } 50% { transform: translateX(50px) rotate(180deg); } 100% { top: 105vh; transform: translateX(-30px) rotate(360deg); } }
 
-        #sc-11 { background: #0a061c; }
-        .dot { position: absolute; width: 2px; height: 2px; background: white; animation: blink 2s infinite ease-in-out; }
+        #sc-15 { background: #0a061c; }
+        .dot { position: absolute; width: 2px; height: 2px; background: white; animation: blink 1.5s infinite ease-in-out; }
         @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 
-        #sc-12 { background: #0b141a; }
-        .bubble { position: absolute; border: 1px solid rgba(0, 180, 255, 0.2); background: rgba(255,255,255,0.02); border-radius: 50%; animation: bubbleUp 6s infinite ease-in-out; }
+        #sc-16 { background: #000; }
+        .tunnel { position: absolute; border: 1px solid rgba(255,255,255,0.05); top: 50%; left: 50%; transform: translate(-50%, -50%); animation: tunnelZoom 3s infinite linear; }
+        @keyframes tunnelZoom { 0% { width: 10px; height: 10px; opacity: 0; } 100% { width: 800px; height: 800px; opacity: 1; } }
+
+        #sc-17 { background: #0b141a; }
+        .bubble { position: absolute; border: 1px solid rgba(0, 180, 255, 0.2); background: rgba(255,255,255,0.02); border-radius: 50%; animation: bubbleUp 4s infinite ease-in-out; }
         @keyframes bubbleUp { 0% { bottom: -60px; transform: translateX(0); opacity: 0; } 50% { opacity: 0.4; } 100% { bottom: 105vh; transform: translateX(40px); opacity: 0; } }
 
-        #sc-13 { background: #030704; }
-        .bug { position: absolute; width: 5px; height: 5px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: wander 8s infinite ease-in-out; }
+        #sc-18 { background: #030704; }
+        .bug { position: absolute; width: 5px; height: 5px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: wander 5s infinite ease-in-out; }
         @keyframes wander { 0%, 100% { transform: translate(0, 0); opacity: 0; } 50% { opacity: 0.8; transform: translate(60px, -40px); } }
 
-        #sc-14 { background: #0b0b0f; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; }
-        #sc-15 { background: linear-gradient(to top, #ff9e7d, #2d1b4e); }
-        #sc-16 { background: #0f0f12; }
-        #sc-17 { background: radial-gradient(circle, #4a0505 0%, #000000 80%); }
-        #sc-18 { background: #09050e; background-image: radial-gradient(rgba(255, 0, 150, 0.08) 1px, transparent 0); background-size: 40px 40px; }
-        #sc-19 { background: #030206; }
-        #sc-20 { background: linear-gradient(to bottom, #16162e, #0b0b16); }
+        #sc-19 { background: radial-gradient(circle, #1a1525 0%, #030206 100%); }
+        #sc-20 { background: #0b0b0f; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; }
+        #sc-21 { background: linear-gradient(to top, #ff9e7d, #2d1b4e); }
     </style>
 </head>
 <body>
@@ -160,24 +172,25 @@
     <div id="stage">
         <div id="sc-1" class="bg-layer"></div>
         <div id="sc-2" class="bg-layer"></div>
-        <div id="sc-3" class="bg-layer"><div class="cloud" style="top:20%;"></div></div>
+        <div id="sc-3" class="bg-layer"><div class="star" style="top:15%;"></div><div class="star" style="top:45%; animation-delay:1s;"></div></div>
         <div id="sc-4" class="bg-layer"></div>
-        <div id="sc-5" class="bg-layer"><div class="bokeh" style="left:30%;"></div></div>
-        <div id="sc-6" class="bg-layer"></div>
+        <div id="sc-5" class="bg-layer"><div class="rb"></div></div>
+        <div id="sc-6" class="bg-layer"><div class="cloud" style="top:30%;"></div></div>
         <div id="sc-7" class="bg-layer"></div>
-        <div id="sc-8" class="bg-layer"><div class="wave" style="bottom:-30px;"></div></div>
+        <div id="sc-8" class="bg-layer"><div class="bokeh" style="left:20%;"></div><div class="bokeh" style="left:70%; animation-delay:2s;"></div></div>
         <div id="sc-9" class="bg-layer"></div>
-        <div id="sc-10" class="bg-layer"><div class="leaf" style="left:40%;">🍁</div></div>
-        <div id="sc-11" class="bg-layer"><div class="dot" style="top:30%; left:50%;"></div></div>
-        <div id="sc-12" class="bg-layer"><div class="bubble" style="left:70%; width:50px; height:50px;"></div></div>
-        <div id="sc-13" class="bg-layer"><div class="bug" style="top:50%; left:20%;"></div></div>
-        <div id="sc-14" class="bg-layer"></div>
-        <div id="sc-15" class="bg-layer"></div>
-        <div id="sc-16" class="bg-layer"></div>
-        <div id="sc-17" class="bg-layer"></div>
-        <div id="sc-18" class="bg-layer"></div>
+        <div id="sc-10" class="bg-layer"></div>
+        <div id="sc-11" class="bg-layer"></div>
+        <div id="sc-12" class="bg-layer"><div class="wave" style="bottom:-40px;"></div></div>
+        <div id="sc-13" class="bg-layer"></div>
+        <div id="sc-14" class="bg-layer"><div class="leaf" style="left:30%;">🍁</div><div class="leaf" style="left:75%; animation-delay:2s;">🍂</div></div>
+        <div id="sc-15" class="bg-layer"><div class="dot" style="top:20%; left:40%;"></div><div class="dot" style="top:70%; left:85%;"></div></div>
+        <div id="sc-16" class="bg-layer"><div class="tunnel" style="animation-delay:0s;"></div><div class="tunnel" style="animation-delay:1.5s;"></div></div>
+        <div id="sc-17" class="bg-layer"><div class="bubble" style="left:25%;"></div><div class="bubble" style="left:60%; animation-delay:1.5s;"></div></div>
+        <div id="sc-18" class="bg-layer"><div class="bug" style="top:30%; left:40%;"></div></div>
         <div id="sc-19" class="bg-layer"></div>
         <div id="sc-20" class="bg-layer"></div>
+        <div id="sc-21" class="bg-layer"></div>
 
         <div id="text-overlay"></div>
     </div>
@@ -185,29 +198,28 @@
     <audio id="audio-track" src="solidten.mp3" preload="auto"></audio>
 
     <script>
-        // Exact timeline maps calculated straight from the speech patterns in solidten.mp3
-        const timeline = [
-            { time: 0.0,  text: "One plus is equal to two" },
-            { time: 2.1,  text: "I know love me, I love you too" },
-            { time: 5.1,  text: "Two plus two equal to four" },
-            { time: 8.0,  text: "I know we love, we can do more" },
-            { time: 10.9, text: "So let's love, so let's do more" },
-            { time: 13.9, text: "It was one yesterday, today it will be four" },
-            { time: 17.6, text: "How about we take it to level eight" },
-            { time: 21.0, text: "Who said we have to wait" },
-            { time: 23.3, text: "We can just do it right now" },
-            { time: 25.9, text: "Dial up to a full 10 oh wow" },
-            { time: 29.5, text: "For me it's just you" },
-            { time: 31.8, text: "For me I just want you" },
-            { time: 34.2, text: "Future me also says this" },
-            { time: 37.0, text: "Even 20 years from now" },
-            { time: 39.8, text: "We still at a solid ten somehow" },
-            { time: 43.1, text: "That's amazing, no?" },
-            { time: 45.4, text: "I know you see some future too" },
-            { time: 48.4, text: "It might seem bleak for now" },
-            { time: 51.0, text: "Give it a rest, maybe we focus on just now." },
-            { time: 54.3, text: "Maybe we just try to make it to four today" },
-            { time: 57.8, text: "If we make it to 2, we call it a good day" }
+        const lyrics = [
+            "One plus is equal to two",
+            "I know love me, I love you too",
+            "Two plus two equal to four",
+            "I know we love, we can do more",
+            "So let's love, so let's do more",
+            "It was one yesterday, today it will be four",
+            "How about we take it to level eight",
+            "Who said we have to wait",
+            "We can just do it right now",
+            "Dial up to a full 10 oh wow",
+            "For me it's just you",
+            "For me I just want you",
+            "Future me also says this",
+            "Even 20 years from now",
+            "We still at a solid ten somehow",
+            "That's amazing, no?",
+            "I know you see some future too",
+            "It might seem bleak for now",
+            "Give it a rest, maybe we focus on just now.",
+            "Maybe we just try to make it to four today",
+            "If we make it to 2, we call it a good day"
         ];
 
         const crossPlatformFonts = [
@@ -217,63 +229,70 @@
             'Palatino Linotype, Book Antiqua, Palatino, serif', 'Comic Sans MS, cursive, sans-serif',
             'Century Gothic, sans-serif', 'Garamond, serif', 'Bookman Old Style, serif',
             'Arial Narrow, sans-serif', 'Didot, serif', 'American Typewriter, serif',
-            'Copperplate, sans-serif', 'Futura, sans-serif', 'Baskerville, serif', 'Gill Sans, sans-serif'
+            'Copperplate, sans-serif', 'Futura, sans-serif', 'Baskerville, serif', 'Gill Sans, sans-serif', 'Avant Garde, sans-serif'
         ];
 
         const textColors = [
             '#ffffff', '#fdf0d5', '#ffffff', '#e0f2fe', '#fce7f3', 
             '#f1f5f9', '#fca5a5', '#fae8ff', '#ccffdd', '#ffedd5',
             '#f472b6', '#e0f2fe', '#fda4af', '#ffedd5', '#fef08a',
-            '#ffffff', '#e0e7ff', '#cbd5e1', '#f3e8ff', '#0f172a'
+            '#ffffff', '#e0e7ff', '#cbd5e1', '#f3e8ff', '#e2e8f0', '#0f172a'
         ];
+
+        // Total Target Matrix Constated Configuration
+        const TOTAL_DURATION_MS = 53000; 
+        const STEP_DURATION_MS = TOTAL_DURATION_MS / lyrics.length; // Precisely 2523.8ms per slide frame block
 
         const audio = document.getElementById('audio-track');
         const gatekeeper = document.getElementById('gatekeeper');
         const startBtn = document.getElementById('start-btn');
         const textElement = document.getElementById('text-overlay');
         
-        let lastIndex = -1;
+        let playbackStartTime = null;
+        let runningLoop = null;
 
         startBtn.addEventListener('click', () => {
             gatekeeper.style.opacity = '0';
             setTimeout(() => gatekeeper.style.visibility = 'hidden', 500);
+            
+            audio.currentTime = 0;
             audio.play();
-            requestAnimationFrame(syncLyrics);
+            
+            playbackStartTime = performance.now();
+            runningLoop = requestAnimationFrame(tickTimeline);
         });
 
-        function syncLyrics() {
-            if (audio.paused || audio.ended) {
-                if (audio.ended) {
-                    textElement.innerHTML = '';
-                    clearActiveBackgrounds();
-                }
+        function tickTimeline(timestamp) {
+            if (!playbackStartTime) return;
+
+            const elapsed = timestamp - playbackStartTime;
+
+            if (elapsed >= TOTAL_DURATION_MS) {
+                // Clear state instantly on terminal 53s tick execution
+                textElement.innerHTML = '';
+                clearActiveBackgrounds();
+                audio.pause();
+                cancelAnimationFrame(runningLoop);
+                document.getElementById('stage').style.backgroundColor = '#000';
                 return;
             }
 
-            const currentTime = audio.currentTime;
-            let activeIndex = -1;
+            // Map current text index based on active runtime segment calculation
+            let currentIndex = Math.floor(elapsed / STEP_DURATION_MS);
+            currentIndex = Math.min(currentIndex, lyrics.length - 1);
 
-            // Find the current active text slot matching the audio runtime clock
-            for (let i = 0; i < timeline.length; i++) {
-                if (currentTime >= timeline[i].time) {
-                    activeIndex = i;
-                }
-            }
-
-            // Trigger structural DOM changes only when shifting to a brand new index
-            if (activeIndex !== lastIndex && activeIndex !== -1) {
-                lastIndex = activeIndex;
-                
-                textElement.style.fontFamily = crossPlatformFonts[activeIndex % crossPlatformFonts.length];
-                textElement.style.color = textColors[activeIndex % textColors.length];
-                textElement.innerHTML = timeline[activeIndex].text;
+            // Execute text structural swaps dynamically
+            if (textElement.innerHTML !== lyrics[currentIndex]) {
+                textElement.style.fontFamily = crossPlatformFonts[currentIndex];
+                textElement.style.color = textColors[currentIndex];
+                textElement.innerHTML = lyrics[currentIndex];
                 adjustFontSize();
 
-                // Swap dynamic background layers safely
-                for (let i = 1; i <= timeline.length; i++) {
+                // Handle background layer adjustments
+                for (let i = 1; i <= lyrics.length; i++) {
                     let layer = document.getElementById(`sc-${i}`);
                     if (layer) {
-                        if (i === (activeIndex + 1)) {
+                        if (i === (currentIndex + 1)) {
                             layer.classList.add('active');
                         } else {
                             layer.classList.remove('active');
@@ -282,11 +301,11 @@
                 }
             }
 
-            requestAnimationFrame(syncLyrics);
+            runningLoop = requestAnimationFrame(tickTimeline);
         }
 
         function clearActiveBackgrounds() {
-            for (let i = 1; i <= timeline.length; i++) {
+            for (let i = 1; i <= lyrics.length; i++) {
                 let layer = document.getElementById(`sc-${i}`);
                 if (layer) layer.classList.remove('active');
             }
