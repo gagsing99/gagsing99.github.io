@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kinetic Lyrics - 53 Second Strict Dynamic Cut</title>
+    <title>Kinetic Lyrics - Dual Audio Dynamic Pacing</title>
     <style>
         * {
             box-sizing: border-box;
@@ -27,7 +27,7 @@
             overflow: hidden;
         }
         
-        /* Entrance Gatekeeper */
+        /* Interactive Autoplay Bypass Layer */
         #gatekeeper {
             position: absolute;
             z-index: 1000;
@@ -59,7 +59,7 @@
             box-shadow: 0 0 25px rgba(255, 42, 116, 0.6);
         }
 
-        /* Typography Overlay with Deep Text Protection */
+        /* Typography Structural Shielding Layer */
         #text-overlay {
             position: relative;
             z-index: 100;
@@ -74,7 +74,7 @@
             text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.8);
         }
 
-        /* Ambient Dynamic CSS Background Layers */
+        /* Ambient Ecosystem Structural Layers */
         .bg-layer {
             position: absolute;
             top: 0;
@@ -92,7 +92,7 @@
             visibility: visible;
         }
 
-        /* 21 Distinct Environmental Handcrafted Ecosystem Styles */
+        /* 21 Tailored Custom CSS Romantic Scenes */
         #sc-1 { background: radial-gradient(circle, #2c0b1a 0%, #0a0307 100%); }
         #sc-1::before { content: '❤️'; position: absolute; font-size: 8rem; opacity: 0.15; top: 35%; left: 42%; animation: beat 1.2s infinite ease-in-out; }
         @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
@@ -128,7 +128,6 @@
         @keyframes aurora { 0% { transform: translateX(-20%) skewX(-10deg); } 100% { transform: translateX(0%) skewX(10deg); } }
 
         #sc-10 { background: linear-gradient(to top, #632c00, #140400); }
-
         #sc-11 { background: #09050e; background-image: radial-gradient(rgba(255, 0, 150, 0.08) 1px, transparent 0); background-size: 40px 40px; }
 
         #sc-12 { background: #020c1b; }
@@ -172,21 +171,21 @@
     <div id="stage">
         <div id="sc-1" class="bg-layer"></div>
         <div id="sc-2" class="bg-layer"></div>
-        <div id="sc-3" class="bg-layer"><div class="star" style="top:15%;"></div><div class="star" style="top:45%; animation-delay:1s;"></div></div>
+        <div id="sc-3" class="bg-layer"><div class="star" style="top:15%;"></div></div>
         <div id="sc-4" class="bg-layer"></div>
         <div id="sc-5" class="bg-layer"><div class="rb"></div></div>
         <div id="sc-6" class="bg-layer"><div class="cloud" style="top:30%;"></div></div>
         <div id="sc-7" class="bg-layer"></div>
-        <div id="sc-8" class="bg-layer"><div class="bokeh" style="left:20%;"></div><div class="bokeh" style="left:70%; animation-delay:2s;"></div></div>
+        <div id="sc-8" class="bg-layer"><div class="bokeh" style="left:20%;"></div></div>
         <div id="sc-9" class="bg-layer"></div>
         <div id="sc-10" class="bg-layer"></div>
         <div id="sc-11" class="bg-layer"></div>
         <div id="sc-12" class="bg-layer"><div class="wave" style="bottom:-40px;"></div></div>
         <div id="sc-13" class="bg-layer"></div>
-        <div id="sc-14" class="bg-layer"><div class="leaf" style="left:30%;">🍁</div><div class="leaf" style="left:75%; animation-delay:2s;">🍂</div></div>
-        <div id="sc-15" class="bg-layer"><div class="dot" style="top:20%; left:40%;"></div><div class="dot" style="top:70%; left:85%;"></div></div>
-        <div id="sc-16" class="bg-layer"><div class="tunnel" style="animation-delay:0s;"></div><div class="tunnel" style="animation-delay:1.5s;"></div></div>
-        <div id="sc-17" class="bg-layer"><div class="bubble" style="left:25%;"></div><div class="bubble" style="left:60%; animation-delay:1.5s;"></div></div>
+        <div id="sc-14" class="bg-layer"><div class="leaf" style="left:30%;">🍁</div></div>
+        <div id="sc-15" class="bg-layer"><div class="dot" style="top:20%; left:40%;"></div></div>
+        <div id="sc-16" class="bg-layer"><div class="tunnel"></div></div>
+        <div id="sc-17" class="bg-layer"><div class="bubble" style="left:25%;"></div></div>
         <div id="sc-18" class="bg-layer"><div class="bug" style="top:30%; left:40%;"></div></div>
         <div id="sc-19" class="bg-layer"></div>
         <div id="sc-20" class="bg-layer"></div>
@@ -195,7 +194,8 @@
         <div id="text-overlay"></div>
     </div>
 
-    <audio id="audio-track" src="solidten.mp3" preload="auto"></audio>
+    <audio id="vocal-track" src="solidten.mp3" preload="auto"></audio>
+    <audio id="romance-track" src="romance.mp3" preload="auto" loop></audio>
 
     <script>
         const lyrics = [
@@ -239,24 +239,51 @@
             '#ffffff', '#e0e7ff', '#cbd5e1', '#f3e8ff', '#e2e8f0', '#0f172a'
         ];
 
-        // Total Target Matrix Constated Configuration
-        const TOTAL_DURATION_MS = 53000; 
-        const STEP_DURATION_MS = TOTAL_DURATION_MS / lyrics.length; // Precisely 2523.8ms per slide frame block
+        const TOTAL_DURATION_MS = 53000;
 
-        const audio = document.getElementById('audio-track');
+        const vocalAudio = document.getElementById('vocal-track');
+        const romanceAudio = document.getElementById('romance-track');
         const gatekeeper = document.getElementById('gatekeeper');
         const startBtn = document.getElementById('start-btn');
         const textElement = document.getElementById('text-overlay');
         
         let playbackStartTime = null;
         let runningLoop = null;
+        let slideTimelineStamps = [];
+
+        function buildDynamicTimeline() {
+            // Calculate total word count across the entire poem
+            let totalWords = 0;
+            const wordCounts = lyrics.map(line => {
+                const count = line.split(/\s+/).length;
+                totalWords += count;
+                return count;
+            });
+
+            // Distribute the 53 seconds based on how many words are in each line
+            let compiledTime = 0;
+            slideTimelineStamps = lyrics.map((text, index) => {
+                let start = compiledTime;
+                let duration = (wordCounts[index] / totalWords) * TOTAL_DURATION_MS;
+                compiledTime += duration;
+                return { start: start, end: compiledTime, text: text };
+            });
+        }
 
         startBtn.addEventListener('click', () => {
             gatekeeper.style.opacity = '0';
             setTimeout(() => gatekeeper.style.visibility = 'hidden', 500);
             
-            audio.currentTime = 0;
-            audio.play();
+            buildDynamicTimeline();
+
+            // Set up clean background music loop
+            romanceAudio.volume = 0.4; // Soft background level balance
+            romanceAudio.currentTime = 0;
+            romanceAudio.play();
+
+            // Fire main verbal sync guide
+            vocalAudio.currentTime = 0;
+            vocalAudio.play();
             
             playbackStartTime = performance.now();
             runningLoop = requestAnimationFrame(tickTimeline);
@@ -268,27 +295,31 @@
             const elapsed = timestamp - playbackStartTime;
 
             if (elapsed >= TOTAL_DURATION_MS) {
-                // Clear state instantly on terminal 53s tick execution
                 textElement.innerHTML = '';
                 clearActiveBackgrounds();
-                audio.pause();
+                vocalAudio.pause();
+                romanceAudio.pause();
                 cancelAnimationFrame(runningLoop);
                 document.getElementById('stage').style.backgroundColor = '#000';
                 return;
             }
 
-            // Map current text index based on active runtime segment calculation
-            let currentIndex = Math.floor(elapsed / STEP_DURATION_MS);
-            currentIndex = Math.min(currentIndex, lyrics.length - 1);
+            // Find current text index via word weight timeline boundaries
+            let currentIndex = 0;
+            for (let i = 0; i < slideTimelineStamps.length; i++) {
+                if (elapsed >= slideTimelineStamps[i].start && elapsed < slideTimelineStamps[i].end) {
+                    currentIndex = i;
+                    break;
+                }
+            }
 
-            // Execute text structural swaps dynamically
             if (textElement.innerHTML !== lyrics[currentIndex]) {
                 textElement.style.fontFamily = crossPlatformFonts[currentIndex];
                 textElement.style.color = textColors[currentIndex];
                 textElement.innerHTML = lyrics[currentIndex];
                 adjustFontSize();
 
-                // Handle background layer adjustments
+                // Swap dynamic background containers
                 for (let i = 1; i <= lyrics.length; i++) {
                     let layer = document.getElementById(`sc-${i}`);
                     if (layer) {
