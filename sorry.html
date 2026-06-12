@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Scratch</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            /* Vertical gradient from white to dark charcoal gray/black */
+            background: linear-gradient(to bottom, #ffffff 0%, #1a1a1a 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #1a1a1a;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: row; /* Forces blocks to stay in one single line */
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 50px;
+        }
+
+        .scratch-box {
+            position: relative;
+            /* Flex-basis and aspect ratio keep them perfectly square and responsive */
+            flex: 1;
+            aspect-ratio: 1 / 1; 
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The hidden letters - All monochromatic black */
+        .letter {
+            font-size: 2.2rem;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            color: #000000;
+            z-index: 1;
+        }
+
+        /* Canvas overlay for scratching */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: pointer;
+            touch-action: none;
+            border-radius: 8px;
+        }
+
+        #love-message {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease, transform 1s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #love-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scaling adjustments for very small screens to keep everything in one line */
+        @media (max-width: 380px) {
+            .letter {
+                font-size: 1.6rem;
+            }
+            #game-container {
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Scratch</h2>
+
+    <div id="game-container">
+        <div class="scratch-box">
+            <span class="letter">S</span>
+            <canvas></canvas>
+        </div>
+        <div class="scratch-box">
+            <span class="letter">O</span>
+            <canvas></canvas>
+        </div>
+        <div class="scratch-box">
+            <span class="letter">R</span>
+            <canvas></canvas>
+        </div>
+        <div class="scratch-box">
+            <span class="letter">R</span>
+            <canvas></canvas>
+        </div>
+        <div class="scratch-box">
+            <span class="letter">Y</span>
+            <canvas></canvas>
+        </div>
+    </div>
+
+    <div id="love-message">I love you 3000</div>
+
+    <script>
+        const canvases = document.querySelectorAll('canvas');
+        const message = document.getElementById('love-message');
+        
+        // Dynamic monochrome shades for each block (ranging from light gray to dark charcoal)
+        const monochromeShades = ['#d1d1d1', '#b5b5b5', '#999999', '#7c7c7c', '#5e5e5e'];
+        
+        let completedBlocks = new Set();
+
+        canvases.forEach((canvas, index) => {
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            let isDrawing = false;
+
+            // Handle responsive sizing adjustments dynamically
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                
+                // Draw/redraw the monochrome layer
+                ctx.fillStyle = monochromeShades[index];
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Add fine grit texture
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                for (let i = 0; i < canvas.width; i += 3) {
+                    ctx.fillRect(i, 0, 1, canvas.height);
+                }
+            }
+
+            // Initial sizing
+            resizeCanvas();
+            // Re-render layout smoothly if screen structure shifts
+            window.addEventListener('resize', () => {
+                if (!completedBlocks.has(index)) resizeCanvas();
+            });
+
+            // Set up scratching physics
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = 18; 
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            function getCoords(e) {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const canvasRect = canvas.getBoundingClientRect();
+                return {
+                    x: clientX - canvasRect.left,
+                    y: clientY - canvasRect.top
+                };
+            }
+
+            function scratchStart(e) {
+                isDrawing = true;
+                const coords = getCoords(e);
+                ctx.beginPath();
+                ctx.moveTo(coords.x, coords.y);
+            }
+
+            function scratchMove(e) {
+                if (!isDrawing) return;
+                e.preventDefault(); 
+                const coords = getCoords(e);
+                ctx.lineTo(coords.x, coords.y);
+                ctx.stroke();
+            }
+
+            function scratchEnd() {
+                if (!isDrawing) return;
+                isDrawing = false;
+                checkRevealedPercent();
+            }
+
+            function checkRevealedPercent() {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                let clearPixels = 0;
+
+                for (let i = 3; i < pixels.length; i += 4) {
+                    if (pixels[i] === 0) {
+                        clearPixels++;
+                    }
+                }
+
+                const percentCleared = (clearPixels / (pixels.length / 4)) * 100;
+
+                if (percentCleared > 45 && !completedBlocks.has(index)) {
+                    canvas.style.transition = 'opacity 0.4s ease';
+                    canvas.style.opacity = '0';
+                    setTimeout(() => canvas.style.pointerEvents = 'none', 400);
+                    
+                    completedBlocks.add(index);
+                    checkGameOver();
+                }
+            }
+
+            // Mouse Events
+            canvas.addEventListener('mousedown', scratchStart);
+            canvas.addEventListener('mousemove', scratchMove);
+            window.addEventListener('mouseup', scratchEnd);
+
+            // Touch Events
+            canvas.addEventListener('touchstart', scratchStart);
+            canvas.addEventListener('touchmove', scratchMove);
+            window.addEventListener('touchend', scratchEnd);
+        });
+
+        function checkGameOver() {
+            if (completedBlocks.size === canvases.length) {
+                setTimeout(() => {
+                    message.classList.add('show');
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
