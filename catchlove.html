@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch My Love!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #ffe6e6, #ffb3c6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        #ui {
+            margin-top: 20px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            color: #d90429;
+            margin: 0 0 10px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        #meter-container {
+            width: 300px;
+            height: 25px;
+            background-color: #fff;
+            border-radius: 15px;
+            border: 3px solid #ff4d6d;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #meter {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff4d6d, #ff758f);
+            transition: width 0.2s ease;
+        }
+
+        #heart {
+            position: absolute;
+            font-size: 50px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s ease;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));
+            /* Center the absolute positioning anchor */
+            transform: translate(-50%, -50%); 
+            left: 50%;
+            top: 50%;
+        }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #win-screen h2 {
+            color: #d90429;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #ff4d6d;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #d90429;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h1>Catch My Love! ❤️</h1>
+        <div id="meter-container">
+            <div id="meter"></div>
+        </div>
+    </div>
+
+    <!-- The target -->
+    <div id="heart">❤️</div>
+
+    <!-- Win Modal -->
+    <div id="win-screen">
+        <h2>💖 You Won My Heart! 💖</h2>
+        <p>Your love meter is 100% full!</p>
+        <button onclick="resetGame()">Play Again</button>
+    </div>
+
+    <script>
+        const heart = document.getElementById('heart');
+        const meter = document.getElementById('meter');
+        const winScreen = document.getElementById('win-screen');
+        
+        let loveScore = 0;
+        let heartSize = 60; // initial font size in px
+        let moveInterval;
+        let speed = 1000; // initial movement speed in ms
+
+        function moveHeart() {
+            // Keep the heart within reasonable screen bounds
+            const padding = 80;
+            const maxX = window.innerWidth - padding;
+            const maxY = window.innerHeight - padding;
+            
+            // Random positions (ensuring it doesn't spawn off-screen)
+            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(padding + 80, Math.floor(Math.random() * maxY)); // extra top padding for UI
+            
+            heart.style.left = `${randomX}px`;
+            heart.style.top = `${randomY}px`;
+        }
+
+        function startInterval() {
+            clearInterval(moveInterval);
+            moveInterval = setInterval(moveHeart, speed);
+        }
+
+        // When the player clicks the heart
+        heart.addEventListener('click', () => {
+            loveScore += 10;
+            meter.style.width = `${loveScore}%`;
+
+            if (loveScore >= 100) {
+                clearInterval(moveInterval);
+                winScreen.style.display = 'flex';
+                heart.style.display = 'none';
+            } else {
+                // Make it harder: shrink it and speed it up
+                heartSize = Math.max(25, heartSize - 3);
+                heart.style.fontSize = `${heartSize}px`;
+                
+                speed = Math.max(400, speed - 70); 
+                
+                // Instantly jump to a new spot and restart timer
+                moveHeart();
+                startInterval();
+            }
+        });
+
+        function resetGame() {
+            loveScore = 0;
+            heartSize = 60;
+            speed = 1000;
+            meter.style.width = '0%';
+            heart.style.fontSize = `${heartSize}px`;
+            heart.style.display = 'block';
+            winScreen.style.display = 'none';
+            
+            // Center the heart to start
+            heart.style.left = '50%';
+            heart.style.top = '50%';
+            startInterval();
+        }
+
+        // Kick off the game loop
+        startInterval();
+    </script>
+</body>
+</html>
