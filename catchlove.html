@@ -2,39 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch My Love!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catch My Love! (Balanced Edition)</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #ffe6e6, #ffb3c6);
+            background: linear-gradient(135deg, #ffb3c6, #ff85a2, #fbc2eb);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            min-height: 100vh; 
+            min-height: -webkit-fill-available;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         #ui {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: center;
             z-index: 10;
+            width: 90%;
+            max-width: 400px;
         }
 
         h1 {
             color: #d90429;
-            margin: 0 0 10px 0;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin: 0 0 5px 0;
+            font-size: 2rem;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.6);
+        }
+
+        #stats-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        #timer-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            background: #d90429;
+            padding: 4px 16px;
+            border-radius: 15px;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         #meter-container {
-            width: 300px;
-            height: 25px;
+            width: 100%;
+            height: 22px;
             background-color: #fff;
             border-radius: 15px;
-            border: 3px solid #ff4d6d;
+            border: 3px solid #d90429;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
@@ -42,47 +71,94 @@
         #meter {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #ff4d6d, #ff758f);
+            background: linear-gradient(90deg, #ff4d6d, #ff007f);
             transition: width 0.2s ease;
         }
 
+        /* The real shifting heart target */
         #heart {
+            position: absolute;
+            font-size: 60px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));
+            transform: translate(-50%, -50%); 
+            left: 50%;
+            top: 50%;
+            z-index: 50;
+            padding: 10px; /* Fair, standard hitbox margin */
+            transition: transform 0.1s ease;
+        }
+
+        /* Fake heart decoys to trick your eyes */
+        .decoy-heart {
             position: absolute;
             font-size: 50px;
             cursor: pointer;
             user-select: none;
-            transition: all 0.1s ease;
-            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));
-            /* Center the absolute positioning anchor */
-            transform: translate(-50%, -50%); 
-            left: 50%;
-            top: 50%;
+            -webkit-user-select: none;
+            filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.1));
+            transform: translate(-50%, -50%);
+            z-index: 40;
+            padding: 10px;
+            opacity: 0.85;
         }
 
-        #win-screen {
+        .miss-message {
+            position: absolute;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.2rem;
+            background: #d90429;
+            border: 2px solid #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            pointer-events: none;
+            z-index: 90;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            animation: fadeUp 1s forwards ease-out;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -140%) scale(0.85); }
+        }
+
+        .modal-screen {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 240, 245, 0.98);
             z-index: 100;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        #win-screen h2 {
+        .modal-screen h2 {
             color: #d90429;
-            font-size: 3rem;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-screen p {
+            color: #333;
+            font-size: 1.2rem;
             margin-bottom: 20px;
         }
 
         button {
-            padding: 12px 24px;
-            font-size: 1rem;
+            padding: 14px 32px;
+            font-size: 1.1rem;
             background-color: #ff4d6d;
             color: white;
             border: none;
@@ -90,6 +166,8 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            font-weight: bold;
         }
 
         button:hover {
@@ -101,44 +179,81 @@
 <body>
 
     <div id="ui">
-        <h1>Catch My Love! ❤️</h1>
+        <h1>Catch My Love! 💓</h1>
+        <div id="stats-row">
+            <div id="timer-display">Time: 15.0s</div>
+        </div>
         <div id="meter-container">
             <div id="meter"></div>
         </div>
     </div>
 
-    <!-- The target -->
+    <!-- The actual target -->
     <div id="heart">❤️</div>
 
     <!-- Win Modal -->
-    <div id="win-screen">
-        <h2>💖 You Won My Heart! 💖</h2>
-        <p>Your love meter is 100% full!</p>
+    <div id="win-screen" class="modal-screen">
+        <h2>💖 Perfect! You Won! 💖</h2>
+        <p>You tracked down my heart beautifully!</p>
         <button onclick="resetGame()">Play Again</button>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-screen" class="modal-screen">
+        <h2>💔 Out of Time! 💔</h2>
+        <p>Tough luck, those fake hearts got the best of you...</p>
+        <button onclick="resetGame()">Try Again</button>
     </div>
 
     <script>
         const heart = document.getElementById('heart');
         const meter = document.getElementById('meter');
         const winScreen = document.getElementById('win-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const timerDisplay = document.getElementById('timer-display');
         
         let loveScore = 0;
-        let heartSize = 60; // initial font size in px
+        let heartSize = 60; 
         let moveInterval;
-        let speed = 1000; // initial movement speed in ms
+        let gameTimer;
+        
+        let speed = 900; // Balanced pacing tempo
+        let timeLeft = 15.0; // Fair starting clock window
+        let isGameOver = false;
+
+        // Dynamic variations of hearts used for targets and decoys
+        const heartPool = ['❤️', '💖', '💝', '💘', '💕', '💗', '💓', '💞'];
+        
+        const missMessages = [
+            "I love you babda", "you are you though", "I love you 3000", 
+            "Sheila ki Jawani", "tu cheeze badhi Hai mast", "tu itni hot Kaise Hai", 
+            "main tainu baut chahnda", "mast badhi lage tu", "hahahahahaha", 
+            "aaja fer", "challlllll"
+        ];
+
+        function getRandomPosition() {
+            const paddingX = 60;
+            const paddingY = 130;
+            const maxX = window.innerWidth - paddingX;
+            const maxY = window.innerHeight - paddingY;
+            
+            const randomX = Math.max(paddingX, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(paddingY + 20, Math.floor(Math.random() * maxY));
+            return { x: randomX, y: randomY };
+        }
 
         function moveHeart() {
-            // Keep the heart within reasonable screen bounds
-            const padding = 80;
-            const maxX = window.innerWidth - padding;
-            const maxY = window.innerHeight - padding;
+            if (isGameOver) return;
             
-            // Random positions (ensuring it doesn't spawn off-screen)
-            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
-            const randomY = Math.max(padding + 80, Math.floor(Math.random() * maxY)); // extra top padding for UI
+            const pos = getRandomPosition();
+            heart.style.left = `${pos.x}px`;
+            heart.style.top = `${pos.y}px`;
             
-            heart.style.left = `${randomX}px`;
-            heart.style.top = `${randomY}px`;
+            // Randomly rotate the primary target's look on its jump loop
+            heart.innerText = heartPool[Math.floor(Math.random() * heartPool.length)];
+            
+            // Spawn look-alike decoy hearts to distract the player
+            spawnDecoyHeart();
         }
 
         function startInterval() {
@@ -146,45 +261,157 @@
             moveInterval = setInterval(moveHeart, speed);
         }
 
-        // When the player clicks the heart
-        heart.addEventListener('click', () => {
+        function startCountdown() {
+            clearInterval(gameTimer);
+            gameTimer = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft <= 0) {
+                    timeLeft = 0;
+                    triggerGameOver();
+                }
+                timerDisplay.innerText = `Time: ${timeLeft.toFixed(1)}s`;
+            }, 100);
+        }
+
+        function spawnDecoyHeart() {
+            // Keep screen from becoming oversaturated with fakes
+            const existingDecoys = document.querySelectorAll('.decoy-heart');
+            if (existingDecoys.length > 3) {
+                existingDecoys[0].remove();
+            }
+
+            const decoy = document.createElement('div');
+            decoy.className = 'decoy-heart';
+            
+            // Uses a random heart character from the pool
+            decoy.innerText = heartPool[Math.floor(Math.random() * heartPool.length)];
+            
+            const pos = getRandomPosition();
+            decoy.style.left = `${pos.x}px`;
+            decoy.style.top = `${pos.y}px`;
+
+            // Penalty for hitting a fake decoy heart
+            const handleDecoyHit = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (isGameOver) return;
+
+                timeLeft = Math.max(0, timeLeft - 1.5); // Penalty loss of time
+                decoy.innerText = '⚠️';
+                setTimeout(() => decoy.remove(), 200);
+                
+                // Trigger a miss popup at decoy position
+                triggerMissPopup(e);
+            };
+
+            decoy.addEventListener('touchstart', handleDecoyHit, { passive: false });
+            decoy.addEventListener('mousedown', handleDecoyHit);
+
+            document.body.appendChild(decoy);
+        }
+
+        // Handle Correct Target Hits
+        function handleHeartHit(e) {
+            e.stopPropagation(); 
+            e.preventDefault(); 
+            if (isGameOver) return;
+            
             loveScore += 10;
             meter.style.width = `${loveScore}%`;
+            
+            // Moderate time bonus reward
+            timeLeft += 1.2; 
 
             if (loveScore >= 100) {
-                clearInterval(moveInterval);
-                winScreen.style.display = 'flex';
-                heart.style.display = 'none';
+                endGame(winScreen);
             } else {
-                // Make it harder: shrink it and speed it up
-                heartSize = Math.max(25, heartSize - 3);
+                // Subtle scaling down to slowly ramp up focus requirement
+                heartSize = Math.max(38, heartSize - 2); 
                 heart.style.fontSize = `${heartSize}px`;
                 
-                speed = Math.max(400, speed - 70); 
+                // Scaled progression speed curve
+                speed = Math.max(500, speed - 50); 
                 
-                // Instantly jump to a new spot and restart timer
                 moveHeart();
                 startInterval();
             }
+        }
+
+        // Universal Miss Logic (Clicking background canvas or decoys)
+        function handleMiss(e) {
+            if (e.target.closest('#ui') || isGameOver || e.target.classList.contains('decoy-heart')) return;
+
+            // Penalty for fully missing the targets and hitting empty space
+            timeLeft = Math.max(0, timeLeft - 0.6);
+            triggerMissPopup(e);
+        }
+
+        function triggerMissPopup(e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const msg = document.createElement('div');
+            msg.className = 'miss-message';
+            msg.innerText = missMessages[Math.floor(Math.random() * missMessages.length)];
+            msg.style.left = `${clientX}px`;
+            msg.style.top = `${clientY}px`;
+            
+            document.body.appendChild(msg);
+            setTimeout(() => { msg.remove(); }, 1000);
+        }
+
+        heart.addEventListener('touchstart', handleHeartHit, { passive: false });
+        heart.addEventListener('click', handleHeartHit);
+
+        document.body.addEventListener('touchstart', handleMiss, { passive: true });
+        document.body.addEventListener('mousedown', (e) => {
+            if (!('ontouchstart' in window)) handleMiss(e);
         });
+
+        function triggerGameOver() {
+            endGame(gameOverScreen);
+        }
+
+        function endGame(screenToShow) {
+            isGameOver = true;
+            clearInterval(moveInterval);
+            clearInterval(gameTimer);
+            clearDecoys();
+            screenToShow.style.display = 'flex';
+            heart.style.display = 'none';
+        }
+
+        function clearDecoys() {
+            document.querySelectorAll('.decoy-heart').forEach(el => el.remove());
+        }
 
         function resetGame() {
             loveScore = 0;
             heartSize = 60;
-            speed = 1000;
+            speed = 900;
+            timeLeft = 15.0;
+            isGameOver = false;
+
             meter.style.width = '0%';
             heart.style.fontSize = `${heartSize}px`;
+            heart.innerText = '❤️';
             heart.style.display = 'block';
-            winScreen.style.display = 'none';
             
-            // Center the heart to start
+            winScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            clearDecoys();
+            
             heart.style.left = '50%';
             heart.style.top = '50%';
+            
             startInterval();
+            startCountdown();
         }
 
-        // Kick off the game loop
+        // Start loops
         startInterval();
+        startCountdown();
     </script>
 </body>
 </html>
