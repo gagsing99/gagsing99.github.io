@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Catch My Love! (Balanced Edition)</title>
+    <title>Catch My Love! (Distraction Edition)</title>
     <style>
         body {
             margin: 0;
@@ -75,7 +75,7 @@
             transition: width 0.2s ease;
         }
 
-        /* The real shifting heart target */
+        /* The real active heart target */
         #heart {
             position: absolute;
             font-size: 60px;
@@ -87,12 +87,12 @@
             left: 50%;
             top: 50%;
             z-index: 50;
-            padding: 10px; /* Fair, standard hitbox margin */
+            padding: 10px; 
             transition: transform 0.1s ease;
         }
 
-        /* Fake heart decoys to trick your eyes */
-        .decoy-heart {
+        /* Fake non-heart decoy shapes */
+        .decoy-shape {
             position: absolute;
             font-size: 50px;
             cursor: pointer;
@@ -188,7 +188,7 @@
         </div>
     </div>
 
-    <!-- The actual target -->
+    <!-- The actual target (Always a classic heart) -->
     <div id="heart">❤️</div>
 
     <!-- Win Modal -->
@@ -201,7 +201,7 @@
     <!-- Game Over Modal -->
     <div id="game-over-screen" class="modal-screen">
         <h2>💔 Out of Time! 💔</h2>
-        <p>Tough luck, those fake hearts got the best of you...</p>
+        <p>Tough luck, you tapped the wrong distractions...</p>
         <button onclick="resetGame()">Try Again</button>
     </div>
 
@@ -217,12 +217,23 @@
         let moveInterval;
         let gameTimer;
         
-        let speed = 900; // Balanced pacing tempo
-        let timeLeft = 15.0; // Fair starting clock window
+        let speed = 900; 
+        let timeLeft = 15.0; 
         let isGameOver = false;
 
-        // Dynamic variations of hearts used for targets and decoys
-        const heartPool = ['❤️', '💖', '💝', '💘', '💕', '💗', '💓', '💞'];
+        // Color filters strictly for the main active heart target
+        const heartFilters = [
+            "none", 
+            "hue-rotate(60deg) saturate(1.5)", 
+            "hue-rotate(140deg) brightness(1.2)", 
+            "hue-rotate(200deg) saturate(2)", 
+            "hue-rotate(270deg) brightness(1.3)", 
+            "hue-rotate(310deg) saturate(2)", 
+            "hue-rotate(90deg) contrast(1.5)"
+        ];
+
+        // Random non-heart decoy shapes to flood the screen
+        const decoyPool = ['⭐', '✨', '🌟', '💥', '🎈', '🔮', '🫧', '💎', '🍓', '🎀', '🍭'];
         
         const missMessages = [
             "I love you babda", "you are you though", "I love you 3000", 
@@ -249,11 +260,11 @@
             heart.style.left = `${pos.x}px`;
             heart.style.top = `${pos.y}px`;
             
-            // Randomly rotate the primary target's look on its jump loop
-            heart.innerText = heartPool[Math.floor(Math.random() * heartPool.length)];
+            // Apply a changing color filter to the real heart target
+            heart.style.filter = `drop-shadow(0px 4px 6px rgba(0,0,0,0.15)) ${heartFilters[Math.floor(Math.random() * heartFilters.length)]}`;
             
-            // Spawn look-alike decoy hearts to distract the player
-            spawnDecoyHeart();
+            // Spawn decoy noise shapes
+            spawnDecoy();
         }
 
         function startInterval() {
@@ -273,34 +284,32 @@
             }, 100);
         }
 
-        function spawnDecoyHeart() {
-            // Keep screen from becoming oversaturated with fakes
-            const existingDecoys = document.querySelectorAll('.decoy-heart');
-            if (existingDecoys.length > 3) {
+        function spawnDecoy() {
+            const existingDecoys = document.querySelectorAll('.decoy-shape');
+            if (existingDecoys.length > 4) {
                 existingDecoys[0].remove();
             }
 
             const decoy = document.createElement('div');
-            decoy.className = 'decoy-heart';
+            decoy.className = 'decoy-shape';
             
-            // Uses a random heart character from the pool
-            decoy.innerText = heartPool[Math.floor(Math.random() * heartPool.length)];
+            // Pull a completely random non-heart item from our decoy selection
+            decoy.innerText = decoyPool[Math.floor(Math.random() * decoyPool.length)];
             
             const pos = getRandomPosition();
             decoy.style.left = `${pos.x}px`;
             decoy.style.top = `${pos.y}px`;
 
-            // Penalty for hitting a fake decoy heart
             const handleDecoyHit = (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 if (isGameOver) return;
 
-                timeLeft = Math.max(0, timeLeft - 1.5); // Penalty loss of time
+                // Strong penalty for tapping a distraction shape instead of the heart
+                timeLeft = Math.max(0, timeLeft - 1.5); 
                 decoy.innerText = '⚠️';
                 setTimeout(() => decoy.remove(), 200);
                 
-                // Trigger a miss popup at decoy position
                 triggerMissPopup(e);
             };
 
@@ -310,7 +319,6 @@
             document.body.appendChild(decoy);
         }
 
-        // Handle Correct Target Hits
         function handleHeartHit(e) {
             e.stopPropagation(); 
             e.preventDefault(); 
@@ -318,18 +326,13 @@
             
             loveScore += 10;
             meter.style.width = `${loveScore}%`;
-            
-            // Moderate time bonus reward
             timeLeft += 1.2; 
 
             if (loveScore >= 100) {
                 endGame(winScreen);
             } else {
-                // Subtle scaling down to slowly ramp up focus requirement
                 heartSize = Math.max(38, heartSize - 2); 
                 heart.style.fontSize = `${heartSize}px`;
-                
-                // Scaled progression speed curve
                 speed = Math.max(500, speed - 50); 
                 
                 moveHeart();
@@ -337,11 +340,10 @@
             }
         }
 
-        // Universal Miss Logic (Clicking background canvas or decoys)
         function handleMiss(e) {
-            if (e.target.closest('#ui') || isGameOver || e.target.classList.contains('decoy-heart')) return;
+            if (e.target.closest('#ui') || isGameOver || e.target.classList.contains('decoy-shape')) return;
 
-            // Penalty for fully missing the targets and hitting empty space
+            // Small penalty for missing completely and hitting open space
             timeLeft = Math.max(0, timeLeft - 0.6);
             triggerMissPopup(e);
         }
@@ -382,7 +384,7 @@
         }
 
         function clearDecoys() {
-            document.querySelectorAll('.decoy-heart').forEach(el => el.remove());
+            document.querySelectorAll('.decoy-shape').forEach(el => el.remove());
         }
 
         function resetGame() {
@@ -394,7 +396,7 @@
 
             meter.style.width = '0%';
             heart.style.fontSize = `${heartSize}px`;
-            heart.innerText = '❤️';
+            heart.style.filter = "none";
             heart.style.display = 'block';
             
             winScreen.style.display = 'none';
@@ -409,7 +411,6 @@
             startCountdown();
         }
 
-        // Start loops
         startInterval();
         startCountdown();
     </script>
