@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Box Breathing App</title>
+    <title>Thand Rakh</title>
     <style>
         :root {
             --bg-color: #121826;
@@ -51,12 +51,12 @@
         }
 
         .subtitle {
-            font-size: 0.9rem;
-            color: #94a3b8;
+            font-size: 1rem;
+            color: #38bdf8;
             margin-bottom: 25px;
+            font-weight: 500;
         }
 
-        /* Settings Panel */
         .settings {
             background: rgba(255,255,255,0.03);
             padding: 15px;
@@ -69,10 +69,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-        }
-
-        .setting-row:last-child {
-            margin-bottom: 0;
         }
 
         label {
@@ -98,20 +94,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn-step:active {
-            background: var(--accent-color);
-        }
+        .btn-step:active { background: var(--accent-color); }
 
-        .duration-val {
-            font-size: 1.1rem;
-            font-weight: bold;
-            min-width: 25px;
-        }
+        .duration-val { font-size: 1.1rem; font-weight: bold; min-width: 25px; }
 
-        /* Visual Breathing Circle */
         .circle-container {
             position: relative;
             width: 240px;
@@ -133,10 +121,7 @@
             transform: scale(0.4);
         }
 
-        .circle-text {
-            position: relative;
-            z-index: 10;
-        }
+        .circle-text { position: relative; z-index: 10; }
 
         #phase-name {
             font-size: 1.4rem;
@@ -147,12 +132,8 @@
             transition: color 0.3s;
         }
 
-        #timer-display {
-            font-size: 3rem;
-            font-weight: 800;
-        }
+        #timer-display { font-size: 3rem; font-weight: 800; }
 
-        /* Dynamic Message Box */
         .message-box {
             min-height: 40px;
             margin-bottom: 25px;
@@ -163,12 +144,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Controls */
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
+        .controls { display: flex; gap: 15px; justify-content: center; }
 
         .btn-main {
             padding: 16px 32px;
@@ -178,35 +154,21 @@
             border-radius: 50px;
             cursor: pointer;
             flex: 1;
-            transition: background 0.2s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn-main:active {
-            transform: scale(0.98);
-        }
-
-        #btn-start {
-            background: var(--accent-color);
-            color: #0f172a;
-        }
-
-        #btn-reset {
-            background: #2e3d52;
-            color: var(--text-color);
-        }
+        #btn-start { background: var(--accent-color); color: #0f172a; }
+        #btn-reset { background: #2e3d52; color: var(--text-color); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Box Breathing</h1>
-        <div class="subtitle">Reset your nervous system</div>
+        <h1>Thand Rakh</h1>
+        <div class="subtitle">Main Tere naal haan</div>
 
-        <!-- Mobile Settings -->
         <div class="settings">
             <div class="setting-row">
-                <label>Inhale / Exhale:</label>
+                <label>Saah Duration:</label>
                 <div class="input-group">
                     <button class="btn-step" onclick="adjustTime('breath', -1)">-</button>
                     <span class="duration-val" id="breath-val">5</span>
@@ -214,7 +176,7 @@
                 </div>
             </div>
             <div class="setting-row">
-                <label>Hold (In / Out):</label>
+                <label>Rok Duration:</label>
                 <div class="input-group">
                     <button class="btn-step" onclick="adjustTime('hold', -1)">-</button>
                     <span class="duration-val" id="hold-val">5</span>
@@ -223,7 +185,6 @@
             </div>
         </div>
 
-        <!-- Breathing Ring -->
         <div class="circle-container">
             <div class="breath-circle" id="visual-circle"></div>
             <div class="circle-text">
@@ -232,10 +193,8 @@
             </div>
         </div>
 
-        <!-- Personalized Messages Status Display -->
         <div class="message-box" id="dynamic-message">✨</div>
 
-        <!-- Controls -->
         <div class="controls">
             <button class="btn-main" id="btn-start" onclick="toggleApp()">Start</button>
             <button class="btn-main" id="btn-reset" onclick="resetApp()">Reset</button>
@@ -245,21 +204,18 @@
     <script>
         let breathDuration = 5; 
         let holdDuration = 5;
-        
         let isRunning = false;
         let timerInterval = null;
-        
         let currentPhase = 0; 
         let secondsLeft = 0;
 
         const phases = [
-            { name: "Inhale", color: "var(--inhale-color)" },
-            { name: "Hold", color: "var(--hold-color)" },
-            { name: "Exhale", color: "var(--exhale-color)" },
-            { name: "Hold", color: "var(--hold-color)" }
+            { name: "Saah lae", color: "var(--inhale-color)" },
+            { name: "Rok saah", color: "var(--hold-color)" },
+            { name: "Saah chhad", color: "var(--exhale-color)" },
+            { name: "Rok saah", color: "var(--hold-color)" }
         ];
 
-        // Custom Messages List
         const loveMessages = [
             "I love you", "tu bas tu hai", "jithe tu othe main", 
             "tu hi sab Mera", "Pyaar Mera tu", "#JG4Life", 
@@ -268,13 +224,6 @@
         ];
 
         let lastMessage = "";
-
-        // Elements
-        const phaseNameEl = document.getElementById("phase-name");
-        const timerDisplayEl = document.getElementById("timer-display");
-        const circleEl = document.getElementById("visual-circle");
-        const startBtn = document.getElementById("btn-start");
-        const messageEl = document.getElementById("dynamic-message");
 
         function adjustTime(type, change) {
             if (isRunning) return;
@@ -287,107 +236,62 @@
             }
         }
 
-        // Pull a truly random message without repeating the exact same one back-to-back
         function updateRandomMessage() {
             let availableMessages = loveMessages.filter(msg => msg !== lastMessage);
-            let randomIndex = Math.floor(Math.random() * availableMessages.length);
-            let selectedMessage = availableMessages[randomIndex];
-            
+            let selectedMessage = availableMessages[Math.floor(Math.random() * availableMessages.length)];
             lastMessage = selectedMessage;
-            messageEl.textContent = selectedMessage;
+            document.getElementById("dynamic-message").textContent = selectedMessage;
         }
 
         function toggleApp() {
-            if (isRunning) {
-                pause();
-            } else {
-                start();
-            }
+            if (isRunning) { pause(); } else { start(); }
         }
 
         function start() {
             isRunning = true;
-            startBtn.textContent = "Pause";
-            startBtn.style.background = "#e2e8f0";
-            startBtn.style.color = "#0f172a";
-            
-            if (secondsLeft <= 0) {
-                currentPhase = 0;
-                secondsLeft = breathDuration;
-            }
-            
+            document.getElementById("btn-start").textContent = "Pause";
+            if (secondsLeft <= 0) { currentPhase = 0; secondsLeft = breathDuration; }
             updateDisplay();
             updateRandomMessage();
-            
             timerInterval = setInterval(() => {
                 secondsLeft--;
-                
                 if (secondsLeft <= 0) {
                     currentPhase = (currentPhase + 1) % 4;
                     secondsLeft = (currentPhase % 2 === 0) ? breathDuration : holdDuration;
                 }
-                
                 updateDisplay();
-                updateRandomMessage(); // Switches up messages multiple times per individual cycle
+                updateRandomMessage();
             }, 1000);
         }
 
         function pause() {
             isRunning = false;
-            startBtn.textContent = "Resume";
-            startBtn.style.background = "var(--accent-color)";
-            startBtn.style.color = "#0f172a";
+            document.getElementById("btn-start").textContent = "Resume";
             clearInterval(timerInterval);
         }
 
         function resetApp() {
             isRunning = false;
             clearInterval(timerInterval);
-            currentPhase = 0;
-            secondsLeft = 0;
-            lastMessage = "";
-            
-            startBtn.textContent = "Start";
-            startBtn.style.background = "var(--accent-color)";
-            startBtn.style.color = "#0f172a";
-            
-            phaseNameEl.textContent = "Ready";
-            phaseNameEl.style.color = "var(--text-color)";
-            timerDisplayEl.textContent = "--";
-            messageEl.textContent = "✨";
-            
-            circleEl.style.transform = "scale(0.4)";
-            circleEl.style.borderColor = "var(--accent-color)";
-            circleEl.style.backgroundColor = "rgba(56, 189, 248, 0.1)";
+            currentPhase = 0; secondsLeft = 0;
+            document.getElementById("btn-start").textContent = "Start";
+            document.getElementById("phase-name").textContent = "Ready";
+            document.getElementById("timer-display").textContent = "--";
+            document.getElementById("dynamic-message").textContent = "✨";
         }
 
         function updateDisplay() {
             const phase = phases[currentPhase];
-            phaseNameEl.textContent = phase.name;
-            phaseNameEl.style.color = phase.color;
-            timerDisplayEl.textContent = secondsLeft;
-            circleEl.style.borderColor = phase.color;
+            document.getElementById("phase-name").textContent = phase.name;
+            document.getElementById("phase-name").style.color = phase.color;
+            document.getElementById("timer-display").textContent = secondsLeft;
+            const circle = document.getElementById("visual-circle");
+            circle.style.borderColor = phase.color;
 
-            if (currentPhase === 0) {
-                const progress = (breathDuration - secondsLeft) / breathDuration;
-                const scale = 0.4 + (progress * 0.6);
-                circleEl.style.transform = `scale(${scale})`;
-                circleEl.style.backgroundColor = `rgba(52, 211, 153, ${0.05 + (progress * 0.15)})`;
-            } 
-            else if (currentPhase === 1) {
-                circleEl.style.transform = "scale(1)";
-                circleEl.style.backgroundColor = "rgba(251, 191, 36, 0.2)";
-            } 
-            else if (currentPhase === 2) {
-                const progress = (breathDuration - secondsLeft) / breathDuration;
-                const scale = 1.0 - (progress * 0.6);
-                circleEl.style.transform = `scale(${scale})`;
-                circleEl.style.backgroundColor = `rgba(244, 63, 94, ${0.2 - (progress * 0.15)})`;
-            } 
-            else if (currentPhase === 3) {
-                circleEl.style.transform = "scale(0.4)";
-                circleEl.style.backgroundColor = "rgba(251, 191, 36, 0.05)";
-            }
+            if (currentPhase === 0) circle.style.transform = `scale(${0.4 + ((breathDuration - secondsLeft) / breathDuration) * 0.6})`;
+            else if (currentPhase === 1) circle.style.transform = "scale(1)";
+            else if (currentPhase === 2) circle.style.transform = `scale(${1.0 - ((breathDuration - secondsLeft) / breathDuration) * 0.6})`;
+            else if (currentPhase === 3) circle.style.transform = "scale(0.4)";
         }
     </script>
 </body>
