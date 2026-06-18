@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Premium 3D Egg Counter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+            text-shadow: 0 4px 12px rgba(56, 189, 248, 0.1);
+        }
+        p.subtitle {
+            color: #94a3b8; 
+            margin-bottom: 20px; 
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        #game-container {
+            position: relative;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 100%;
+            max-width: 440px;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 300px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: #05050a;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+        .control-panel {
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .badge-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+        }
+        .badge {
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* --- Dynamic Dual-Slider Fixes --- */
+        .slider-wrapper {
+            position: relative;
+            width: 100%;
+            height: 36px;
+            margin-bottom: 10px;
+        }
+        .slider-track {
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 99px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        input[type="range"] {
+            position: absolute;
+            width: 100%;
+            pointer-events: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background: none;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            left: 0;
+            z-index: 2;
+        }
+        /* Modernized Neon Slider Knobs */
+        input[type="range"]::-webkit-slider-thumb {
+            height: 26px;
+            width: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #38bdf8;
+            cursor: pointer;
+            pointer-events: auto;
+            appearance: none;
+            -webkit-appearance: none;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+            border-color: #818cf8;
+        }
+        input[type="range"]::-moz-range-thumb {
+            height: 26px;
+            width: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #38bdf8;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .warning-text {
+            font-size: 0.8rem;
+            color: #f43f5e;
+            margin-bottom: 12px;
+            font-weight: 600;
+            height: 16px;
+            letter-spacing: 0.3px;
+        }
+        button {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            padding: 14px 0;
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+        }
+        button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        #overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 24px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 20;
+        }
+        #message {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        #sub-message {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>3D Egg Eyeballer</h1>
+    <p class="subtitle">Set your range window. Max span width allowed is 10!</p>
+
+    <div id="game-container">
+        <div class="stats-bar">
+            <span id="level-display" style="color: #818cf8;">Level 1</span>
+            <span id="timer-display" style="color: #f43f5e;">Time: 15s</span>
+        </div>
+
+        <div id="canvas-container"></div>
+
+        <div class="control-panel" id="controls">
+            <div class="badge-container">
+                <div>Min: <span class="badge" id="minVal">1</span></div>
+                <div>Max: <span class="badge" id="maxVal">11</span></div>
+            </div>
+
+            <div class="slider-wrapper">
+                <div class="slider-track" id="track"></div>
+                <input type="range" id="rangeMin" min="1" max="100" value="1">
+                <input type="range" id="rangeMax" min="1" max="100" value="11">
+            </div>
+
+            <div class="warning-text" id="warning"></div>
+            <button onclick="submitGuess()">Lock In Guess</button>
+        </div>
+
+        <div id="overlay">
+            <div id="message"></div>
+            <div id="sub-message"></div>
+            <button onclick="resetLevel()" style="width: auto; padding: 14px 35px;">Advance / Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const minSlider = document.getElementById('rangeMin');
+        const maxSlider = document.getElementById('rangeMax');
+        const minValDisplay = document.getElementById('minVal');
+        const maxValDisplay = document.getElementById('maxVal');
+        const sliderTrack = document.getElementById('track');
+        const warningDisplay = document.getElementById('warning');
+        const container = document.getElementById('canvas-container');
+
+        let level = 1, eggCount = 0, timeLeft = 15, timerInterval = null, gameActive = true;
+        let scene, camera, renderer, eggContainerGroup;
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x06060c);
+
+            camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 15, 18);
+            camera.lookAt(0, 1.5, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+            const topKeyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+            topKeyLight.position.set(5, 18, 7);
+            topKeyLight.castShadow = true;
+            topKeyLight.shadow.mapSize.width = 2048;
+            topKeyLight.shadow.mapSize.height = 2048;
+            topKeyLight.shadow.bias = -0.0005;
+            scene.add(topKeyLight);
+
+            const backRimLight = new THREE.DirectionalLight(0x6366f1, 1.1); 
+            backRimLight.position.set(-8, 6, -10);
+            scene.add(backRimLight);
+
+            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.5);
+            fillLight.position.set(8, 3, -4);
+            scene.add(fillLight);
+
+            const floorGeo = new THREE.CylinderGeometry(8, 8.5, 0.4, 40);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5, metalness: 0.2 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.y = -0.2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            eggContainerGroup = new THREE.Group();
+            scene.add(eggContainerGroup);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (eggContainerGroup) {
+                    eggContainerGroup.rotation.y = Math.sin(Date.now() * 0.0001) * 0.06;
+                }
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        function createEggMesh() {
+            const points = [];
+            for (let i = 0; i <= 32; i++) {
+                const t = i / 32;
+                const angle = t * Math.PI;
+                const x = Math.sin(angle) * (1.15 + 0.06 * Math.cos(angle)); 
+                const y = -Math.cos(angle) * 1.4;
+                points.push(new THREE.Vector2(x, y));
+            }
+            
+            const eggGeo = new THREE.LatheGeometry(points, 40);
+            const eggMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.12,  
+                metalness: 0.05
+            });
+
+            const mesh = new THREE.Mesh(eggGeo, eggMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        function generateEggStack(count) {
+            while(eggContainerGroup.children.length > 0){ 
+                eggContainerGroup.remove(eggContainerGroup.children[0]); 
+            }
+
+            for (let i = 0; i < count; i++) {
+                const egg = createEggMesh();
+                let layer = Math.floor(i / 9); 
+                let angle = (i * 2.4) + (Math.random() * 0.15); 
+                let radius = Math.min(3.8, (i % 9) * 0.42 + (layer * 0.1) + 0.1);
+                
+                egg.position.set(Math.cos(angle) * radius, layer * 0.95 + (Math.random() * 0.15), Math.sin(angle) * radius);
+                egg.rotation.set((Math.random() - 0.5) * 0.8 + 1.1, Math.random() * Math.PI, (Math.random() - 0.5) * 0.3);
+                
+                let s = 0.85 + Math.random() * 0.1;
+                egg.scale.set(s, s, s);
+                eggContainerGroup.add(egg);
+            }
+        }
+
+        // --- Multi-Handle Core Logic & Precise Percentage Fix ---
+        function updateSliderUI(e) {
+            let min = parseInt(minSlider.value);
+            let max = parseInt(maxSlider.value);
+            const minAllowed = parseInt(minSlider.min);
+            const maxAllowed = parseInt(minSlider.max);
+
+            if (min > max) {
+                if (e && e.target === minSlider) { max = min; maxSlider.value = max; } 
+                else { min = max; minSlider.value = min; }
+            }
+
+            if (max - min > 10) {
+                if (e && e.target === minSlider) { max = min + 10; maxSlider.value = max; } 
+                else { min = max - 10; minSlider.value = min; warningDisplay.innerText = "Max range span allowed is 10!"; setTimeout(() => warningDisplay.innerText = "", 2500); }
+            }
+
+            if (e) {
+                minSlider.style.zIndex = (e.target === minSlider) ? "3" : "2";
+                maxSlider.style.zIndex = (e.target === maxSlider) ? "3" : "2";
+            }
+
+            // FIXED RANGE TRACK MATH: Factors in min allowed boundary perfectly
+            const totalRange = maxAllowed - minAllowed;
+            const pLeft = ((min - minAllowed) / totalRange) * 100;
+            const pRight = ((max - minAllowed) / totalRange) * 100;
+            
+            sliderTrack.style.background = `linear-gradient(to right, #1e293b ${pLeft}%, #38bdf8 ${pLeft}%, #818cf8 ${pRight}%, #1e293b ${pRight}%)`;
+
+            minValDisplay.innerText = min;
+            maxValDisplay.innerText = max;
+        }
+
+        minSlider.addEventListener('input', updateSliderUI);
+        maxSlider.addEventListener('input', updateSliderUI);
+
+        function initLevel() {
+            gameActive = true;
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('controls').style.opacity = '1';
+            
+            const baseMin = 5 + (level * 4);
+            const baseMax = 11 + (level * 5);
+            eggCount = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+
+            const sliderLimit = baseMax + 12;
+            minSlider.max = sliderLimit; 
+            maxSlider.max = sliderLimit;
+
+            minSlider.value = Math.max(1, eggCount - 5);
+            maxSlider.value = parseInt(minSlider.value) + 7;
+            
+            // Re-sync UI with fresh boundaries
+            updateSliderUI(null);
+
+            timeLeft = Math.max(5, 16 - (level * 1));
+            document.getElementById('timer-display').innerText = `Time: ${timeLeft}s`;
+            document.getElementById('level-display').innerText = `Level ${level}`;
+
+            generateEggStack(eggCount);
+            clearInterval(timerInterval);
+            timerInterval = setInterval(tick, 1000);
+        }
+
+        function tick() {
+            if (!gameActive) return;
+            timeLeft--;
+            document.getElementById('timer-display').innerText = `Time: ${timeLeft}s`;
+            if (timeLeft <= 0) { clearInterval(timerInterval); endGame(false, "Timeout!"); }
+        }
+
+        function submitGuess() {
+            if (!gameActive) return;
+            clearInterval(timerInterval);
+            if (eggCount >= parseInt(minSlider.value) && eggCount <= parseInt(maxSlider.value)) endGame(true);
+            else endGame(false);
+        }
+
+        function endGame(isWin, customMsg) {
+            gameActive = false;
+            const overlay = document.getElementById('overlay');
+            const msgDiv = document.getElementById('message');
+            const subMsgDiv = document.getElementById('sub-message');
+            
+            overlay.style.display = 'flex';
+            document.getElementById('controls').style.opacity = '0.2';
+
+            if (isWin) {
+                msgDiv.innerHTML = "❤️ you are my omelette ❤️";
+                msgDiv.style.color = "#38bdf8";
+                subMsgDiv.innerText = `Outstanding! There were exactly ${eggCount} eggs.`;
+                level++;
+            } else {
+                msgDiv.innerHTML = "o oh! You are such an andaaa 🥚";
+                msgDiv.style.color = "#f43f5e";
+                subMsgDiv.innerText = customMsg === "Timeout!" ? `Time up! There were ${eggCount} eggs.` : `Wrong bounds! There were ${eggCount} eggs.`;
+            }
+        }
+
+        function resetLevel() { initLevel(); }
+        window.onload = () => { init3D(); initLevel(); };
+    </script>
+</body>
+</html>
