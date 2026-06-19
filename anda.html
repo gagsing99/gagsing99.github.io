@@ -210,7 +210,7 @@
 <body>
 
     <h1>Extreme Egg Eyeballer</h1>
-    <p class="subtitle">Watch out for camouflage camouflage eggs and shifting platforms!</p>
+    <p class="subtitle">Watch out for tight stacks and shifting platforms!</p>
 
     <div id="game-container">
         <div class="stats-bar">
@@ -255,8 +255,7 @@
         let level = 1, eggCount = 0, timeLeft = 15, timerInterval = null, gameActive = true;
         let scene, camera, renderer, eggContainerGroup;
 
-        // Shiny Materials
-        let whiteEggMat, camoEggMat;
+        let whiteEggMat;
 
         function init3D() {
             scene = new THREE.Scene();
@@ -274,18 +273,10 @@
             renderer.toneMappingExposure = 1.1;
             container.appendChild(renderer.domElement);
 
-            // High-Contrast Material Setup
             whiteEggMat = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 roughness: 0.08,
                 metalness: 0.02
-            });
-
-            // Camouflage egg material (Matches the platform to deceive the eyes)
-            camoEggMat = new THREE.MeshStandardMaterial({
-                color: 0x181528,
-                roughness: 0.5,
-                metalness: 0.4
             });
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.25));
@@ -298,7 +289,6 @@
             topKeyLight.shadow.bias = -0.0005;
             scene.add(topKeyLight);
 
-            // Intense rim-glow highlight line
             const backRimLight = new THREE.DirectionalLight(0xf43f5e, 1.2); 
             backRimLight.position.set(-6, 5, -8);
             scene.add(backRimLight);
@@ -307,7 +297,6 @@
             fillLight.position.set(8, 3, -4);
             scene.add(fillLight);
 
-            // Nest Platform matching camo eggs
             const floorGeo = new THREE.CylinderGeometry(7.5, 8, 0.4, 40);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f0c1b, roughness: 0.6, metalness: 0.3 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -323,7 +312,6 @@
                 if (eggContainerGroup && gameActive) {
                     let time = Date.now() * 0.001;
                     
-                    // Platform drift speed and erratic tilt severity scales up drastically with levels
                     let speedModifier = 0.5 + (level * 0.15);
                     let tiltModifier = Math.min(0.25, level * 0.03);
 
@@ -342,7 +330,7 @@
             });
         }
 
-        function createEggMesh(isCamo) {
+        function createEggMesh() {
             const points = [];
             for (let i = 0; i <= 32; i++) {
                 const t = i / 32;
@@ -353,7 +341,7 @@
             }
             
             const eggGeo = new THREE.LatheGeometry(points, 32);
-            const mesh = new THREE.Mesh(eggGeo, isCamo ? camoEggMat : whiteEggMat);
+            const mesh = new THREE.Mesh(eggGeo, whiteEggMat);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             return mesh;
@@ -364,19 +352,13 @@
                 eggContainerGroup.remove(eggContainerGroup.children[0]); 
             }
 
-            // Ratio of hidden camouflage eggs scales up with level progression
-            let camoProbability = Math.min(0.45, 0.15 + (level * 0.04));
-
             for (let i = 0; i < count; i++) {
-                let isCamo = Math.random() < camoProbability;
-                const egg = createEggMesh(isCamo);
+                const egg = createEggMesh();
                 
-                // Chaos placement math (Aggressive multi-layered stacking clusters)
                 let layer = Math.floor(i / 7); 
                 let angle = (i * 2.6) + (Math.random() * 0.4); 
                 let radius = Math.min(3.2, (i % 7) * 0.38 + (layer * 0.05) + (Math.random() * 0.2));
                 
-                // Random cross-clipping coordinate deviations
                 let xOffset = (Math.random() - 0.5) * 0.3;
                 let zOffset = (Math.random() - 0.5) * 0.3;
 
@@ -386,7 +368,6 @@
                     Math.sin(angle) * radius + zOffset
                 );
                 
-                // Extreme structural rotations to obscure shapes completely
                 egg.rotation.set(
                     Math.random() * Math.PI, 
                     Math.random() * Math.PI, 
@@ -438,7 +419,6 @@
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('controls').style.opacity = '1';
             
-            // Massively increased starting quantities and scaling metrics
             const baseMin = 10 + (level * 5);
             const baseMax = 18 + (level * 7);
             eggCount = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
@@ -447,12 +427,12 @@
             minSlider.max = sliderLimit; 
             maxSlider.max = sliderLimit;
 
-            minSlider.value = Math.max(1, eggCount - 6);
+            // ENFORCED MECHANIC: The range selector initialization point is locked between 1 and 10!
+            minSlider.value = Math.floor(Math.random() * 10) + 1; 
             maxSlider.value = parseInt(minSlider.value) + 8;
             
             updateSliderUI(null);
 
-            // Shorter window timers to induce counting panic
             timeLeft = Math.max(4, 15 - (level * 1));
             document.getElementById('timer-display').innerText = `Time: ${timeLeft}s`;
             document.getElementById('level-display').innerText = `Level ${level}`;
