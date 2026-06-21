@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Balloon Fight Challenge!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16/10;
+        }
+        canvas {
+            background: linear-gradient(to bottom, #74b9ff, #a1c4fd);
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            pointer-events: none;
+            gap: 5px;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        h1 { color: #ff4757; margin-bottom: 5px; }
+        h2 { color: #2ed573; margin-top: 0; }
+        .challenge-box {
+            background: #16a085;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            max-width: 90%;
+        }
+        input[type="text"] {
+            padding: 12px;
+            width: 80%;
+            max-width: 280px;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background: #ff6b81; }
+        #share-url {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #a4b0be;
+            word-break: break-all;
+            max-width: 90%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    
+    <div id="ui-layer">
+        <div id="score-display">Score: 0</div>
+        <div id="timer-display">Time: 30</div>
+    </div>
+
+    <div id="game-over-screen">
+        <h1>Game Over!</h1>
+        <h2 id="final-score">Your Score: 0</h2>
+        
+        <div id="challenge-receive" class="challenge-box" style="display: none;"></div>
+
+        <p style="font-size: 18px; margin-bottom: 10px;">Now, challenge Gaganu with your score!</p>
+        <input type="text" id="msg-input" placeholder="Enter a cheeky trash-talk message...">
+        <button onclick="generateShareLink()">Generate & Copy Share Link</button>
+        <div id="share-url"></div>
+        <button onclick="location.reload()" style="background: #2ed573; margin-top: 15px;">Play Again</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gameOverScreen = document.getElementById('game-over-screen');
+const scoreDisplay = document.getElementById('score-display');
+const timerDisplay = document.getElementById('timer-display');
+const finalScoreDisplay = document.getElementById('final-score');
+const msgInput = document.getElementById('msg-input');
+const shareUrlDisplay = document.getElementById('share-url');
+const challengeReceive = document.getElementById('challenge-receive');
+
+// Game parameters
+let score = 0;
+let timeLeft = 30;
+let gameActive = true;
+let targets = [];
+let balloons = [];
+let splashes = [];
+
+// Aim Tracking
+let aimX = canvas.width / 2;
+let aimY = 0;
+
+// Dynamic background clouds system
+let clouds = [
+    { x: 100, y: 80, size: 30, speed: 0.3 },
+    { x: 450, y: 50, size: 40, speed: 0.2 },
+    { x: 700, y: 110, size: 25, speed: 0.4 }
+];
+
+// Synth Audio Setup (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSplashSound(isBlood) {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    // Synthesize a fluid pop/splash impact noise
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    // Pitfall hearts sound lower and muddy, normal splashes sound snappy
+    osc.type = isBlood ? 'sawtooth' : 'triangle';
+    osc.frequency.setValueAtTime(isBlood ? 180 : 300, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+    
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.16);
+}
+
+// Parse Query Parameter Setup
+const urlParams = new URLSearchParams(window.location.search);
+const opponentScore = urlParams.get('score');
+const opponentMsg = urlParams.get('msg');
+
+if (opponentScore !== null) {
+    challengeReceive.style.display = 'block';
+    challengeReceive.innerText = `Gaganu's Challenge: Beat my score of ${opponentScore}! \n"${opponentMsg || 'Good luck!'}"`;
+}
+
+// Particle Class
+class SplashParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 9;
+        this.vy = (Math.random() - 0.7) * 9 - 2;
+        this.radius = Math.random() * 4 + 2;
+        this.alpha = 1;
+        this.gravity = 0.25;
+        this.color = color;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity;
+        this.alpha -= 0.03;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// Targets Structure
+class Target {
+    constructor() {
+        this.x = Math.random() * (canvas.width - 120) + 60;
+        this.y = canvas.height + Math.random() * 100;
+        this.radius = 24;
+        this.speed = Math.random() * 2.5 + 2;
+        this.drift = Math.random() * 2 - 1;
+        
+        // Spawn configuration (25% chance of spawning pitfall Heart)
+        if (Math.random() < 0.25) {
+            this.icon = '❤️';
+            this.type = 'pitfall';
+        } else {
+            const types = ['🦅', '🐛', '🕷️'];
+            this.icon = types[Math.floor(Math.random() * types.length)];
+            this.type = 'enemy';
+        }
+    }
+
+    update() {
+        this.y -= this.speed;
+        this.x += this.drift;
+        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+            this.drift *= -1;
+        }
+    }
+
+    draw() {
+        ctx.save();
+        ctx.font = "38px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(this.icon, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+// Balloon Projectiles
+class Balloon {
+    constructor(targetX, targetY) {
+        this.x = canvas.width / 2; 
+        this.y = canvas.height - 20;
+        this.radius = 14;
+        this.speed = 11;
+        
+        let angle = Math.atan2(targetY - this.y, targetX - this.x);
+        this.vx = Math.cos(angle) * this.speed;
+        this.vy = Math.sin(angle) * this.speed;
+        
+        const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#9b59b6'];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+    draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.ellipse(this.x, this.y, this.radius, this.radius * 1.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// Scenery Drawing Helpers
+function drawScenery() {
+    // Sun
+    ctx.fillStyle = '#feca57';
+    ctx.beginPath();
+    ctx.arc(80, 80, 45, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Drifting Clouds
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    clouds.forEach(c => {
+        c.x += c.speed;
+        if (c.x - c.size * 2 > canvas.width) c.x = -c.size * 2;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+        ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.4, c.size * 0.8, 0, Math.PI * 2);
+        ctx.arc(c.x + c.size * 1.2, c.y, c.size * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Draw spread out Palm Trees at base level
+    const treePositions = [60, 180, 620, 740];
+    treePositions.forEach(xPos => {
+        // Trunk
+        ctx.strokeStyle = '#795548';
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(xPos, canvas.height);
+        ctx.quadraticCurveTo(xPos - 5, canvas.height - 40, xPos - 10, canvas.height - 80);
+        ctx.stroke();
+
+        // Leaves
+        ctx.fillStyle = '#2e7d32';
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.ellipse(xPos - 10, canvas.height - 80, 12, 30, (i * 35 * Math.PI) / 180, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+}
+
+function drawCannon() {
+    const cannonX = canvas.width / 2;
+    const cannonY = canvas.height;
+    let angle = Math.atan2(aimY - cannonY, aimX - cannonX);
+
+    ctx.save();
+    // Heavy Mount Base Platform
+    ctx.fillStyle = '#34495e';
+    ctx.beginPath();
+    ctx.arc(cannonX, cannonY, 35, Math.PI, 0);
+    ctx.fill();
+
+    // Directional Cannon Trunk
+    ctx.translate(cannonX, cannonY);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(0, -11, 55, 22);
+    ctx.fillStyle = '#1a252f';
+    ctx.fillRect(52, -11, 5, 22);
+    ctx.restore();
+}
+
+setInterval(() => {
+    if (gameActive) targets.push(new Target());
+}, 650);
+
+// Main Dynamic Core Loop
+function gameLoop() {
+    if (!gameActive) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background Elements Processing First
+    drawScenery();
+
+    // Splash Engine Processing
+    for (let i = splashes.length - 1; i >= 0; i--) {
+        splashes[i].update();
+        splashes[i].draw();
+        if (splashes[i].alpha <= 0) splashes.splice(i, 1);
+    }
+
+    // Balloon Movement & Hit Registration
+    for (let b = balloons.length - 1; b >= 0; b--) {
+        balloons[b].update();
+        balloons[b].draw();
+
+        if (balloons[b].y < -20 || balloons[b].x < -20 || balloons[b].x > canvas.width + 20) {
+            balloons.splice(b, 1);
+            continue;
+        }
+
+        for (let t = targets.length - 1; t >= 0; t--) {
+            let dist = Math.hypot(balloons[b].x - targets[t].x, balloons[b].y - targets[t].y);
+            if (dist < balloons[b].radius + targets[t].radius) {
+                
+                let isHeart = (targets[t].type === 'pitfall');
+                let splashColor = isHeart ? '#ff3838' : '#74b9ff'; // Red Blood vs Blue Water
+                
+                // Play Synth Sound Effect
+                playSplashSound(isHeart);
+
+                // Pop Drop Splashes
+                for(let p=0; p < 18; p++) {
+                    splashes.push(new SplashParticle(targets[t].x, targets[t].y, splashColor));
+                }
+
+                // Balance adjustment rule
+                if (isHeart) {
+                    score = Math.max(0, score - 15); // Drop score by 15, floor at 0
+                } else {
+                    score += 10;
+                }
+
+                targets.splice(t, 1);
+                balloons.splice(b, 1);
+                scoreDisplay.innerText = `Score: ${score}`;
+                break;
+            }
+        }
+    }
+
+    // Target tracking mechanics 
+    for (let t = targets.length - 1; t >= 0; t--) {
+        targets[t].update();
+        targets[t].draw();
+        if (targets[t].y < -40) targets.splice(t, 1);
+    }
+
+    drawCannon();
+    requestAnimationFrame(gameLoop);
+}
+
+function triggerFire(clientX, clientY) {
+    if (!gameActive) return;
+    const rect = canvas.getBoundingClientRect();
+    aimX = (clientX - rect.left) * (canvas.width / rect.width);
+    aimY = (clientY - rect.top) * (canvas.height / rect.height);
+    balloons.push(new Balloon(aimX, aimY));
+}
+
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    aimX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    aimY = (e.clientY - rect.top) * (canvas.height / rect.height);
+});
+
+canvas.addEventListener('click', (e) => {
+    triggerFire(e.clientX, e.clientY);
+});
+
+canvas.addEventListener('touchstart', (e) => {
+    if(e.touches.length > 0) {
+        triggerFire(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    e.preventDefault();
+}, { passive: false });
+
+// Timer Processing Count
+const timerInterval = setInterval(() => {
+    if (timeLeft > 0) {
+        timeLeft--;
+        timerDisplay.innerText = `Time: ${timeLeft}`;
+    } else {
+        endGame();
+    }
+}, 1000);
+
+function endGame() {
+    gameActive = false;
+    clearInterval(timerInterval);
+    finalScoreDisplay.innerText = `Your Score: ${score}`;
+    gameOverScreen.style.display = 'flex';
+}
+
+function generateShareLink() {
+    const message = encodeURIComponent(msgInput.value || "Try and beat me!");
+    const baseUrl = window.location.href.split('?')[0];
+    const shareUrl = `${baseUrl}?score=${score}&msg=${message}`;
+    shareUrlDisplay.innerText = shareUrl;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Challenge link copied! Send it right to Gaganu.");
+    }).catch(err => {
+        alert("Failed to copy link automatically, please copy text manually below.");
+    });
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
