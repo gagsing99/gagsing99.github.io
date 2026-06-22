@@ -6,7 +6,7 @@
     <title>Balloon Fight Challenge!</title>
     <style>
         :root {
-            --vh: 1s;
+            --vh: 1vh;
         }
         * {
             box-sizing: border-box;
@@ -14,45 +14,42 @@
             user-select: none;
             -webkit-touch-callout: none;
         }
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             background: #1a1a2e;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
+        }
+        body {
+            height: calc(var(--vh, 1vh) * 100);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            min-height: calc(var(--vh, 1vh) * 100);
-            overflow: hidden;
-            touch-action: none;
         }
         #game-container {
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 12px;
-            overflow: hidden;
             width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16/10;
-            background: #74b9ff;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #74b9ff, #a1c4fd);
         }
         canvas {
-            background: linear-gradient(to bottom, #74b9ff, #a1c4fd);
             display: block;
             width: 100%;
             height: 100%;
         }
         #ui-layer {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: calc(15px + env(safe-area-inset-top, 0px));
+            right: calc(15px + env(safe-area-inset-right, 0px));
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            font-size: clamp(16px, 4vw, 22px);
+            font-size: clamp(18px, 5vw, 24px);
             font-weight: bold;
             color: #2c3e50;
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
@@ -72,27 +69,27 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 20px;
+            padding: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px));
             z-index: 10;
         }
-        h1 { color: #ff4757; margin-bottom: 10px; font-size: clamp(24px, 6vw, 36px); margin-top: 0;}
-        h2 { color: #2ed573; margin-top: 0; font-size: clamp(20px, 5vw, 28px);}
+        h1 { color: #ff4757; margin-bottom: 10px; font-size: clamp(26px, 7vw, 40px); margin-top: 0;}
+        h2 { color: #2ed573; margin-top: 0; font-size: clamp(22px, 5vw, 30px);}
         .challenge-box {
             background: #16a085;
             padding: 15px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             font-weight: bold;
-            font-size: clamp(14px, 3.5vw, 16px);
+            font-size: clamp(14px, 4vw, 18px);
             max-width: 90%;
             line-height: 1.4;
         }
         input[type="text"] {
-            padding: 12px;
+            padding: 14px;
             width: 85%;
-            max-width: 280px;
+            max-width: 300px;
             border: 2px solid #34495e;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-bottom: 15px;
             font-size: 16px;
             background: #fff;
@@ -101,11 +98,11 @@
             user-select: text;
         }
         button {
-            padding: 12px 24px;
+            padding: 14px 28px;
             background: #ff4757;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             font-weight: bold;
@@ -126,7 +123,7 @@
 <body>
 
 <div id="game-container">
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <canvas id="gameCanvas"></canvas>
     
     <div id="ui-layer">
         <div id="score-display">Score: 0</div>
@@ -135,7 +132,7 @@
 
     <div id="onboarding-screen" class="screen-overlay">
         <h1>Balloon Fight!</h1>
-        <p style="font-size: 16px; margin-bottom: 15px;">Enter your name to begin:</p>
+        <p style="font-size: 18px; margin-bottom: 15px;">Enter your name to begin:</p>
         <input type="text" id="name-input" value="Player">
         <button onclick="submitName()">Save & Continue</button>
     </div>
@@ -159,15 +156,6 @@
 </div>
 
 <script>
-// Mobile vh fix for Safari/Chrome UI bars
-function resetVH() {
-    let vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-}
-window.addEventListener('resize', resetVH);
-window.addEventListener('orientationchange', resetVH);
-resetVH();
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const onboardingScreen = document.getElementById('onboarding-screen');
@@ -182,28 +170,46 @@ const msgInput = document.getElementById('msg-input');
 const nameInput = document.getElementById('name-input');
 const shareUrlDisplay = document.getElementById('share-url');
 
-// Game parameters
+// Game Engine Parameters
 let score = 0;
 let timeLeft = 30;
 let gameActive = false;
 let targets = [];
 let balloons = [];
 let splashes = [];
+let clouds = [];
 let timerInterval;
 let currentUserName = "";
 
-// Aim Tracking
-let aimX = canvas.width / 2;
+// Dynamic Aiming coordinates
+let aimX = 0;
 let aimY = 0;
 
-// Scenery
-let clouds = [
-    { x: 100, y: 80, size: 30, speed: 0.3 },
-    { x: 450, y: 50, size: 40, speed: 0.2 },
-    { x: 700, y: 110, size: 25, speed: 0.4 }
-];
+// Dynamic Screen Resize Engine
+function resizeCanvas() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Scale canvas pixels 1:1 with hardware layout space
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    aimX = canvas.width / 2;
+    
+    // Regenerate clouds cleanly based on new viewport width
+    if (clouds.length === 0) {
+        clouds = [
+            { x: canvas.width * 0.15, y: canvas.height * 0.15, size: 30, speed: 0.3 },
+            { x: canvas.width * 0.55, y: canvas.height * 0.10, size: 40, speed: 0.2 },
+            { x: canvas.width * 0.85, y: canvas.height * 0.22, size: 25, speed: 0.4 }
+        ];
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', resizeCanvas);
+resizeCanvas();
 
-// --- COOKIE HELPERS ---
+// --- COOKIE MANAGEMENT ---
 function setCookie(name, value, days) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -221,15 +227,11 @@ function getCookie(name) {
     return "";
 }
 
-// Web Audio Setup
+// Web Audio API Synth Engine
 let audioCtx;
 function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function playSplashSound(isBlood) {
@@ -249,10 +251,10 @@ function playSplashSound(isBlood) {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.13);
-    } catch(e) { console.log("Audio play blocked"); }
+    } catch(e) {}
 }
 
-// Check Cookies on Startup
+// Core App Initialization Flows
 currentUserName = getCookie("playerName");
 if (currentUserName) {
     onboardingScreen.style.display = 'none';
@@ -260,7 +262,7 @@ if (currentUserName) {
 }
 
 function submitName() {
-    initAudio(); // Required interaction binding for iOS Audio safety rules
+    initAudio();
     let value = nameInput.value.trim();
     currentUserName = value ? value : "Player";
     setCookie("playerName", currentUserName, 30);
@@ -301,12 +303,12 @@ function startGame() {
     gameLoop();
 }
 
-// Particle Class
+// Particle Splash Class
 class SplashParticle {
     constructor(x, y, color) {
         this.x = x; this.y = y;
-        this.vx = (Math.random() - 0.5) * 9;
-        this.vy = (Math.random() - 0.7) * 9 - 2;
+        this.vx = (Math.random() - 0.5) * 10;
+        this.vy = (Math.random() - 0.7) * 10 - 2;
         this.radius = Math.random() * 4 + 2;
         this.alpha = 1;
         this.gravity = 0.25;
@@ -328,13 +330,17 @@ class SplashParticle {
     }
 }
 
-// Targets Class
+// Adaptive Floating Targets Class
 class Target {
     constructor() {
-        this.x = Math.random() * (canvas.width - 140) + 70;
+        // Safe spawn coordinates relative to active screen resolution widths
+        this.x = Math.random() * (canvas.width - 100) + 50;
         this.y = canvas.height + Math.random() * 80;
-        this.radius = 26;
-        this.speed = Math.random() * 2.2 + 2.2;
+        this.radius = Math.min(canvas.width, canvas.height) * 0.045; // Dynamic responsive hit-radius
+        if (this.radius < 22) this.radius = 22;
+        
+        // Speed scaling relative to screen height
+        this.speed = (canvas.height * 0.004) + Math.random() * 2;
         this.drift = Math.random() * 2 - 1;
         
         if (Math.random() < 0.24) {
@@ -352,7 +358,8 @@ class Target {
     }
     draw() {
         ctx.save();
-        ctx.font = "38px Arial";
+        // Scale font sizes smoothly to screen scales
+        ctx.font = `${this.radius * 1.6}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(this.icon, this.x, this.y);
@@ -360,13 +367,16 @@ class Target {
     }
 }
 
-// Balloon Projectiles
+// Balloon Projectiles Engine
 class Balloon {
     constructor(targetX, targetY) {
         this.x = canvas.width / 2; 
-        this.y = canvas.height - 20;
+        this.y = canvas.height - 25;
         this.radius = 14;
-        this.speed = 13;
+        
+        // Dynamic speed projection to handle variable full-screen layouts flawlessly
+        this.speed = canvas.height * 0.022;
+        if (this.speed < 12) this.speed = 12;
         
         let angle = Math.atan2(targetY - this.y, targetX - this.x);
         this.vx = Math.cos(angle) * this.speed;
@@ -389,9 +399,9 @@ class Balloon {
 function drawScenery() {
     // Sun
     ctx.fillStyle = '#feca57';
-    ctx.beginPath(); ctx.arc(80, 80, 42, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(canvas.width * 0.12, canvas.height * 0.15, 42, 0, Math.PI * 2); ctx.fill();
 
-    // Clouds
+    // Responsive Drifting Clouds
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     clouds.forEach(c => {
         c.x += c.speed;
@@ -403,17 +413,17 @@ function drawScenery() {
         ctx.fill();
     });
 
-    // Palm Trees
-    const treePositions = [60, 180, 620, 740];
+    // Spread Out Palm Trees at Bottom Border Line
+    const treePositions = [canvas.width * 0.08, canvas.width * 0.22, canvas.width * 0.78, canvas.width * 0.92];
     treePositions.forEach(xPos => {
         ctx.strokeStyle = '#795548'; ctx.lineWidth = 8;
         ctx.beginPath(); ctx.moveTo(xPos, canvas.height);
-        ctx.quadraticCurveTo(xPos - 5, canvas.height - 40, xPos - 10, canvas.height - 80); ctx.stroke();
+        ctx.quadraticCurveTo(xPos - 5, canvas.height - 50, xPos - 10, canvas.height - 90); ctx.stroke();
 
         ctx.fillStyle = '#2e7d32';
         for (let i = 0; i < 5; i++) {
             ctx.beginPath();
-            ctx.ellipse(xPos - 10, canvas.height - 80, 12, 30, (i * 35 * Math.PI) / 180, 0, Math.PI * 2);
+            ctx.ellipse(xPos - 10, canvas.height - 90, 14, 34, (i * 35 * Math.PI) / 180, 0, Math.PI * 2);
             ctx.fill();
         }
     });
@@ -426,16 +436,16 @@ function drawCannon() {
 
     ctx.save();
     ctx.fillStyle = '#34495e';
-    ctx.beginPath(); ctx.arc(cannonX, cannonY, 35, Math.PI, 0); ctx.fill();
+    ctx.beginPath(); ctx.arc(cannonX, cannonY, 40, Math.PI, 0); ctx.fill();
 
     ctx.translate(cannonX, cannonY);
     ctx.rotate(angle);
-    ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -11, 55, 22);
-    ctx.fillStyle = '#1a252f'; ctx.fillRect(52, -11, 5, 22);
+    ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, -12, 60, 24);
+    ctx.fillStyle = '#1a252f'; ctx.fillRect(56, -12, 6, 24);
     ctx.restore();
 }
 
-// Spawning Cycle
+// Spawning Frame Monitor
 let spawnTimer = 0;
 function gameLoop() {
     if (!gameActive) return;
@@ -444,21 +454,22 @@ function gameLoop() {
     drawScenery();
 
     spawnTimer++;
-    if (spawnTimer % 40 === 0) {
+    if (spawnTimer % 35 === 0) {
         targets.push(new Target());
     }
 
-    // Particle Splashes
+    // Processing Splashes
     for (let i = splashes.length - 1; i >= 0; i--) {
         splashes[i].update(); splashes[i].draw();
         if (splashes[i].alpha <= 0) splashes.splice(i, 1);
     }
 
-    // Balloons
+    // Processing Balloons
     for (let b = balloons.length - 1; b >= 0; b--) {
         balloons[b].update(); balloons[b].draw();
 
-        if (balloons[b].y < -20 || balloons[b].x < -20 || balloons[b].x > canvas.width + 20) {
+        // Edge cleanup rules
+        if (balloons[b].y < -30 || balloons[b].x < -30 || balloons[b].x > canvas.width + 30) {
             balloons.splice(b, 1); continue;
         }
 
@@ -470,7 +481,7 @@ function gameLoop() {
                 
                 playSplashSound(isHeart);
 
-                for(let p=0; p < 18; p++) splashes.push(new SplashParticle(targets[t].x, targets[t].y, splashColor));
+                for(let p=0; p < 20; p++) splashes.push(new SplashParticle(targets[t].x, targets[t].y, splashColor));
 
                 if (isHeart) {
                     score = Math.max(0, score - 15);
@@ -485,34 +496,30 @@ function gameLoop() {
         }
     }
 
-    // Targets Engine
+    // Processing Floating Targets
     for (let t = targets.length - 1; t >= 0; t--) {
         targets[t].update(); targets[t].draw();
-        if (targets[t].y < -40) targets.splice(t, 1);
+        if (targets[t].y < -50) targets.splice(t, 1);
     }
 
     drawCannon();
     requestAnimationFrame(gameLoop);
 }
 
-// High Compatibility Coordinate Converter for High Density Displays (Pixel 10 / iPhone 16 Pro)
+// Pointer Coordination Normalization Engine
 function handlePointerInput(clientX, clientY) {
     if (!gameActive) return;
-    initAudio(); // Workaround to safely awaken audio pipeline context on touch events
-    const rect = canvas.getBoundingClientRect();
-    aimX = (clientX - rect.left) * (canvas.width / rect.width);
-    aimY = (clientY - rect.top) * (canvas.height / rect.height);
+    initAudio();
+    aimX = clientX;
+    aimY = clientY;
     balloons.push(new Balloon(aimX, aimY));
 }
 
-// Track aiming dynamically on Desktop Hover or Move
 canvas.addEventListener('pointermove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    aimX = (e.clientX - rect.left) * (canvas.width / rect.width);
-    aimY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    aimX = e.clientX;
+    aimY = e.clientY;
 });
 
-// Primary Input trigger using Unified PointerEvents API
 canvas.addEventListener('pointerdown', (e) => {
     handlePointerInput(e.clientX, e.clientY);
     e.preventDefault();
@@ -542,7 +549,7 @@ function generateShareLink() {
         navigator.clipboard.writeText(shareUrl).then(() => {
             alert("Challenge link copied! Send it over to your opponent.");
         }).catch(() => {
-            alert("Copying failed. Please copy the link text manually from the screen.");
+            alert("Please copy the link text manually from the screen below.");
         });
     } else {
         alert("Please copy the link text manually from the screen below.");
