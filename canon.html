@@ -181,22 +181,16 @@ let clouds = [];
 let timerInterval;
 let currentUserName = "";
 
-// Dynamic Aiming coordinates
 let aimX = 0;
 let aimY = 0;
 
-// Dynamic Screen Resize Engine
 function resizeCanvas() {
     let vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
-    
-    // Scale canvas pixels 1:1 with hardware layout space
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    
     aimX = canvas.width / 2;
     
-    // Regenerate clouds cleanly based on new viewport width
     if (clouds.length === 0) {
         clouds = [
             { x: canvas.width * 0.15, y: canvas.height * 0.15, size: 30, speed: 0.3 },
@@ -208,24 +202,6 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', resizeCanvas);
 resizeCanvas();
-
-// --- COOKIE MANAGEMENT ---
-function setCookie(name, value, days) {
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/;SameSite=Strict";
-}
-
-function getCookie(name) {
-    let cname = name + "=";
-    let decodedCookie = decodeURIComponent(document.cookie);
-    let ca = decodedCookie.split(';');
-    for(let i = 0; i < ca.length; i++) {
-        let c = ca[i].trim();
-        if (c.indexOf(cname) == 0) return c.substring(cname.length, c.length);
-    }
-    return "";
-}
 
 // Web Audio API Synth Engine
 let audioCtx;
@@ -254,8 +230,13 @@ function playSplashSound(isBlood) {
     } catch(e) {}
 }
 
-// Core App Initialization Flows
-currentUserName = getCookie("playerName");
+// --- SECURE STORAGE REPLACEMENT (FIXES BLANK LOCAL SCREEN) ---
+try {
+    currentUserName = localStorage.getItem("playerName") || "";
+} catch (e) {
+    currentUserName = ""; // Fallback for hyper-restrictive security modes
+}
+
 if (currentUserName) {
     onboardingScreen.style.display = 'none';
     processIncomingChallenge();
@@ -265,7 +246,9 @@ function submitName() {
     initAudio();
     let value = nameInput.value.trim();
     currentUserName = value ? value : "Player";
-    setCookie("playerName", currentUserName, 30);
+    try {
+        localStorage.setItem("playerName", currentUserName);
+    } catch(e) {}
     onboardingScreen.style.display = 'none';
     processIncomingChallenge();
 }
@@ -303,7 +286,6 @@ function startGame() {
     gameLoop();
 }
 
-// Particle Splash Class
 class SplashParticle {
     constructor(x, y, color) {
         this.x = x; this.y = y;
@@ -330,16 +312,13 @@ class SplashParticle {
     }
 }
 
-// Adaptive Floating Targets Class
 class Target {
     constructor() {
-        // Safe spawn coordinates relative to active screen resolution widths
         this.x = Math.random() * (canvas.width - 100) + 50;
         this.y = canvas.height + Math.random() * 80;
-        this.radius = Math.min(canvas.width, canvas.height) * 0.045; // Dynamic responsive hit-radius
+        this.radius = Math.min(canvas.width, canvas.height) * 0.045;
         if (this.radius < 22) this.radius = 22;
         
-        // Speed scaling relative to screen height
         this.speed = (canvas.height * 0.004) + Math.random() * 2;
         this.drift = Math.random() * 2 - 1;
         
@@ -358,7 +337,6 @@ class Target {
     }
     draw() {
         ctx.save();
-        // Scale font sizes smoothly to screen scales
         ctx.font = `${this.radius * 1.6}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -367,14 +345,12 @@ class Target {
     }
 }
 
-// Balloon Projectiles Engine
 class Balloon {
     constructor(targetX, targetY) {
         this.x = canvas.width / 2; 
         this.y = canvas.height - 25;
         this.radius = 14;
         
-        // Dynamic speed projection to handle variable full-screen layouts flawlessly
         this.speed = canvas.height * 0.022;
         if (this.speed < 12) this.speed = 12;
         
@@ -397,11 +373,9 @@ class Balloon {
 }
 
 function drawScenery() {
-    // Sun
     ctx.fillStyle = '#feca57';
     ctx.beginPath(); ctx.arc(canvas.width * 0.12, canvas.height * 0.15, 42, 0, Math.PI * 2); ctx.fill();
 
-    // Responsive Drifting Clouds
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     clouds.forEach(c => {
         c.x += c.speed;
@@ -413,7 +387,6 @@ function drawScenery() {
         ctx.fill();
     });
 
-    // Spread Out Palm Trees at Bottom Border Line
     const treePositions = [canvas.width * 0.08, canvas.width * 0.22, canvas.width * 0.78, canvas.width * 0.92];
     treePositions.forEach(xPos => {
         ctx.strokeStyle = '#795548'; ctx.lineWidth = 8;
@@ -445,7 +418,6 @@ function drawCannon() {
     ctx.restore();
 }
 
-// Spawning Frame Monitor
 let spawnTimer = 0;
 function gameLoop() {
     if (!gameActive) return;
@@ -458,17 +430,14 @@ function gameLoop() {
         targets.push(new Target());
     }
 
-    // Processing Splashes
     for (let i = splashes.length - 1; i >= 0; i--) {
         splashes[i].update(); splashes[i].draw();
         if (splashes[i].alpha <= 0) splashes.splice(i, 1);
     }
 
-    // Processing Balloons
     for (let b = balloons.length - 1; b >= 0; b--) {
         balloons[b].update(); balloons[b].draw();
 
-        // Edge cleanup rules
         if (balloons[b].y < -30 || balloons[b].x < -30 || balloons[b].x > canvas.width + 30) {
             balloons.splice(b, 1); continue;
         }
@@ -496,7 +465,6 @@ function gameLoop() {
         }
     }
 
-    // Processing Floating Targets
     for (let t = targets.length - 1; t >= 0; t--) {
         targets[t].update(); targets[t].draw();
         if (targets[t].y < -50) targets.splice(t, 1);
@@ -506,7 +474,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Pointer Coordination Normalization Engine
 function handlePointerInput(clientX, clientY) {
     if (!gameActive) return;
     initAudio();
