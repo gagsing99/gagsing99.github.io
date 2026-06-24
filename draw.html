@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Geometry Speed Challenge</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            width: 100%;
+        }
+        .meta-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        #level-indicator, #timer-display {
+            background-color: #334155;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+        #level-indicator { color: #38bdf8; }
+        #timer-display { color: #f43f5e; }
+        h1 {
+            font-size: 1.6rem;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+        #instructions {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            height: 55vh;
+            background-color: #1e293b;
+            border-radius: 20px;
+            border: 2px solid #475569;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            touch-action: none;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            width: 90%;
+        }
+        #prompt-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #ffffff;
+            opacity: 0.15;
+            letter-spacing: 2px;
+        }
+        #result-card {
+            background-color: rgba(15, 23, 42, 0.98);
+            border: 2px solid #38bdf8;
+            padding: 24px;
+            border-radius: 16px;
+            display: none;
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+        #score {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #38bdf8;
+            margin: 5px 0;
+        }
+        #feedback {
+            font-size: 1.05rem;
+            color: #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 240px;
+            box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.2);
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        #share-btn {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="meta-container">
+            <div id="level-indicator">LEVEL 1 / 7</div>
+            <div id="timer-display">TIME: 0.0s</div>
+        </div>
+        <h1 id="shape-title">Line</h1>
+        <p id="instructions">Draw a single straight line from start to finish.</p>
+    </header>
+
+    <div id="canvas-container">
+        <canvas id="paintCanvas"></canvas>
+        <div id="ui-overlay">
+            <div id="prompt-text">LINE</div>
+            <div id="result-card">
+                <h2 id="result-status">Completed!</h2>
+                <div id="score">0%</div>
+                <div id="feedback">Analyzing...</div>
+                <div class="btn-group">
+                    <button id="action-btn" onclick="handleActionButton()">Next Level</button>
+                    <button id="share-btn" onclick="shareScores()" style="display:none;">Share Challenge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div></div>
+
+<script>
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d');
+    const resultCard = document.getElementById('result-card');
+    const promptText = document.getElementById('prompt-text');
+    const scoreDisplay = document.getElementById('score');
+    const feedbackDisplay = document.getElementById('feedback');
+    const levelIndicator = document.getElementById('level-indicator');
+    const timerDisplay = document.getElementById('timer-display');
+    const shapeTitle = document.getElementById('shape-title');
+    const instructions = document.getElementById('instructions');
+    const actionBtn = document.getElementById('action-btn');
+    const shareBtn = document.getElementById('share-btn');
+
+    let isDrawing = false;
+    let points = [];
+    const MIN_LENGTH = 180; 
+
+    // Timer States
+    let gameClock = 0; 
+    let timerId = null;
+    let isChallengeMode = false;
+    let challengeTargetTime = 0;
+
+    // Level configuration sequence with dynamic pass targets
+    const LEVELS = [
+        { name: 'Line', prompt: 'LINE', desc: 'Draw a straight line.', color: '#38bdf8', passPercentage: 80 },
+        { name: 'Triangle', prompt: 'TRIANGLE', desc: 'Draw a closed triangle.', color: '#a855f7', passPercentage: 80 },
+        { name: 'Square', prompt: 'SQUARE', desc: 'Draw an even 4-sided box.', color: '#f43f5e', passPercentage: 80 },
+        { name: 'Rectangle', prompt: 'RECTANGLE', desc: 'Draw an elongated box.', color: '#10b981', passPercentage: 85 },
+        { name: 'Rhombus', prompt: 'RHOMBUS', desc: 'Draw a diamond shape.', color: '#f59e0b', passPercentage: 85 },
+        { name: 'Oval', prompt: 'OVAL', desc: 'Draw a smooth egg shape.', color: '#ec4899', passPercentage: 85 },
+        { name: 'Circle', prompt: 'CIRCLE', desc: 'Draw a perfect round ring.', color: '#22c55e', passPercentage: 85 }
+    ];
+    let currentLevelIdx = 0;
+    let currentScore = 0;
+
+    // Initialize Game & Query Parsing
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const beatTimeParam = urlParams.get('beatTime');
+        
+        if (beatTimeParam) {
+            isChallengeMode = true;
+            challengeTargetTime = parseFloat(beatTimeParam);
+            gameClock = challengeTargetTime;
+            alert(`CHALLENGE MODE ACTIVE!\nYou must pass all levels before the clock hits 0.0s!\nTime to beat: ${challengeTargetTime} seconds.`);
+        } else {
+            gameClock = 0;
+        }
+        
+        resizeCanvas();
+        startTimer();
+    };
+
+    function startTimer() {
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(() => {
+            if (resultCard.style.display === 'block') return; // Pause timer on result overlay
+
+            if (isChallengeMode) {
+                gameClock -= 0.1;
+                if (gameClock <= 0) {
+                    gameClock = 0;
+                    clearInterval(timerId);
+                    gameOverChallengeFailed();
+                }
+            } else {
+                gameClock += 0.1;
+            }
+            timerDisplay.innerText = `TIME: ${gameClock.toFixed(1)}s`;
+        }, 100);
+    }
+
+    function gameOverChallengeFailed() {
+        isDrawing = false;
+        promptText.style.display = 'none';
+        resultCard.style.display = 'block';
+        scoreDisplay.innerText = "❌";
+        scoreDisplay.style.color = "#f43f5e";
+        feedbackDisplay.innerText = "Out of time! You failed to beat the original score.";
+        actionBtn.innerText = "Restart Challenge";
+        currentScore = 0; 
+    }
+
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        setupContextColors();
+    }
+
+    function setupContextColors() {
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = LEVELS[currentLevelIdx].color;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Input Processing ---
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function startDrawing(e) {
+        if (resultCard.style.display === 'block' || (isChallengeMode && gameClock <= 0)) return;
+        isDrawing = true;
+        points = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const pos = getMousePos(e);
+        points.push(pos);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        promptText.style.opacity = '0.02';
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const pos = getMousePos(e);
+        points.push(pos);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
+
+    function stopDrawing() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        if (points.length < 6) return resetGame();
+        evaluateLevel();
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+    window.addEventListener('touchend', stopDrawing);
+
+    // --- Geometrical Accuracy Evaluation Algorithms ---
+    function evaluateLevel() {
+        let totalLength = 0;
+        for (let i = 1; i < points.length; i++) {
+            totalLength += Math.hypot(points[i].x - points[i-1].x, points[i].y - points[i-1].y);
+        }
+        if (totalLength < MIN_LENGTH) {
+            alert("Trace too short! Draw a larger shape.");
+            return resetGame();
+        }
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        let sumX = 0, sumY = 0;
+        points.forEach(p => {
+            if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+            sumX += p.x; sumY += p.y;
+        });
+        const width = maxX - minX;
+        const height = maxY - minY;
+        const cx = sumX / points.length;
+        const cy = sumY / points.length;
+
+        let rawAccuracy = 0;
+        const currentShape = LEVELS[currentLevelIdx].name;
+
+        if (currentShape === 'Line') {
+            const pStart = points[0];
+            const pEnd = points[points.length - 1];
+            let devSum = 0;
+            points.forEach(p => {
+                const num = Math.abs((pEnd.y - pStart.y)*p.x - (pEnd.x - pStart.x)*p.y + pEnd.x*pStart.y - pEnd.y*pStart.x);
+                const den = Math.hypot(pEnd.y - pStart.y, pEnd.x - pStart.x);
+                devSum += (den === 0) ? 0 : num / den;
+            });
+            rawAccuracy = 100 * (1 - ((devSum / points.length) / 14));
+
+        } else if (currentShape === 'Circle') {
+            let totalRadius = 0;
+            const radii = points.map(p => {
+                const r = Math.hypot(p.x - cx, p.y - cy);
+                totalRadius += r;
+                return r;
+            });
+            const avgRadius = totalRadius / points.length;
+            let devSum = 0;
+            radii.forEach(r => devSum += Math.abs(r - avgRadius));
+            rawAccuracy = 100 * (1 - ((devSum / points.length) / avgRadius) * 2.2);
+
+        } else if (currentShape === 'Oval') {
+            const rx = width / 2; const ry = height / 2;
+            let deviation = 0;
+            points.forEach(p => {
+                const dx = p.x - cx; const dy = p.y - cy;
+                const val = (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry);
+                deviation += Math.abs(val - 1);
+            });
+            rawAccuracy = 100 * (1 - (deviation / points.length) * 1.4);
+
+        } else if (currentShape === 'Square' || currentShape === 'Rectangle') {
+            const rx = width / 2; const ry = height / 2;
+            let squarePenalty = (currentShape === 'Square') ? Math.abs(width - height) / ((width + height)/2) * 40 : 0;
+            let devSum = 0;
+            points.forEach(p => {
+                const dx = Math.abs(p.x - cx) / rx;
+                const dy = Math.abs(p.y - cy) / ry;
+                devSum += Math.abs(1 - Math.max(dx, dy));
+            });
+            rawAccuracy = 100 * (1 - (devSum / points.length) * 1.8) - squarePenalty;
+
+        } else if (currentShape === 'Triangle') {
+            let devSum = 0;
+            points.forEach(p => {
+                const ny = (p.y - minY) / height;
+                const halfWidthAtY = ny * (width / 2);
+                devSum += Math.abs(Math.abs(p.x - cx) - halfWidthAtY) / (width / 2);
+            });
+            rawAccuracy = 100 * (1 - (devSum / points.length) * 1.0);
+
+        } else if (currentShape === 'Rhombus') {
+            const rx = width / 2; const ry = height / 2;
+            let devSum = 0;
+            points.forEach(p => {
+                const val = Math.abs(p.x - cx)/rx + Math.abs(p.y - cy)/ry;
+                devSum += Math.abs(val - 1);
+            });
+            rawAccuracy = 100 * (1 - (devSum / points.length) * 1.3);
+        }
+
+        currentScore = Math.max(0, Math.min(100, Math.round(rawAccuracy)));
+        showResults(currentScore);
+    }
+
+    // --- UI State Management ---
+    function showResults(score) {
+        promptText.style.display = 'none';
+        resultCard.style.display = 'block';
+        scoreDisplay.innerText = `${score}%`;
+        scoreDisplay.style.color = LEVELS[currentLevelIdx].color;
+
+        const currentLvlConfig = LEVELS[currentLevelIdx];
+        const isLastLevel = (currentLevelIdx === LEVELS.length - 1);
+
+        if (score >= currentLvlConfig.passPercentage) {
+            if (isLastLevel) {
+                clearInterval(timerId);
+                feedbackDisplay.innerText = isChallengeMode 
+                    ? `Incredible! You beat the challenge with ${gameClock.toFixed(1)}s left!` 
+                    : `Congratulations! You beat all levels in ${gameClock.toFixed(1)}s!`;
+                actionBtn.innerText = "Restart Game";
+                shareBtn.style.display = "block";
+            } else {
+                feedbackDisplay.innerText = `Excellent! Passed target of ${currentLvlConfig.passPercentage}%.`;
+                actionBtn.innerText = "Next Level";
+                shareBtn.style.display = "none";
+            }
+        } else {
+            feedbackDisplay.innerText = `Required accuracy: ${currentLvlConfig.passPercentage}%. Trace more precisely!`;
+            actionBtn.innerText = "Retry Shape";
+            shareBtn.style.display = "none";
+        }
+    }
+
+    function handleActionButton() {
+        const currentLvlConfig = LEVELS[currentLevelIdx];
+        if (currentScore >= currentLvlConfig.passPercentage) {
+            if (currentLevelIdx === LEVELS.length - 1) {
+                window.location.search = ""; // clear query parameters on fresh loop
+                return;
+            }
+            currentLevelIdx++;
+        } else if (isChallengeMode && gameClock <= 0) {
+            window.location.reload();
+            return;
+        }
+        updateLevelUI();
+        resetGame();
+    }
+
+    function shareScores() {
+        const finalTime = isChallengeMode ? (challengeTargetTime - gameClock) : gameClock;
+        const challengeUrl = `${window.location.origin}${window.location.pathname}?beatTime=${finalTime.toFixed(1)}`;
+        
+        navigator.clipboard.writeText(challengeUrl).then(() => {
+            alert("Challenge URL copied to clipboard! Send it to a friend to see if they can beat your time.");
+        }).catch(() => {
+            alert(`Copy this URL to challenge friends: ${challengeUrl}`);
+        });
+    }
+
+    function updateLevelUI() {
+        const lvl = LEVELS[currentLevelIdx];
+        levelIndicator.innerText = `LEVEL ${currentLevelIdx + 1} / ${LEVELS.length}`;
+        shapeTitle.innerText = lvl.name;
+        instructions.innerText = `${lvl.desc} (Target: ${lvl.passPercentage}%)`;
+        promptText.innerText = lvl.prompt;
+        setupContextColors();
+    }
+
+    function resetGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        points = [];
+        resultCard.style.display = 'none';
+        promptText.style.display = 'block';
+        promptText.style.opacity = '0.15';
+    }
+</script>
+</body>
+</html>
