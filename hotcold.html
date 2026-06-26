@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Find the Hidden Heart</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
+        canvas { display: block; }
+        #ui-stats { position: absolute; top: 15px; left: 0; width: 100%; text-align: center; font-size: 1.2rem; font-weight: bold; pointer-events: none; letter-spacing: 1px; }
+        #v-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; background: rgba(0,0,0,0.9); color: #fff; z-index: 10; }
+        #v-text { font-size: 2rem; font-weight: bold; margin-bottom: 20px; }
+        button { padding: 12px 30px; font-size: 1rem; font-weight: bold; border: none; border-radius: 25px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="ui-stats">TAPS: 10 | TIME: 60s</div>
+    <div id="v-screen">
+        <div id="v-text"></div>
+        <button id="retry">Try Again</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiStats = document.getElementById('ui-stats');
+        const vScreen = document.getElementById('v-screen');
+        const vText = document.getElementById('v-text');
+        const retryBtn = document.getElementById('retry');
+
+        let bgColor, textColor, maxDist, gameOver = false, particles = [];
+        let heart = { x: 0, y: 0, r: 20 }; 
+        let tapsLeft = 10;
+        let timeLeft = 60;
+        let timerInterval;
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
+        
+        function init() {
+            clearInterval(timerInterval);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            maxDist = Math.hypot(canvas.width, canvas.height);
+            
+            const r = rand(0, 256), g = rand(0, 256), b = rand(0, 256);
+            bgColor = `rgb(${r},${g},${b})`;
+            const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            textColor = lum > 0.5 ? `rgb(${rand(0,60)},${rand(0,60)},${rand(0,60)})` : `rgb(${rand(195,256)},${rand(195,256)},${rand(195,256)})`;
+
+            uiStats.style.color = textColor;
+            retryBtn.style.backgroundColor = textColor;
+            retryBtn.style.color = bgColor;
+            vScreen.style.display = 'none';
+            particles = [];
+            gameOver = false;
+            tapsLeft = 10;
+            timeLeft = 60;
+            updateUI();
+
+            heart.x = rand(40, canvas.width - 40);
+            heart.y = rand(40, canvas.height - 40);
+
+            timerInterval = setInterval(() => {
+                if (!gameOver) {
+                    timeLeft--;
+                    updateUI();
+                    if (timeLeft <= 0) {
+                        endGame(false, "Time's up! The heart slipped away... ⏳");
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            uiStats.innerText = `TAPS: ${tapsLeft} | TIME: ${timeLeft}s`;
+        }
+
+        function drawHeart(c, x, y, s) {
+            c.beginPath();
+            c.moveTo(x, y + s / 4);
+            c.quadraticCurveTo(x, y - s / 2, x - s / 2, y - s / 2);
+            c.quadraticCurveTo(x - s, y - s / 2, x - s, y + s / 4);
+            c.quadraticCurveTo(x - s, y + s * 0.75, x, y + s * 1.2);
+            c.quadraticCurveTo(x + s, y + s * 0.75, x + s, y + s / 4);
+            c.quadraticCurveTo(x + s, y - s / 2, x + s / 2, y - s / 2);
+            c.quadraticCurveTo(x, y - s / 2, x, y + s / 4);
+            c.closePath();
+            c.fill();
+        }
+
+        function handleTap(x, y) {
+            if (gameOver) return;
+
+            tapsLeft--;
+            updateUI();
+
+            const dist = Math.hypot(x - heart.x, y - heart.y);
+            
+            if (dist <= heart.r * 1.5) {
+                endGame(true, "You have Gagan's heart, saambh k rakh ❤️");
+                return;
+            }
+
+            if (tapsLeft <= 0) {
+                endGame(false, "Out of taps! Better luck next time 💔");
+                return;
+            }
+
+            const pct = dist / maxDist;
+            let txt = "COLD ❄️";
+            if (pct < 0.04) txt = "SUPER HOT 🔥";
+            else if (pct < 0.10) txt = "HOTTER 💥";
+            else if (pct < 0.22) txt = "HOT ☀️";
+            else if (pct < 0.45) txt = "WARM 🌤️";
+
+            particles.push({ x, y, txt, alpha: 1, yVel: -1.2 });
+        }
+
+        function endGame(won, message) {
+            gameOver = true;
+            clearInterval(timerInterval);
+            vText.innerText = message;
+            vScreen.style.display = 'flex';
+        }
+
+        function loop() {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = (gameOver && vText.innerText.includes("Gagan")) ? "#ffffff" : bgColor;
+            drawHeart(ctx, heart.x, heart.y, heart.r);
+
+            ctx.font = "bold 1.1rem sans-serif";
+            ctx.textAlign = "center";
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.y += p.yVel;
+                p.alpha -= 0.025;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.fillStyle = textColor.replace('rgb', 'rgba').replace(')', `,${p.alpha})`);
+                    ctx.fillText(p.txt, p.x, p.y);
+                }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; maxDist = Math.hypot(canvas.width, canvas.height); });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+        canvas.addEventListener('mousedown', (e) => handleTap(e.clientX, e.clientY));
+        retryBtn.addEventListener('click', init);
+
+        init();
+        loop();
+    </script>
+</body>
+</html>
