@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Whisper Game - Pro Edition</title>
+    <title>The Whisper Game - Continuous Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -30,7 +30,7 @@
             display: flex; align-items: center; justify-content: center;
             word-break: break-word;
         }
-        .meter { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+        .meter { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 15px; display: none; }
         .meter-fill { height: 100%; background: #03dac6; width: 0%; transition: width 0.1s; }
         .status { font-style: italic; color: #b3b3b3; min-height: 24px; margin: 10px 0; font-size: 14px; }
         button {
@@ -53,9 +53,9 @@
     <div class="progress-badge" id="progress-badge">Easy Mode — Phrase 1/25</div>
     <div class="phrase-box" id="target-phrase">Loading...</div>
     
-    <div class="meter"><div class="meter-fill" id="meter-fill"></div></div>
+    <div class="meter" id="volume-meter"><div class="meter-fill" id="meter-fill"></div></div>
     
-    <button id="record-btn" onclick="handleButtonClick()">🎤 Start Whispering</button>
+    <button id="record-btn" onclick="handleButtonClick()">🎤 Start Game</button>
     <div class="status" id="status">Tap button to start game and enable mic</div>
     <div class="result" id="result"></div>
     <div class="transcript" id="transcript"></div>
@@ -93,111 +93,127 @@ const phraseBank = {
 
 const levelOrder = ["easy", "medium", "hard", "super-hard"];
 let currentLevelIndex = 0, currentPhraseIndex = 0;
-let isListening = false, isAudioInitialized = false;
-
-let audioContext, analyser, microphone, dataArray;
-const WHISPER_THRESHOLD = 35; // Fine-tuned volume ceiling (0-255 scale)
+let isListening = false;
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition;
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true; // STAYS ALIVE CONTINUOUSLY
     recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    recognition.interimResults = true; // Catch words mid-sentence for instant processing
 
     recognition.onstart = () => {
         isListening = true;
-        document.getElementById('status').innerText = "🤫 Whisper now!";
-        document.getElementById('status').style.color = "#03dac6";
         const btn = document.getElementById('record-btn');
-        btn.innerText = "🛑 Stop Listening";
+        btn.innerText = "🛑 Stop Engine";
         btn.style.background = "#f44336";
     };
 
     recognition.onerror = (event) => {
-        if (event.error === 'no-speech') {
-            document.getElementById('status').innerText = "❌ No sound caught. Whisper closer to mic!";
-        } else {
-            document.getElementById('status').innerText = "❌ Error: " + event.error;
+        if (event.error !== 'no-speech') {
+            document.getElementById('status').innerText = "❌ Engine Error: " + event.error;
+            stopListeningState();
         }
-        stopListeningState();
     };
 
-    recognition.onend = () => { stopListeningState(); };
+    recognition.onend = () => { 
+        // Auto-restart if user didn't intentionally click stop
+        if (isListening) {
+            try { recognition.start(); } catch(e) {}
+        }
+    };
 
     recognition.onresult = (event) => {
-        const speechToText = event.results[0][0].transcript;
-        document.getElementById('transcript').innerText = `You said: "${speechToText}"`;
-        evaluateResult(speechToText);
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal || event.results[i][0].confidence > 0.1) {
+                finalTranscript += event.results[i][0].transcript;
+            }
+        }
+        
+        if (finalTranscript.trim().length > 0) {
+            document.getElementById('transcript').innerText = `Detected: "${finalTranscript}"`;
+            evaluateResult(finalTranscript);
+        }
     };
 } else {
-    alert("Speech API not fully supported here. Try Safari on iOS or Chrome on Android.");
+    alert("Speech API not fully supported here. Use Chrome or Safari.");
 }
 
-// Lazy init audio loop on first real click
-async function setupAudioEngine() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        microphone = audioContext.createMediaStreamSource(stream);
-        microphone.connect(analyser);
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        isAudioInitialized = true;
-        
-        // Start live level monitoring
-        trackLiveVolume();
-    } catch (e) {
-        document.getElementById('status').innerText = "❌ Mic access denied by system settings.";
-        document.getElementById('status').style.color = "#f44336";
-    }
-}
+// Perform isolated whisper calibration check before starting the speech engine
+function runWhisperGatekeeper() {
+    return new Promise(async (resolve) => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            document.getElementById('volume-meter').style.display = "block";
+            document.getElementById('status').innerText = "🔊 Testing noise level... Keep quiet!";
+            document.getElementById('status').style.color = "#ffb74d";
 
-function trackLiveVolume() {
-    if (analyser) {
-        analyser.getByteFrequencyData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-        let average = sum / dataArray.length;
-        
-        // Map data to the interface visual meter
-        document.getElementById('meter-fill').style.width = Math.min(average * 2.5, 100) + "%";
-        requestAnimationFrame(trackLiveVolume);
-    }
+            let maxVolume = 0;
+            let checks = 0;
+            
+            const interval = setInterval(() => {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                let average = sum / dataArray.length;
+                
+                maxVolume = Math.max(maxVolume, average);
+                document.getElementById('meter-fill').style.width = Math.min(average * 3, 100) + "%";
+                checks++;
+
+                if (checks >= 20) { // Test for ~2 seconds
+                    clearInterval(interval);
+                    
+                    // Disconnect and shut down track safely to release hardware conflict
+                    stream.getTracks().forEach(track => track.stop());
+                    audioCtx.close();
+                    document.getElementById('volume-meter').style.display = "none";
+                    
+                    // Target ceiling threshold
+                    if (maxVolume > 38) {
+                        resolve(false); 
+                    } else {
+                        resolve(true);
+                    }
+                }
+            }, 100);
+
+        } catch (e) {
+            document.getElementById('status').innerText = "❌ Microphone access blocked.";
+            resolve(false);
+        }
+    });
 }
 
 async function handleButtonClick() {
     if (!SpeechRecognition) return;
 
-    // 1. If audio engine hasn't started yet, fire it safely inside this tap event
-    if (!isAudioInitialized) {
-        document.getElementById('status').innerText = "🔄 Initializing mic hardware...";
-        await setupAudioEngine();
-        if (!isAudioInitialized) return; // aborted if user denied mic block
-    }
-
     if (isListening) {
-        recognition.stop();
+        stopListeningState();
         return;
     }
 
-    // 2. Measure current room sound volume instantly before letting engine switch on
-    analyser.getByteFrequencyData(dataArray);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-    let instantVolume = sum / dataArray.length;
-
-    // 3. Block if user is using full-speaking voice/shouting
-    if (instantVolume > WHISPER_THRESHOLD) {
-        document.getElementById('status').innerText = "⚠️ TOO LOUD! Start completely silent, then whisper.";
+    document.getElementById('status').innerText = "🔄 Initializing calibration...";
+    const passesWhisperGate = await runWhisperGatekeeper();
+    
+    if (!passesWhisperGate) {
+        document.getElementById('status').innerText = "⚠️ TOO LOUD! You must speak softly or whisper to play.";
         document.getElementById('status').style.color = "#f44336";
         return;
     }
 
-    // 4. Safe to run
+    // Pass configuration check -> Safe to run core isolated translation engine
+    document.getElementById('status').innerText = ""; 
     try {
         recognition.start();
     } catch(e) {
@@ -207,19 +223,23 @@ async function handleButtonClick() {
 
 function stopListeningState() {
     isListening = false;
+    try { recognition.stop(); } catch(e) {}
     const btn = document.getElementById('record-btn');
     if (btn) {
-        btn.innerText = "🎤 Start Whispering";
+        btn.innerText = "🎤 Start Game";
         btn.style.background = "#03dac6";
     }
+    document.getElementById('status').innerText = "Engine stopped.";
+    document.getElementById('status').style.color = "#b3b3b3";
 }
 
 function updateGameDisplay() {
     const currentTier = levelOrder[currentLevelIndex];
     if (!currentTier) {
-        document.getElementById('progress-badge').innerText = "🏆 Victory!";
+        document.getElementById('progress-badge').innerText = "🏆 Campaign Complete!";
         document.getElementById('target-phrase').innerText = "Incredible! You completed all 100 whispers!";
         document.getElementById('record-btn').style.display = "none";
+        stopListeningState();
         return;
     }
     
@@ -264,19 +284,26 @@ function evaluateResult(spokenText) {
         resultDiv.className = "result success";
         resultDiv.innerText = `🎉 PASSED! Score: ${percentage}%`;
         
+        // Temporarily pause recognition to step smoothly to the next level
+        isListening = false;
+        try { recognition.stop(); } catch(e) {}
+
         setTimeout(() => {
             resultDiv.innerText = "";
             document.getElementById('transcript').innerText = "";
-            document.getElementById('status').innerText = "Tap button and whisper";
             advanceProgress();
-        }, 1600);
+            
+            // Re-engage listening automatically for the next phrase block
+            isListening = true;
+            try { recognition.start(); } catch(e) {}
+        }, 1800);
     } else {
         resultDiv.className = "result failure";
-        resultDiv.innerText = `💥 FAILED! Score: ${percentage}% (Needs 60%). Try again!`;
+        resultDiv.innerText = `Keep Whispering... Current Match Score: ${percentage}%`;
     }
 }
 
-// Boot UI
+// Load Initial Display
 updateGameDisplay();
 </script>
 
