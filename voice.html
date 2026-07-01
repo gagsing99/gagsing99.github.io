@@ -30,7 +30,7 @@
             display: flex; align-items: center; justify-content: center;
             word-break: break-word;
         }
-        .meter { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+        .meter { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
         .meter-fill { height: 100%; background: #03dac6; width: 0%; transition: width 0.1s; }
         .status { font-style: italic; color: #b3b3b3; min-height: 24px; margin: 10px 0; font-size: 14px; }
         button {
@@ -38,45 +38,106 @@
             border: none; cursor: pointer; background: #03dac6; color: #000;
             font-weight: bold; transition: 0.2s;
         }
+        button:active { transform: scale(0.98); }
         button:disabled { background: #444; color: #888; cursor: not-allowed; }
         .result { font-size: 18px; margin-top: 20px; font-weight: bold; }
         .success { color: #4caf50; }
         .failure { color: #f44336; }
+        .transcript { font-size: 15px; color: #ffb74d; margin-top: 12px; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="game-container">
     <h1>🤫 Whisper Only</h1>
-    <div class="progress-badge" id="progress-badge">Level: Easy</div>
+    <div class="progress-badge" id="progress-badge">Easy Mode — Phrase 1/25</div>
     <div class="phrase-box" id="target-phrase">Loading...</div>
     
     <div class="meter"><div class="meter-fill" id="meter-fill"></div></div>
     
-    <button id="record-btn" onclick="toggleListening()">🎤 Start Whispering</button>
-    <div class="status" id="status">Tap to start whisper check</div>
+    <button id="record-btn" onclick="handleButtonClick()">🎤 Start Whispering</button>
+    <div class="status" id="status">Tap button to start game and enable mic</div>
     <div class="result" id="result"></div>
+    <div class="transcript" id="transcript"></div>
 </div>
 
 <script>
 const phraseBank = {
-    easy: ["Cat sat on the mat", "Blue sky", "Hot coffee", "Gagan loves you", "Gagani loves me", "Jassa Singh is great", "I love you three thousand", "Tusi great ho"],
-    medium: ["The quick brown fox jumps", "Whispering winds in the woods", "Coding late into the night", "JavaScript engines run fast"],
-    hard: ["Syntactic sugar causes cancer", "Parallel processing distributed computing"],
-    "super-hard": ["Pneumonoultramicroscopicsilicovolcanoconiosis is lung disease", "Supercalifragilisticexpialidocious sounds atrocious"]
+    easy: [
+        "Cat sat on the mat", "Blue sky", "Hot coffee", "Red apple", "Big dog",
+        "Cold water", "Run fast", "Gagan loves you", "Good morning", "Happy birthday",
+        "Green grass", "Fly a kite", "Soft pillow", "White snow", "Sing a song",
+        "Read a book", "Time to eat", "Gagani loves me", "Bright stars", "Drive the car",
+        "Baby smiles", "Fish can swim", "Ice cream cone", "I love you three thousand", "Sweet dreams"
+    ],
+    medium: [
+        "The quick brown fox jumps", "Whispering winds in the woods", "A rolling stone gathers no moss", "Coding late into the night", "Baking fresh blueberry muffins",
+        "JavaScript engines run incredibly fast", "Tusi great ho", "A picture is worth a thousand words", "An apple a day keeps the doctor away", "Curiosity killed the cat eventually",
+        "Better late than never to arrive", "Practice makes perfect every single day", "Every cloud has a silver lining inside", "Jassa Singh is great", "The early bird catches the worm",
+        "Actions speak louder than empty words", "Don't count your chickens before hatching", "Good things come to those who wait", "Honesty is definitely the best policy", "Knowledge is power in this modern world",
+        "Light travels faster than heavy sound", "The pen is mightier than a sharp sword", "Two heads are better than one brain", "Where there is a will there is a way", "Birds of a feather flock together closely"
+    ],
+    hard: [
+        "Syntactic sugar causes cancer of the semicolon", "Asynchronous operations handle continuous background network traffic smoothly", "Parallel processing distributed computing infrastructure scales up easily", "Algorithm efficiency dramatically improves overall system rendering benchmarks", "Cryptographic protocols guarantee absolute confidentiality during data transmission",
+        "Sublime acoustics echo through the cavernous subterranean chambers", "Meticulous architecture prevents catastrophic stack overflow exceptions completely", "Phenomenal cosmic power hidden inside an incredibly microscopic space", "Flamboyant flamingos frantically fluttered past the tropical paradise", "Superficial conversations seldom satisfy deeply analytical intellectual human minds",
+        "Juxtaposing chaotic dynamic environments against structured static frameworks", "Enigmatic whispers echo endlessly down the abandoned concrete hallways", "Exquisite culinary masterpieces require exceptional attention to microscopic details", "Idiosyncratic behaviors often characterize brilliant eccentric software engineers", "Perpendicular lines intersect precisely at ninety degree perfect angles",
+        "Symmetrical geometric patterns emerged from the chaotic mathematical simulations", "Unprecedented technological advancements completely revolutionized global communications networks", "Vicarious adventures experienced entirely through reading fictional fantasy novels", "Whimsical woodwinds played delightful melodies during the autumn festival", "Zealous young entrepreneurs launched a highly disruptive financial platform"
+    ],
+    "super-hard": [
+        "Pneumonoultramicroscopicsilicovolcanoconiosis is a fictional lung disease caused by inhaling fine ash", "Peter Piper picked a peck of pickled peppers before packing his bags for Peru", "She sells seashells by the seashore while shouting sharp sounds dramatically", "The sixth sick sheik's sixth sheep is incredibly sick according to local legends", "Supercalifragilisticexpialidocious sounds quite atrocious when whispered backward in total darkness",
+        "Antidisestablishmentarianism was a highly prominent political philosophy in nineteenth century England", "Floccinaucinihilipilification is the habit of estimating something as completely worthless", "Honorificabilitudinitatibus is the state of being able to achieve high honorable status", "Pseudopseudohypoparathyroidism causes mild genetic medical conditions mimicking classic symptoms perfectly", "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch is a real town name located in Wales",
+        "Deoxyribonucleic acid carries the entire complex genetic blueprint for living organisms", "Electroencephalographically recording neural pathways provides profound diagnostic insights into human brains", "Incomprehensibility remains a fundamental characteristic of advanced quantum mechanics theories", "Uncharacteristically uncooperative unicyclists upset the entirely synchronized parade choreography", "Institutionalization of highly complex multi tiered bureaucratic systems creates massive stagnation",
+        "Mathematical compartmentalization facilitates easier execution of incredibly dense calculations", "Counterrevolutionary movements historically faced massive pushback from established governing regimes", "Intercontinental ballistic missile defense systems require instantaneous microsecond calculations", "Dacryocystorhinostomy surgeries restore proper tear drainage pathways into the nasal cavity", "The automated garbage collector optimized memory allocation profiles without interrupting application threads"
+    ]
 };
 
+const levelOrder = ["easy", "medium", "hard", "super-hard"];
 let currentLevelIndex = 0, currentPhraseIndex = 0;
-let isListening = false;
+let isListening = false, isAudioInitialized = false;
+
 let audioContext, analyser, microphone, dataArray;
-const WHISPER_THRESHOLD = 30; // 0-255 scale
+const WHISPER_THRESHOLD = 35; // Fine-tuned volume ceiling (0-255 scale)
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = new SpeechRecognition();
-recognition.lang = 'en-US';
+let recognition;
 
-// Setup Audio Analyzer for Whisper Detection
-async function initAudio() {
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('status').innerText = "🤫 Whisper now!";
+        document.getElementById('status').style.color = "#03dac6";
+        const btn = document.getElementById('record-btn');
+        btn.innerText = "🛑 Stop Listening";
+        btn.style.background = "#f44336";
+    };
+
+    recognition.onerror = (event) => {
+        if (event.error === 'no-speech') {
+            document.getElementById('status').innerText = "❌ No sound caught. Whisper closer to mic!";
+        } else {
+            document.getElementById('status').innerText = "❌ Error: " + event.error;
+        }
+        stopListeningState();
+    };
+
+    recognition.onend = () => { stopListeningState(); };
+
+    recognition.onresult = (event) => {
+        const speechToText = event.results[0][0].transcript;
+        document.getElementById('transcript').innerText = `You said: "${speechToText}"`;
+        evaluateResult(speechToText);
+    };
+} else {
+    alert("Speech API not fully supported here. Try Safari on iOS or Chrome on Android.");
+}
+
+// Lazy init audio loop on first real click
+async function setupAudioEngine() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -85,71 +146,139 @@ async function initAudio() {
         microphone.connect(analyser);
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-        checkVolume();
+        isAudioInitialized = true;
+        
+        // Start live level monitoring
+        trackLiveVolume();
     } catch (e) {
-        document.getElementById('status').innerText = "Mic access blocked.";
+        document.getElementById('status').innerText = "❌ Mic access denied by system settings.";
+        document.getElementById('status').style.color = "#f44336";
     }
 }
 
-function checkVolume() {
-    if (!isListening) {
+function trackLiveVolume() {
+    if (analyser) {
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
-        for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
         let average = sum / dataArray.length;
         
-        document.getElementById('meter-fill').style.width = Math.min(average * 2, 100) + "%";
-        requestAnimationFrame(checkVolume);
+        // Map data to the interface visual meter
+        document.getElementById('meter-fill').style.width = Math.min(average * 2.5, 100) + "%";
+        requestAnimationFrame(trackLiveVolume);
     }
 }
 
-function toggleListening() {
+async function handleButtonClick() {
+    if (!SpeechRecognition) return;
+
+    // 1. If audio engine hasn't started yet, fire it safely inside this tap event
+    if (!isAudioInitialized) {
+        document.getElementById('status').innerText = "🔄 Initializing mic hardware...";
+        await setupAudioEngine();
+        if (!isAudioInitialized) return; // aborted if user denied mic block
+    }
+
     if (isListening) {
         recognition.stop();
         return;
     }
 
-    // Check volume before starting
+    // 2. Measure current room sound volume instantly before letting engine switch on
     analyser.getByteFrequencyData(dataArray);
     let sum = 0;
-    for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
-    let volume = sum / dataArray.length;
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+    let instantVolume = sum / dataArray.length;
 
-    if (volume > WHISPER_THRESHOLD) {
-        document.getElementById('status').innerText = "⚠️ TOO LOUD! Whisper, don't talk.";
-        document.getElementById('status').style.color = "#ff4336";
+    // 3. Block if user is using full-speaking voice/shouting
+    if (instantVolume > WHISPER_THRESHOLD) {
+        document.getElementById('status').innerText = "⚠️ TOO LOUD! Start completely silent, then whisper.";
+        document.getElementById('status').style.color = "#f44336";
         return;
     }
 
-    // Start recognition
-    recognition.start();
-    isListening = true;
-    document.getElementById('status').innerText = "🤫 Listening to whisper...";
-    document.getElementById('status').style.color = "#03dac6";
-}
-
-recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript.toLowerCase();
-    const target = phraseBank[Object.keys(phraseBank)[currentLevelIndex]][currentPhraseIndex].toLowerCase();
-    
-    if (transcript.includes(target.split(' ')[0])) { // Simplified check
-        document.getElementById('result').innerText = "✅ Perfect whisper!";
-        document.getElementById('result').className = "result success";
-        setTimeout(() => advance(), 1500);
-    } else {
-        document.getElementById('result').innerText = "❌ Try again.";
+    // 4. Safe to run
+    try {
+        recognition.start();
+    } catch(e) {
+        console.error(e);
     }
-};
-
-function advance() {
-    currentPhraseIndex++;
-    if (currentPhraseIndex >= 5) { currentLevelIndex++; currentPhraseIndex = 0; }
-    document.getElementById('target-phrase').innerText = phraseBank[Object.keys(phraseBank)[currentLevelIndex]][currentPhraseIndex];
-    document.getElementById('result').innerText = "";
 }
 
-initAudio();
-document.getElementById('target-phrase').innerText = phraseBank.easy[0];
+function stopListeningState() {
+    isListening = false;
+    const btn = document.getElementById('record-btn');
+    if (btn) {
+        btn.innerText = "🎤 Start Whispering";
+        btn.style.background = "#03dac6";
+    }
+}
+
+function updateGameDisplay() {
+    const currentTier = levelOrder[currentLevelIndex];
+    if (!currentTier) {
+        document.getElementById('progress-badge').innerText = "🏆 Victory!";
+        document.getElementById('target-phrase').innerText = "Incredible! You completed all 100 whispers!";
+        document.getElementById('record-btn').style.display = "none";
+        return;
+    }
+    
+    const targetPhrase = phraseBank[currentTier][currentPhraseIndex];
+    const friendlyTierNames = { "easy": "Easy Mode", "medium": "Medium Mode", "hard": "Hard Mode", "super-hard": "💥 Super Hard Mode" };
+    
+    document.getElementById('progress-badge').innerText = `${friendlyTierNames[currentTier]} — ${currentPhraseIndex + 1}/25`;
+    document.getElementById('target-phrase').innerText = targetPhrase;
+}
+
+function advanceProgress() {
+    currentPhraseIndex++;
+    if (currentPhraseIndex >= 25) {
+        currentPhraseIndex = 0;
+        currentLevelIndex++;
+    }
+    updateGameDisplay();
+}
+
+function evaluateResult(spokenText) {
+    const cleanText = (str) => str.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/).filter(Boolean);
+    
+    const currentTier = levelOrder[currentLevelIndex];
+    const targetPhrase = phraseBank[currentTier][currentPhraseIndex];
+    
+    const targetWords = cleanText(targetPhrase);
+    const spokenWords = cleanText(spokenText);
+    
+    let matches = 0;
+    targetWords.forEach((word) => {
+        const index = spokenWords.indexOf(word);
+        if (index !== -1) {
+            matches++;
+            spokenWords.splice(index, 1); 
+        }
+    });
+    
+    const percentage = Math.round((matches / targetWords.length) * 100);
+    const resultDiv = document.getElementById('result');
+    
+    if (percentage >= 60) {
+        resultDiv.className = "result success";
+        resultDiv.innerText = `🎉 PASSED! Score: ${percentage}%`;
+        
+        setTimeout(() => {
+            resultDiv.innerText = "";
+            document.getElementById('transcript').innerText = "";
+            document.getElementById('status').innerText = "Tap button and whisper";
+            advanceProgress();
+        }, 1600);
+    } else {
+        resultDiv.className = "result failure";
+        resultDiv.innerText = `💥 FAILED! Score: ${percentage}% (Needs 60%). Try again!`;
+    }
+}
+
+// Boot UI
+updateGameDisplay();
 </script>
+
 </body>
 </html>
