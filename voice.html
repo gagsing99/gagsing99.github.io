@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Whisper Game - Continuous Edition</title>
+    <title>The Whisper Game - Custom Edition</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -50,7 +50,7 @@
 
 <div class="game-container">
     <h1>🤫 Whisper Only</h1>
-    <div class="progress-badge" id="progress-badge">Easy Mode — Phrase 1/25</div>
+    <div class="progress-badge" id="progress-badge">Easy Mode — Phrase 1/10</div>
     <div class="phrase-box" id="target-phrase">Loading...</div>
     
     <div class="meter" id="volume-meter"><div class="meter-fill" id="meter-fill"></div></div>
@@ -62,32 +62,23 @@
 </div>
 
 <script>
+// Exactly 10 phrases per category (Total 40)
 const phraseBank = {
     easy: [
-        "Cat sat on the mat", "Blue sky", "Hot coffee", "Red apple", "Big dog",
-        "Cold water", "Run fast", "Gagan loves you", "Good morning", "Happy birthday",
-        "Green grass", "Fly a kite", "Soft pillow", "White snow", "Sing a song",
-        "Read a book", "Time to eat", "Gagani loves me", "Bright stars", "Drive the car",
-        "Baby smiles", "Fish can swim", "Ice cream cone", "I love you three thousand", "Sweet dreams"
+        "Gagan loves you", "Gagani loves me", "Jassa Singh is great", "I love you three thousand", "Tusi great ho",
+        "Red leather yellow leather", "I scream you scream", "Big black bug", "Toy boat toy boat", "Short silk shirts"
     ],
     medium: [
-        "The quick brown fox jumps", "Whispering winds in the woods", "A rolling stone gathers no moss", "Coding late into the night", "Baking fresh blueberry muffins",
-        "JavaScript engines run incredibly fast", "Tusi great ho", "A picture is worth a thousand words", "An apple a day keeps the doctor away", "Curiosity killed the cat eventually",
-        "Better late than never to arrive", "Practice makes perfect every single day", "Every cloud has a silver lining inside", "Jassa Singh is great", "The early bird catches the worm",
-        "Actions speak louder than empty words", "Don't count your chickens before hatching", "Good things come to those who wait", "Honesty is definitely the best policy", "Knowledge is power in this modern world",
-        "Light travels faster than heavy sound", "The pen is mightier than a sharp sword", "Two heads are better than one brain", "Where there is a will there is a way", "Birds of a feather flock together closely"
+        "She sells sea shells on the sea shore", "Peter Piper picked a peck of pickled peppers", "How can a clam cram in a clean cream can", "I saw Susie sitting in a shoeshine shop", "Wayne went to Wales to watch walruses",
+        "Double bubble gum bubbles double", "Gagan loves you more than words can say", "Gagani loves me day and night", "Jassa Singh is remarkably great", "Tusi universal level great ho"
     ],
     hard: [
-        "Syntactic sugar causes cancer of the semicolon", "Asynchronous operations handle continuous background network traffic smoothly", "Parallel processing distributed computing infrastructure scales up easily", "Algorithm efficiency dramatically improves overall system rendering benchmarks", "Cryptographic protocols guarantee absolute confidentiality during data transmission",
-        "Sublime acoustics echo through the cavernous subterranean chambers", "Meticulous architecture prevents catastrophic stack overflow exceptions completely", "Phenomenal cosmic power hidden inside an incredibly microscopic space", "Flamboyant flamingos frantically fluttered past the tropical paradise", "Superficial conversations seldom satisfy deeply analytical intellectual human minds",
-        "Juxtaposing chaotic dynamic environments against structured static frameworks", "Enigmatic whispers echo endlessly down the abandoned concrete hallways", "Exquisite culinary masterpieces require exceptional attention to microscopic details", "Idiosyncratic behaviors often characterize brilliant eccentric software engineers", "Perpendicular lines intersect precisely at ninety degree perfect angles",
-        "Symmetrical geometric patterns emerged from the chaotic mathematical simulations", "Unprecedented technological advancements completely revolutionized global communications networks", "Vicarious adventures experienced entirely through reading fictional fantasy novels", "Whimsical woodwinds played delightful melodies during the autumn festival", "Zealous young entrepreneurs launched a highly disruptive financial platform"
+        "The shells she sells are surely seashells", "A peck of pickled peppers Peter Piper picked", "If Peter Piper picked a peck of pickled peppers", "Susie works in a shoeshine shop where she shines", "Where she shines she sits and where she sits she shines",
+        "Gagan loves you across the entire multiverse", "Gagani loves me without any absolute limits", "Jassa Singh is unimaginably great and true", "Tusi completely great ho globally", "I love you three thousand times infinity"
     ],
     "super-hard": [
-        "Pneumonoultramicroscopicsilicovolcanoconiosis is a fictional lung disease caused by inhaling fine ash", "Peter Piper picked a peck of pickled peppers before packing his bags for Peru", "She sells seashells by the seashore while shouting sharp sounds dramatically", "The sixth sick sheik's sixth sheep is incredibly sick according to local legends", "Supercalifragilisticexpialidocious sounds quite atrocious when whispered backward in total darkness",
-        "Antidisestablishmentarianism was a highly prominent political philosophy in nineteenth century England", "Floccinaucinihilipilification is the habit of estimating something as completely worthless", "Honorificabilitudinitatibus is the state of being able to achieve high honorable status", "Pseudopseudohypoparathyroidism causes mild genetic medical conditions mimicking classic symptoms perfectly", "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch is a real town name located in Wales",
-        "Deoxyribonucleic acid carries the entire complex genetic blueprint for living organisms", "Electroencephalographically recording neural pathways provides profound diagnostic insights into human brains", "Incomprehensibility remains a fundamental characteristic of advanced quantum mechanics theories", "Uncharacteristically uncooperative unicyclists upset the entirely synchronized parade choreography", "Institutionalization of highly complex multi tiered bureaucratic systems creates massive stagnation",
-        "Mathematical compartmentalization facilitates easier execution of incredibly dense calculations", "Counterrevolutionary movements historically faced massive pushback from established governing regimes", "Intercontinental ballistic missile defense systems require instantaneous microsecond calculations", "Dacryocystorhinostomy surgeries restore proper tear drainage pathways into the nasal cavity", "The automated garbage collector optimized memory allocation profiles without interrupting application threads"
+        "Supercalifragilisticexpialidocious sounds quite atrocious when whispered backward in total darkness", "Antidisestablishmentarianism was a highly prominent political philosophy in nineteenth century England", "Floccinaucinihilipilification is the habit of estimating something as completely worthless", "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch is a real town name located in Wales", "Uncharacteristically uncooperative unicyclists upset the entirely synchronized parade choreography",
+        "Gagan loves you unconditionally through all space and chronological dimensions forever", "Gagani loves me eternally beyond the edge of the known universe", "Jassa Singh is structurally the greatest individual in human history", "Tusi multi dimensionally great ho aur hamesha rahoge", "I love you three thousand times over and over without stopping"
     ]
 };
 
@@ -100,9 +91,9 @@ let recognition;
 
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.continuous = true; // STAYS ALIVE CONTINUOUSLY
+    recognition.continuous = true;
     recognition.lang = 'en-US';
-    recognition.interimResults = true; // Catch words mid-sentence for instant processing
+    recognition.interimResults = true;
 
     recognition.onstart = () => {
         isListening = true;
@@ -119,7 +110,6 @@ if (SpeechRecognition) {
     };
 
     recognition.onend = () => { 
-        // Auto-restart if user didn't intentionally click stop
         if (isListening) {
             try { recognition.start(); } catch(e) {}
         }
@@ -139,10 +129,9 @@ if (SpeechRecognition) {
         }
     };
 } else {
-    alert("Speech API not fully supported here. Use Chrome or Safari.");
+    alert("Speech API not supported. Use Chrome or Safari.");
 }
 
-// Perform isolated whisper calibration check before starting the speech engine
 function runWhisperGatekeeper() {
     return new Promise(async (resolve) => {
         try {
@@ -171,15 +160,12 @@ function runWhisperGatekeeper() {
                 document.getElementById('meter-fill').style.width = Math.min(average * 3, 100) + "%";
                 checks++;
 
-                if (checks >= 20) { // Test for ~2 seconds
+                if (checks >= 20) { 
                     clearInterval(interval);
-                    
-                    // Disconnect and shut down track safely to release hardware conflict
                     stream.getTracks().forEach(track => track.stop());
                     audioCtx.close();
                     document.getElementById('volume-meter').style.display = "none";
                     
-                    // Target ceiling threshold
                     if (maxVolume > 38) {
                         resolve(false); 
                     } else {
@@ -212,7 +198,6 @@ async function handleButtonClick() {
         return;
     }
 
-    // Pass configuration check -> Safe to run core isolated translation engine
     document.getElementById('status').innerText = ""; 
     try {
         recognition.start();
@@ -237,7 +222,7 @@ function updateGameDisplay() {
     const currentTier = levelOrder[currentLevelIndex];
     if (!currentTier) {
         document.getElementById('progress-badge').innerText = "🏆 Campaign Complete!";
-        document.getElementById('target-phrase').innerText = "Incredible! You completed all 100 whispers!";
+        document.getElementById('target-phrase').innerText = "Incredible! You completed all 40 whispers!";
         document.getElementById('record-btn').style.display = "none";
         stopListeningState();
         return;
@@ -246,13 +231,13 @@ function updateGameDisplay() {
     const targetPhrase = phraseBank[currentTier][currentPhraseIndex];
     const friendlyTierNames = { "easy": "Easy Mode", "medium": "Medium Mode", "hard": "Hard Mode", "super-hard": "💥 Super Hard Mode" };
     
-    document.getElementById('progress-badge').innerText = `${friendlyTierNames[currentTier]} — ${currentPhraseIndex + 1}/25`;
+    document.getElementById('progress-badge').innerText = `${friendlyTierNames[currentTier]} — ${currentPhraseIndex + 1}/10`;
     document.getElementById('target-phrase').innerText = targetPhrase;
 }
 
 function advanceProgress() {
     currentPhraseIndex++;
-    if (currentPhraseIndex >= 25) {
+    if (currentPhraseIndex >= 10) { // Safely jumps tiers at exactly 10 items
         currentPhraseIndex = 0;
         currentLevelIndex++;
     }
@@ -284,7 +269,6 @@ function evaluateResult(spokenText) {
         resultDiv.className = "result success";
         resultDiv.innerText = `🎉 PASSED! Score: ${percentage}%`;
         
-        // Temporarily pause recognition to step smoothly to the next level
         isListening = false;
         try { recognition.stop(); } catch(e) {}
 
@@ -293,7 +277,6 @@ function evaluateResult(spokenText) {
             document.getElementById('transcript').innerText = "";
             advanceProgress();
             
-            // Re-engage listening automatically for the next phrase block
             isListening = true;
             try { recognition.start(); } catch(e) {}
         }, 1800);
@@ -303,7 +286,6 @@ function evaluateResult(spokenText) {
     }
 }
 
-// Load Initial Display
 updateGameDisplay();
 </script>
 
