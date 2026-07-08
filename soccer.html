@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Jass & Gagan: Love in Motion</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: system-ui, -apple-system, sans-serif;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            max-width: 850px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 500px;
+            font-size: clamp(16px, 4vw, 22px);
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: rgba(30, 41, 59, 0.7);
+            padding: 12px 24px;
+            border-radius: 16px;
+            border: 2px solid rgba(244, 63, 94, 0.2);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 20px rgba(244, 63, 94, 0.15);
+        }
+        #roleBanner {
+            font-size: 16px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        canvas {
+            border: 3px solid rgba(244, 63, 94, 0.3);
+            box-shadow: 0 20px 40px rgba(244, 63, 94, 0.1);
+            border-radius: 12px;
+            max-width: 100%;
+            height: auto;
+            transition: background-color 0.8s ease;
+        }
+        .instructions {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #f43f5e;
+            text-align: center;
+            font-weight: 500;
+        }
+        .win-overlay, .break-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 12px;
+            display: none;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            border: 2px solid rgba(244, 63, 94, 0.4);
+        }
+        .win-overlay h1, .break-overlay h2 { 
+            font-size: clamp(28px, 6vw, 42px); 
+            margin: 0 0 10px 0; 
+            font-weight: 800;
+            color: #fb7185;
+        }
+        .break-overlay p {
+            font-size: clamp(14px, 3vw, 18px);
+            color: #fda4af;
+            margin: 0 0 24px 0;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        button {
+            background: #f43f5e; color: white; border: none;
+            padding: 14px 36px; font-size: 18px; font-weight: bold;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4);
+        }
+        button:hover { 
+            background: #e11d48; 
+            transform: translateY(-1px);
+        }
+        #continueBtn {
+            background: #db2777;
+            color: white;
+            box-shadow: 0 4px 14px rgba(219, 39, 119, 0.4);
+        }
+        #continueBtn:hover {
+            background: #be185d;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div class="scoreboard">
+        <div style="color: #f43f5e;">💖 JASS: <span id="playerScore">0</span></div>
+        <div id="roleBanner">Initializing...</div>
+        <div style="color: #fb923c;">GAGAN: <span id="aiScore">0</span> 💘</div>
+    </div>
+    
+    <div style="position: relative; width: 100%;">
+        <canvas id="tagCanvas" width="850" height="500"></canvas>
+        
+        <!-- Interactive Intermission Break Overlay -->
+        <div id="breakScreen" class="break-overlay">
+            <h2 id="breakTitle">A Perfect Match!</h2>
+            <p id="breakSubtext">Love wins this round.</p>
+            <button id="continueBtn" onclick="dismissBreak()">Next Moment 💞</button>
+        </div>
+
+        <!-- Ultimate Victory Overlay -->
+        <div id="winScreen" class="win-overlay">
+            <h1 id="winMessage">Together Forever!</h1>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>Drag anywhere to guide Jass.</strong> Can Gagan keep up with your heart?
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("tagCanvas");
+const ctx = canvas.getContext("2d");
+
+const playerScoreEl = document.getElementById("playerScore");
+const aiScoreEl = document.getElementById("aiScore");
+const roleBanner = document.getElementById("roleBanner");
+const winScreen = document.getElementById("winScreen");
+const winMessage = document.getElementById("winMessage");
+const breakScreen = document.getElementById("breakScreen");
+const breakTitle = document.getElementById("breakTitle");
+const breakSubtext = document.getElementById("breakSubtext");
+
+let scores = { player: 0, ai: 0 };
+let currentRound = 1; 
+let gameOver = false;
+let isIntermission = false;
+let gameTime = 0; 
+let currentBgColor = "#2e1065";
+
+// Romantic sunset and velvet twilight colors
+const arenaColors = [
+    "#2e1065", "#4c0519", "#311042", "#500732", "#1e1b4b"
+];
+
+const jassEscapeQuotes = [
+    { title: "Hard to Catch! ✨", sub: "Jass leaves Gagan starstruck in the sunset." },
+    { title: "Playing Hard to Get! 😉", sub: "Jass gracefully dances out of reach. Gagan's heart skips a beat!" },
+    { title: "Too Fast for Love! 🏃‍♀️", sub: "Jass flies away like a romantic dream." },
+    { title: "Left Him Dreaming! 💭", sub: "Gagan was too busy admiring Jass to make his move!" }
+];
+
+const jassCaughtQuotes = [
+    { title: "Caught Your Heart! 💖", sub: "Gagan caught up! Jass couldn't escape his charm." },
+    { title: "A Sweet Embrace! 🤗", sub: "No more running. Jass and Gagan melt into a warm embrace." },
+    { title: "Stole a Kiss! 💋", sub: "Gagan expertly tracked her steps and stole a sweet moment." },
+    { title: "Finally Together! ✨", sub: "Jass stopped running to let Gagan catch his breath... and her hand." }
+];
+
+const gaganEscapeQuotes = [
+    { title: "Gagan Dashes Away! 🪐", sub: "Gagan loops around the map just to make Jass chase him!" },
+    { title: "Catch Me If You Can! 🏃‍♂️", sub: "Gagan glides past effortlessly, teasing Jass with a smile." },
+    { title: "A Swift Romance! 💨", sub: "Gagan runs fast, but his eyes are still locked on Jass." },
+    { title: "Slip Away! 🌌", sub: "Jass missed him by a hair! Gagan is playing games with her heart." }
+];
+
+const gaganCaughtQuotes = [
+    { title: "You Caught Him! 💘", sub: "Jass traps Gagan in her loving gaze. He never stood a chance." },
+    { title: "Got You, Gagan! ✨", sub: "Jass intercepts Gagan perfectly. He gladly surrenders his heart!" },
+    { title: "No Escape From Love! 🔒", sub: "Jass corners Gagan. He's exactly where he wants to be." },
+    { title: "Swept Off His Feet! 🥰", sub: "Jass makes a brilliant move and sweeps Gagan right off his feet." }
+];
+
+let isDragging = false;
+let dragTarget = null;
+
+class Vector2D {
+    constructor(x = 0, y = 0) { this.x = x; this.y = y; return this; }
+    set(x, y) { this.x = x; this.y = y; return this; }
+    add(v) { this.x += v.x; this.y += v.y; return this; }
+    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+    mult(n) { this.x *= n; this.y *= n; return this; }
+    div(n) { if(n!==0) { this.x /= n; this.y /= n; } return this; }
+    mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+    normalize() { let m = this.mag(); if (m !== 0) this.div(m); return this; }
+    dist(v) { return Math.sqrt((this.x - v.x)**2 + (this.y - v.y)**2); }
+    limit(max) { if (this.mag() > max) { this.normalize(); this.mult(max); } return this; }
+}
+
+function updateDragTarget(clientX, clientY) {
+    if (gameOver || isIntermission) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
+    if (!dragTarget) dragTarget = new Vector2D();
+    dragTarget.set(x, y);
+}
+
+canvas.addEventListener('mousedown', e => { isDragging = true; updateDragTarget(e.clientX, e.clientY); });
+window.addEventListener('mousemove', e => { if (isDragging) updateDragTarget(e.clientX, e.clientY); });
+window.addEventListener('mouseup', () => { isDragging = false; dragTarget = null; });
+
+canvas.addEventListener('touchstart', e => { isDragging = true; updateDragTarget(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+window.addEventListener('touchmove', e => { if (isDragging) updateDragTarget(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+window.addEventListener('touchend', () => { isDragging = false; dragTarget = null; });
+
+class Agent {
+    constructor(x, y, isUser) {
+        this.pos = new Vector2D(x, y);
+        this.vel = new Vector2D(0, 0);
+        this.acc = new Vector2D(0, 0);
+        this.radius = 22;
+        this.isUser = isUser; // User is always Jass
+        this.maxForce = 0.52;
+    }
+
+    getSpeed() {
+        const userIsRunner = (currentRound % 2 !== 0);
+        if (this.isUser) {
+            return userIsRunner ? 5.6 : 4.9; // Jass speeds
+        } else {
+            return userIsRunner ? 4.3 : 5.25; // Gagan speeds
+        }
+    }
+
+    update() {
+        this.acc.set(0, 0);
+        let speedLimit = this.getSpeed();
+
+        if (this.isUser) {
+            if (dragTarget && !isIntermission) {
+                this.applySteer(dragTarget, speedLimit);
+            } else {
+                this.vel.mult(0.85);
+            }
+        } else {
+            if (!isIntermission) {
+                this.runAISteeringLogic(speedLimit);
+            } else {
+                this.vel.mult(0.85);
+            }
+        }
+
+        this.vel.add(this.acc);
+        this.vel.limit(speedLimit);
+        this.pos.add(this.vel);
+
+        this.pos.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.pos.x));
+        this.pos.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.pos.y));
+    }
+
+    applySteer(targetPos, speed) {
+        let desired = new Vector2D(targetPos.x - this.pos.x, targetPos.y - this.pos.y);
+        let d = desired.mag();
+        
+        if (d > 2) {
+            desired.normalize();
+            if (this.isUser && d < 35) {
+                let factor = d / 35; 
+                desired.mult(speed * factor);
+            } else {
+                desired.mult(speed);
+            }
+
+            let steer = new Vector2D(desired.x - this.vel.x, desired.y - this.vel.y);
+            steer.limit(this.maxForce);
+            this.acc.add(steer);
+        }
+    }
+
+    runAISteeringLogic(speed) {
+        const userIsRunner = (currentRound % 2 !== 0);
+        
+        if (userIsRunner) {
+            // Gagan chases Jass with full dedication
+            this.applySteer(playerAgent.pos, speed);
+        } else {
+            // Gagan escapes playfully away from Jass
+            let escapeTarget = new Vector2D(canvas.width, this.pos.y);
+            let waveOffset = Math.sin(gameTime * 0.04) * 120;
+            escapeTarget.y += waveOffset;
+
+            let distToUser = this.pos.dist(playerAgent.pos);
+            if (distToUser < 230) {
+                let evadeVector = new Vector2D(this.pos.x - playerAgent.pos.x, this.pos.y - playerAgent.pos.y);
+                evadeVector.normalize();
+
+                let sideDodge = new Vector2D(-evadeVector.y, evadeVector.x);
+                if (this.pos.y > canvas.height / 2) {
+                    sideDodge.mult(-1);
+                }
+                
+                evadeVector.add(sideDodge.mult(1.5));
+                evadeVector.normalize().mult(speed * 2.5);
+                
+                escapeTarget.add(evadeVector);
+            }
+
+            if (this.pos.y < 80) {
+                escapeTarget.y += 100;
+            } else if (this.pos.y > canvas.height - 80) {
+                escapeTarget.y -= 100;
+            }
+
+            this.applySteer(escapeTarget, speed);
+        }
+    }
+
+    draw() {
+        const userIsRunner = (currentRound % 2 !== 0);
+        let icon = "👸";
+        let ringColor = "#f43f5e";
+        let fillGlow = "rgba(244, 63, 94, 0.25)";
+
+        if (this.isUser) {
+            icon = userIsRunner ? "👸" : "🏹"; // Jass is a princess or Cupid
+            ringColor = "#f43f5e";
+            fillGlow = "rgba(244, 63, 94, 0.3)";
+        } else {
+            icon = userIsRunner ? "🤵" : "🕺"; // Gagan is a suitor or dancer
+            ringColor = "#fb923c";
+            fillGlow = "rgba(251, 146, 60, 0.3)";
+        }
+
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = fillGlow;
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 3;
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(icon, this.pos.x, this.pos.y);
+    }
+}
+
+let playerAgent = new Agent(100, 250, true);
+let aiAgent = new Agent(750, 250, false);
+
+function triggerIntermission(type) {
+    isIntermission = true;
+    isDragging = false;
+    dragTarget = null;
+
+    let pool = [];
+    if (type === 'user_escaped') pool = jassEscapeQuotes;
+    else if (type === 'user_caught') pool = jassCaughtQuotes;
+    else if (type === 'ai_escaped') pool = gaganEscapeQuotes;
+    else if (type === 'ai_caught') pool = gaganCaughtQuotes;
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    breakTitle.textContent = chosen.title;
+    breakSubtext.textContent = chosen.sub;
+    
+    breakScreen.style.display = "flex";
+}
+
+function dismissBreak() {
+    breakScreen.style.display = "none";
+    isIntermission = false;
+    evaluateMatchEnding();
+}
+
+function initRound() {
+    const userIsRunner = (currentRound % 2 !== 0);
+    currentBgColor = arenaColors[(currentRound - 1) % arenaColors.length];
+
+    if (userIsRunner) {
+        roleBanner.textContent = "Jass Escapes! ✨";
+        roleBanner.style.background = "#9d174d";
+        roleBanner.style.color = "#fce7f3";
+        playerAgent.pos.set(100, canvas.height / 2);
+        aiAgent.pos.set(750, canvas.height / 2);
+    } else {
+        roleBanner.textContent = "Jass Chases Gagan! 💘";
+        roleBanner.style.background = "#c2410c";
+        roleBanner.style.color = "#ffedd5";
+        playerAgent.pos.set(750, canvas.height / 2);
+        aiAgent.pos.set(100, canvas.height / 2);
+    }
+    playerAgent.vel.set(0, 0);
+    aiAgent.vel.set(0, 0);
+}
+
+function checkRulesAndGoals() {
+    if (gameOver || isIntermission) return;
+
+    const userIsRunner = (currentRound % 2 !== 0);
+    let distance = playerAgent.pos.dist(aiAgent.pos);
+    let collisionRange = playerAgent.radius + aiAgent.radius;
+
+    if (distance < collisionRange) {
+        if (userIsRunner) {
+            scores.ai++;
+            aiScoreEl.textContent = scores.ai;
+            triggerIntermission('user_caught');
+        } else {
+            scores.player++;
+            playerScoreEl.textContent = scores.player;
+            triggerIntermission('ai_caught');
+        }
+        return;
+    }
+
+    if (userIsRunner) {
+        if (playerAgent.pos.x >= canvas.width - playerAgent.radius - 5) {
+            scores.player++;
+            playerScoreEl.textContent = scores.player;
+            triggerIntermission('user_escaped');
+        }
+    } else {
+        if (aiAgent.pos.x >= canvas.width - aiAgent.radius - 5) {
+            scores.ai++;
+            aiScoreEl.textContent = scores.ai;
+            triggerIntermission('ai_escaped');
+        }
+    }
+}
+
+function evaluateMatchEnding() {
+    if (scores.player >= 10) {
+        endGame("JASS WINS GAGAN'S ENTIRE HEART! 👑💖");
+    } else if (scores.ai >= 10) {
+        endGame("GAGAN WINS JASS'S ENTIRE HEART! 🤵✨");
+    } else {
+        currentRound++;
+        initRound();
+    }
+}
+
+function endGame(msg) {
+    gameOver = true;
+    winMessage.textContent = msg;
+    winScreen.style.display = "flex";
+}
+
+function restartGame() {
+    scores.player = 0;
+    scores.ai = 0;
+    currentRound = 1;
+    gameOver = false;
+    isIntermission = false;
+    playerScoreEl.textContent = "0";
+    aiScoreEl.textContent = "0";
+    winScreen.style.display = "none";
+    breakScreen.style.display = "none";
+    initRound();
+}
+
+function drawZones() {
+    // The Love Destination Zone
+    ctx.fillStyle = "rgba(244, 63, 94, 0.08)";
+    ctx.fillRect(canvas.width - 60, 0, 60, canvas.height);
+    ctx.strokeStyle = "rgba(244, 63, 94, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - 60, 0);
+    ctx.lineTo(canvas.width - 60, canvas.height);
+    ctx.stroke();
+
+    // Small decorative subtle heart symbol at destination line
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "rgba(244, 63, 94, 0.4)";
+    ctx.fillText("💝", canvas.width - 30, canvas.height / 2);
+}
+
+function drawInputVectorGuide() {
+    if (isDragging && dragTarget && !isIntermission) {
+        ctx.beginPath();
+        ctx.arc(dragTarget.x, dragTarget.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#f43f5e";
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(244, 63, 94, 0.35)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(playerAgent.pos.x, playerAgent.pos.y);
+        ctx.lineTo(dragTarget.x, dragTarget.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+}
+
+function gameLoop() {
+    if (!isIntermission) gameTime++;
+
+    ctx.fillStyle = currentBgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawZones();
+    drawInputVectorGuide();
+
+    if (!gameOver) {
+        playerAgent.update();
+        aiAgent.update();
+        checkRulesAndGoals();
+    }
+
+    playerAgent.draw();
+    aiAgent.draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+initRound();
+gameLoop();
+</script>
+
+</body>
+</html>
