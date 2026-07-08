@@ -143,7 +143,7 @@
     </div>
 
     <div class="instructions">
-        <strong>Drag anywhere to guide Jass.</strong> Can Gagan keep up with your heart?
+        <strong>Drag anywhere to guide Jass.</strong> Reach the glowing escape zone to win the round!
     </div>
 </div>
 
@@ -167,37 +167,38 @@ let isIntermission = false;
 let gameTime = 0; 
 let currentBgColor = "#2e1065";
 
-// Romantic sunset and velvet twilight colors
+const zoneWidth = 60; // Dimensions for the escape zone boundary trigger
+
 const arenaColors = [
     "#2e1065", "#4c0519", "#311042", "#500732", "#1e1b4b"
 ];
 
 const jassEscapeQuotes = [
-    { title: "Hard to Catch! ✨", sub: "Jass leaves Gagan starstruck in the sunset." },
-    { title: "Playing Hard to Get! 😉", sub: "Jass gracefully dances out of reach. Gagan's heart skips a beat!" },
-    { title: "Too Fast for Love! 🏃‍♀️", sub: "Jass flies away like a romantic dream." },
-    { title: "Left Him Dreaming! 💭", sub: "Gagan was too busy admiring Jass to make his move!" }
+    { title: "Hard to Catch! ✨", sub: "Jass successfully crosses into the escape zone, leaving Gagan starstruck." },
+    { title: "Playing Hard to Get! 😉", sub: "Jass reaches safety gracefully! Gagan's heart skips a beat." },
+    { title: "Too Fast for Love! 🏃‍♀️", sub: "Jass sweeps into the zone like a beautiful dream." },
+    { title: "Left Him Dreaming! 💭", sub: "Jass crosses the line while Gagan was too busy admiring her!" }
 ];
 
 const jassCaughtQuotes = [
-    { title: "Caught Your Heart! 💖", sub: "Gagan caught up! Jass couldn't escape his charm." },
-    { title: "A Sweet Embrace! 🤗", sub: "No more running. Jass and Gagan melt into a warm embrace." },
-    { title: "Stole a Kiss! 💋", sub: "Gagan expertly tracked her steps and stole a sweet moment." },
-    { title: "Finally Together! ✨", sub: "Jass stopped running to let Gagan catch his breath... and her hand." }
+    { title: "Caught Your Heart! 💖", sub: "Gagan caught up before Jass could reach the zone!" },
+    { title: "A Sweet Embrace! 🤗", sub: "No more running. Jass is caught in a warm embrace before the line." },
+    { title: "Stole a Kiss! 💋", sub: "Gagan expertly tracked her steps and stopped her escape." },
+    { title: "Finally Together! ✨", sub: "Jass paused her run to let Gagan catch his breath... and her hand." }
 ];
 
 const gaganEscapeQuotes = [
-    { title: "Gagan Dashes Away! 🪐", sub: "Gagan loops around the map just to make Jass chase him!" },
-    { title: "Catch Me If You Can! 🏃‍♂️", sub: "Gagan glides past effortlessly, teasing Jass with a smile." },
-    { title: "A Swift Romance! 💨", sub: "Gagan runs fast, but his eyes are still locked on Jass." },
-    { title: "Slip Away! 🌌", sub: "Jass missed him by a hair! Gagan is playing games with her heart." }
+    { title: "Gagan Reaches Safely! 🪐", sub: "Gagan safely slips into the zone, teasing Jass with a smile." },
+    { title: "Catch Me If You Can! 🏃‍♂️", sub: "Gagan crosses the escape threshold effortlessly." },
+    { title: "A Swift Romance! 💨", sub: "Gagan flies into the zone, but his eyes are still locked on Jass." },
+    { title: "Slip Away! 🌌", sub: "Gagan safely beats the pursuit! He is playing games with her heart." }
 ];
 
 const gaganCaughtQuotes = [
-    { title: "You Caught Him! 💘", sub: "Jass traps Gagan in her loving gaze. He never stood a chance." },
-    { title: "Got You, Gagan! ✨", sub: "Jass intercepts Gagan perfectly. He gladly surrenders his heart!" },
-    { title: "No Escape From Love! 🔒", sub: "Jass corners Gagan. He's exactly where he wants to be." },
-    { title: "Swept Off His Feet! 🥰", sub: "Jass makes a brilliant move and sweeps Gagan right off his feet." }
+    { title: "You Caught Him! 💘", sub: "Jass catches Gagan before he can cross the line. He gladly surrenders." },
+    { title: "Got You, Gagan! ✨", sub: "Jass intercepts Gagan perfectly right outside the safety zone!" },
+    { title: "No Escape From Love! 🔒", sub: "Jass corners Gagan on the run. He's exactly where he wants to be." },
+    { title: "Swept Off His Feet! 🥰", sub: "Jass makes a brilliant move and tagged Gagan before his escape." }
 ];
 
 let isDragging = false;
@@ -239,16 +240,16 @@ class Agent {
         this.vel = new Vector2D(0, 0);
         this.acc = new Vector2D(0, 0);
         this.radius = 22;
-        this.isUser = isUser; // User is always Jass
+        this.isUser = isUser; 
         this.maxForce = 0.52;
     }
 
     getSpeed() {
         const userIsRunner = (currentRound % 2 !== 0);
         if (this.isUser) {
-            return userIsRunner ? 5.6 : 4.9; // Jass speeds
+            return userIsRunner ? 5.6 : 4.9; 
         } else {
-            return userIsRunner ? 4.3 : 5.25; // Gagan speeds
+            return userIsRunner ? 4.3 : 5.25; 
         }
     }
 
@@ -301,10 +302,8 @@ class Agent {
         const userIsRunner = (currentRound % 2 !== 0);
         
         if (userIsRunner) {
-            // Gagan chases Jass with full dedication
             this.applySteer(playerAgent.pos, speed);
         } else {
-            // Gagan escapes playfully away from Jass
             let escapeTarget = new Vector2D(canvas.width, this.pos.y);
             let waveOffset = Math.sin(gameTime * 0.04) * 120;
             escapeTarget.y += waveOffset;
@@ -342,11 +341,11 @@ class Agent {
         let fillGlow = "rgba(244, 63, 94, 0.25)";
 
         if (this.isUser) {
-            icon = userIsRunner ? "👸" : "🏹"; // Jass is a princess or Cupid
+            icon = userIsRunner ? "👸" : "🏹"; 
             ringColor = "#f43f5e";
             fillGlow = "rgba(244, 63, 94, 0.3)";
         } else {
-            icon = userIsRunner ? "🤵" : "🕺"; // Gagan is a suitor or dancer
+            icon = userIsRunner ? "🤵" : "🕺"; 
             ringColor = "#fb923c";
             fillGlow = "rgba(251, 146, 60, 0.3)";
         }
@@ -421,6 +420,7 @@ function checkRulesAndGoals() {
     let distance = playerAgent.pos.dist(aiAgent.pos);
     let collisionRange = playerAgent.radius + aiAgent.radius;
 
+    // Check for interception contact
     if (distance < collisionRange) {
         if (userIsRunner) {
             scores.ai++;
@@ -434,14 +434,15 @@ function checkRulesAndGoals() {
         return;
     }
 
+    // Check for crossing into the escape zone line trigger bounds
     if (userIsRunner) {
-        if (playerAgent.pos.x >= canvas.width - playerAgent.radius - 5) {
+        if (playerAgent.pos.x >= canvas.width - zoneWidth - playerAgent.radius) {
             scores.player++;
             playerScoreEl.textContent = scores.player;
             triggerIntermission('user_escaped');
         }
     } else {
-        if (aiAgent.pos.x >= canvas.width - aiAgent.radius - 5) {
+        if (aiAgent.pos.x >= canvas.width - zoneWidth - aiAgent.radius) {
             scores.ai++;
             aiScoreEl.textContent = scores.ai;
             triggerIntermission('ai_escaped');
@@ -482,18 +483,17 @@ function restartGame() {
 function drawZones() {
     // The Love Destination Zone
     ctx.fillStyle = "rgba(244, 63, 94, 0.08)";
-    ctx.fillRect(canvas.width - 60, 0, 60, canvas.height);
+    ctx.fillRect(canvas.width - zoneWidth, 0, zoneWidth, canvas.height);
     ctx.strokeStyle = "rgba(244, 63, 94, 0.3)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(canvas.width - 60, 0);
-    ctx.lineTo(canvas.width - 60, canvas.height);
+    ctx.moveTo(canvas.width - zoneWidth, 0);
+    ctx.lineTo(canvas.width - zoneWidth, canvas.height);
     ctx.stroke();
 
-    // Small decorative subtle heart symbol at destination line
     ctx.font = "20px Arial";
     ctx.fillStyle = "rgba(244, 63, 94, 0.4)";
-    ctx.fillText("💝", canvas.width - 30, canvas.height / 2);
+    ctx.fillText("💝", canvas.width - (zoneWidth / 2), canvas.height / 2);
 }
 
 function drawInputVectorGuide() {
