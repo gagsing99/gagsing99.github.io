@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Romantic Phrase Slot Machine</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f050a;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            position: relative;
+        }
+
+        /* --- Romantic Background Layers --- */
+        .bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* Glowing Beating Heart Background Core */
+        .giant-heart {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background-color: rgba(255, 30, 80, 0.15);
+            transform: translate(-50%, -50%) rotate(-45deg);
+            transform-origin: center;
+            filter: blur(40px);
+            animation: beat 1.4s infinite ease-in-out;
+        }
+        .giant-heart::before, .giant-heart::after {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background-color: rgba(255, 30, 80, 0.15);
+            border-radius: 50%;
+        }
+        .giant-heart::before { top: -150px; left: 0; }
+        .giant-heart::after { left: 150px; top: 0; }
+
+        @keyframes beat {
+            0%, 100% { transform: translate(-50%, -50%) rotate(-45deg) scale(0.9); }
+            30% { transform: translate(-50%, -50%) rotate(-45deg) scale(1.15); }
+            45% { transform: translate(-50%, -50%) rotate(-45deg) scale(1.05); }
+            60% { transform: translate(-50%, -50%) rotate(-45deg) scale(1.2); }
+        }
+
+        /* Blinking Stars */
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #ffeb3b;
+            animation: blink linear infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Floating Blurred Hearts */
+        .floating-heart {
+            position: absolute;
+            background-color: currentColor;
+            transform: rotate(-45deg);
+            opacity: 0.25;
+            filter: blur(4px);
+            animation: floatUp 8s infinite linear;
+        }
+        .floating-heart::before, .floating-heart::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: currentColor;
+            border-radius: 50%;
+        }
+        .floating-heart::before { top: -50%; left: 0; }
+        .floating-heart::after { left: 50%; top: 0; }
+
+        @keyframes floatUp {
+            0% { transform: translateY(105vh) rotate(-45deg) scale(0.5); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-15vh) rotate(-45deg) scale(1.2); opacity: 0; }
+        }
+
+        /* --- Layout Structure Architecture --- */
+        .layout-centerpiece {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 95vw;
+            max-width: 850px;
+        }
+
+        .name-banner {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            font-weight: bold;
+            color: #ff4d6d;
+            text-shadow: 0 0 10px rgba(255, 77, 109, 0.6), 0 0 20px rgba(255, 77, 109, 0.3);
+            margin: 15px 0;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        /* --- Main Game Slot Frame --- */
+        .game-wrapper {
+            width: 100%;
+            aspect-ratio: 85 / 35;
+            background: linear-gradient(135deg, #2c0816, #15020a);
+            padding: 12px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(255, 30, 80, 0.4);
+            border: 4px solid #4a0e27;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background: #080104;
+            border-radius: 14px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated Background Layer -->
+<div class="bg-container" id="bgContainer">
+    <div class="giant-heart"></div>
+</div>
+
+<!-- Vertically and Horizontally Centered Content Stack -->
+<div class="layout-centerpiece">
+    <div class="name-banner">Jass</div>
+    
+    <div class="game-wrapper">
+        <canvas id="slotCanvas"></canvas>
+    </div>
+    
+    <div class="name-banner">Gagan</div>
+</div>
+
+<script>
+    // --- Setup background stars and hearts via JavaScript insertion ---
+    const bg = document.getElementById('bgContainer');
+    const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#c9184a', '#ffccd5'];
+    
+    for(let i=0; i<35; i++) {
+        let star = document.createElement('div');
+        star.className = 'star';
+        let size = Math.random() * 3 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.left = Math.random() * 100 + 'vw';
+        star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+        star.style.animationDelay = Math.random() * 2 + 's';
+        bg.appendChild(star);
+    }
+
+    for(let i=0; i<15; i++) {
+        let heart = document.createElement('div');
+        heart.className = 'floating-heart';
+        let size = Math.random() * 25 + 15;
+        heart.style.width = size + 'px';
+        heart.style.height = size + 'px';
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.color = colors[Math.floor(Math.random() * colors.length)];
+        heart.style.animationDuration = (Math.random() * 6 + 6) + 's';
+        heart.style.animationDelay = (Math.random() * -10) + 's';
+        bg.appendChild(heart);
+    }
+
+    // --- Web Audio Generator ---
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playSpinSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150 + Math.random() * 400, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function playLockSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+    }
+
+    function playWinChime() {
+        if (!audioCtx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 notes
+        notes.forEach((freq, index) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (index * 0.1));
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime + (index * 0.1));
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (index * 0.1) + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + (index * 0.1));
+            osc.stop(audioCtx.currentTime + (index * 0.1) + 0.4);
+        });
+    }
+
+    // --- Game Logic Engine ---
+    const canvas = document.getElementById('slotCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const BASE_WIDTH = 850;
+    const BASE_HEIGHT = 350;
+
+    const phrases = ["I love you", "3000", "Tu bas tu hai", "Tu Meri", "Main tera", "Infinity", "JG4Life"];
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$";
+    
+    let slots = [];
+    let isSpinning = false;
+    let soundTicker = 0;
+    
+    const leverX = 780;
+    const leverYStart = 100;
+    const leverLength = 110;
+    let leverCurrentY = 100;
+    let isDragging = false;
+    const dragThreshold = 200;
+
+    initSlots("PULL LEVER", true);
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function resizeCanvas() {
+        canvas.width = BASE_WIDTH;
+        canvas.height = BASE_HEIGHT;
+    }
+
+    function initSlots(phrase, displayAll = false) {
+        slots = [];
+        const totalLetters = phrase.length;
+        const slotViewportWidth = 700; 
+        const boxWidth = Math.min(52, slotViewportWidth / totalLetters);
+        const boxHeight = 75;
+        const totalWidth = totalLetters * boxWidth;
+        const startX = (slotViewportWidth - totalWidth) / 2 + 25;
+        const centerY = BASE_HEIGHT / 2;
+
+        for (let i = 0; i < totalLetters; i++) {
+            slots.push({
+                index: i,
+                targetChar: phrase[i],
+                currentChar: displayAll ? phrase[i] : ' ',
+                isLocked: displayAll,
+                x: startX + (i * boxWidth),
+                y: centerY - (boxHeight / 2),
+                w: boxWidth,
+                h: boxHeight
+            });
+        }
+    }
+
+    function triggerSpin() {
+        if (isSpinning) return;
+        isSpinning = true;
+        initAudio(); // Resume or enable audio context context safely on interaction
+
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        initSlots(randomPhrase, false);
+
+        // Shuffle unlock index positions
+        let indicesOrder = slots.map(s => s.index);
+        for (let i = indicesOrder.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indicesOrder[i], indicesOrder[j]] = [indicesOrder[j], indicesOrder[i]];
+        }
+
+        // Lock letters one by one, 1 second apart, randomly placed
+        indicesOrder.forEach((slotIndex, sequenceStep) => {
+            setTimeout(() => {
+                const targetSlot = slots.find(s => s.index === slotIndex);
+                if (targetSlot) {
+                    targetSlot.isLocked = true;
+                    targetSlot.currentChar = targetSlot.targetChar;
+                    playLockSound();
+                }
+                if (sequenceStep === indicesOrder.length - 1) {
+                    isSpinning = false;
+                    setTimeout(playWinChime, 200); // Play rewarding flourish chord
+                }
+            }, 1200 + (sequenceStep * 1000));
+        });
+    }
+
+    // --- Interaction Mapping ---
+    function getCanvasCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (BASE_WIDTH / rect.width),
+            y: (clientY - rect.top) * (BASE_HEIGHT / rect.height)
+        };
+    }
+
+    function handleStart(e) {
+        if (isSpinning) return;
+        const pos = getCanvasCoordinates(e);
+        const distToKnob = Math.hypot(pos.x - leverX, pos.y - leverCurrentY);
+        if (distToKnob < 35) {
+            isDragging = true;
+            initAudio();
+        }
+    }
+
+    function handleMove(e) {
+        if (!isDragging) return;
+        const pos = getCanvasCoordinates(e);
+        
+        if (pos.y >= leverYStart && pos.y <= dragThreshold + 20) {
+            leverCurrentY = pos.y;
+        }
+
+        if (leverCurrentY >= dragThreshold) {
+            isDragging = false;
+            triggerSpin();
+            snapBackLever();
+        }
+    }
+
+    function handleEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        snapBackLever();
+    }
+
+    function snapBackLever() {
+        let snapInterval = setInterval(() => {
+            if (leverCurrentY > leverYStart) {
+                leverCurrentY -= 15;
+            } else {
+                leverCurrentY = leverYStart;
+                clearInterval(snapInterval);
+            }
+        }, 16);
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', handleStart, { passive: true });
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+
+    // --- Render Loop ---
+    function runSlotEngine() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Slot Machine Internal Shell Container
+        ctx.fillStyle = '#0f0207';
+        ctx.fillRect(15, 20, 715, BASE_HEIGHT - 40);
+        ctx.strokeStyle = '#3a0c1d';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(15, 20, 715, BASE_HEIGHT - 40);
+
+        // Mechanical Track Slot
+        ctx.strokeStyle = '#1a040d';
+        ctx.lineWidth = 12;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(leverX, leverYStart);
+        ctx.lineTo(leverX, dragThreshold);
+        ctx.stroke();
+
+        // Metallic Lever Arm
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(leverX, leverYStart + 20);
+        ctx.lineTo(leverX, leverCurrentY);
+        ctx.stroke();
+
+        // Heart-red Lever Knob Ball
+        ctx.fillStyle = isSpinning ? '#7a001e' : '#ff1e56';
+        ctx.beginPath();
+        ctx.arc(leverX, leverCurrentY, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffccd5';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Sound ticker mechanism while spinning
+        if (isSpinning) {
+            soundTicker++;
+            if (soundTicker % 5 === 0) { // Play spinning click ticks sequentially 
+                playSpinSound();
+            }
+        }
+
+        // Draw Slots
+        slots.forEach((slot) => {
+            // Box Background: Black
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(slot.x + 2, slot.y, slot.w - 4, slot.h);
+            
+            // Box Border: Soft dark magenta when spinning, bright heart-pink when locked
+            ctx.strokeStyle = slot.isLocked ? '#ff4d6d' : '#2d0b18';
+            ctx.lineWidth = slot.isLocked ? 2 : 1;
+            ctx.strokeRect(slot.x + 2, slot.y, slot.w - 4, slot.h);
+
+            // Scrambling values
+            if (!slot.isLocked && slot.targetChar !== ' ') {
+                slot.currentChar = chars[Math.floor(Math.random() * chars.length)];
+            } else if (slot.targetChar === ' ') {
+                slot.currentChar = ' ';
+            }
+
+            // Text: Yellow Letters
+            ctx.fillStyle = '#FFEB3B';
+            ctx.font = `bold ${Math.min(34, slot.w * 0.8)}px 'Courier New', monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(slot.currentChar, slot.x + (slot.w / 2), slot.y + (slot.h / 2));
+        });
+
+        requestAnimationFrame(runSlotEngine);
+    }
+
+    requestAnimationFrame(runSlotEngine);
+</script>
+
+</body>
+</html>
