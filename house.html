@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Bedroom Detached Home | Mount Pleasant, Brampton</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2b6cb0;
+            --accent: #d69e2e;
+            --bg-light: #f7fafc;
+            --text-dark: #2d3748;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.25rem;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 1.15rem;
+            color: #cbd5e0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .price-tag {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2c5282;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #edf2f7;
+            color: var(--primary);
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #ebf8ff;
+            color: var(--secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        #copy-notification {
+            margin-left: 1rem;
+            font-size: 0.9rem;
+            color: #38a169;
+            display: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>4-Bedroom Detached Home with Legal Basement Apartment</h1>
+        <p>Mount Pleasant, Brampton | Oversized Lot & Premium Upgrades</p>
+    </header>
+
+    <div class="container">
+        <div class="action-bar">
+            <div>
+                <span class="badge">Move-In Ready</span>
+                <div class="price-tag">$1,299,000</div>
+            </div>
+            <div>
+                <button onclick="copyListing()">Copy Listing Content</button>
+                <span id="copy-notification">Copied to clipboard!</span>
+            </div>
+        </div>
+
+        <div id="listing-body">
+            <h2>Property Overview</h2>
+            <p>Welcome to this stunning, fully detached 4-bedroom, 4-bathroom residence situated on an oversized lot in one of Brampton’s most desirable family-friendly neighbourhoods. Offering a combination of luxury, functional design, and income potential, this move-in-ready property features a brand-new, legal 1-bedroom basement apartment with a separate entrance. Located just minutes from the Mount Pleasant GO Station, top-rated schools, parks, and everyday amenities, this home delivers exceptional lifestyle value and long-term investment appeal.</p>
+
+            <h2>Key Features & Upgrades</h2>
+            <ul>
+                <li><strong>Main Level:</strong> 9-foot smooth ceilings, premium hardwood flooring, and California shutters throughout.</li>
+                <li><strong>Great Room:</strong> Anchored by a cozy gas fireplace and enhanced with custom pot lights for a warm, inviting atmosphere.</li>
+                <li><strong>Designer Kitchen:</strong> Features granite countertops, a central island, a modern backsplash, and abundant cabinetry.</li>
+                <li><strong>Bedrooms & Laundry:</strong> Generous primary retreat with upgraded hallway finishes, plus the convenience of a second-floor laundry area.</li>
+                <li><strong>Legal Basement Apartment:</strong> Brand-new, fully compliant 1-bedroom unit complete with modern finishes, a private entrance, separate laundry, and brand-new appliances. Ideal for mortgage assistance or extended family.</li>
+                <li><strong>Smart Home & Mechanicals:</strong> Equipped with smart locks, an advanced security system, an HRV unit, and an upgraded main-level laundry setup.</li>
+            </ul>
+
+            <h2>Room Dimensions & Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Level</th>
+                        <th>Dimensions</th>
+                        <th>Features / Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Kitchen</td>
+                        <td>Main</td>
+                        <td>4.57 x 2.74 m</td>
+                        <td>Granite Counter, Ceramic Floor</td>
+                    </tr>
+                    <tr>
+                        <td>Great Rm</td>
+                        <td>Main</td>
+                        <td>5.18 x 4.57 m</td>
+                        <td>Fireplace, Hardwood Floor, Pot Lights</td>
+                    </tr>
+                    <tr>
+                        <td>Dining</td>
+                        <td>Main</td>
+                        <td>4.57 x 3.66 m</td>
+                        <td>Combined W/Kitchen, Ceramic Floor</td>
+                    </tr>
+                    <tr>
+                        <td>Laundry</td>
+                        <td>2nd</td>
+                        <td>1.65 x 1.62 m</td>
+                        <td>Second-floor utility setup</td>
+                    </tr>
+                    <tr>
+                        <td>Master (Primary)</td>
+                        <td>2nd</td>
+                        <td>4.72 x 3.57 m</td>
+                        <td>Ensuite Bath, His/Hers Closets, Hardwood Floor</td>
+                    </tr>
+                    <tr>
+                        <td>2nd Br</td>
+                        <td>2nd</td>
+                        <td>3.72 x 3.20 m</td>
+                        <td>4 Pc Bath, W/I Closet</td>
+                    </tr>
+                    <tr>
+                        <td>3rd Br</td>
+                        <td>2nd</td>
+                        <td>3.72 x 3.14 m</td>
+                        <td>4 Pc Bath</td>
+                    </tr>
+                    <tr>
+                        <td>4th Br</td>
+                        <td>2nd</td>
+                        <td>3.72 x 3.20 m</td>
+                        <td>4 Pc Bath</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Neighborhood & Location Highlights</h2>
+            <ul>
+                <li><strong>Transit:</strong> Minutes to Mount Pleasant GO Station for an effortless commute to downtown Toronto.</li>
+                <li><strong>Family & Education:</strong> Walking distance to local parks, playgrounds, and highly-rated elementary and secondary schools.</li>
+                <li><strong>Convenience:</strong> Close to shopping centers, grocery stores, community centers, and medical clinics.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function copyListing() {
+            const content = document.getElementById('listing-body').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                const notification = document.getElementById('copy-notification');
+                notification.style.display = 'inline';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
