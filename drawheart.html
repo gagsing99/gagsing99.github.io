@@ -15,17 +15,37 @@
     }
     #hud { text-align: center; margin-bottom: 10px; }
     #score { font-size: 1.2rem; font-weight: bold; color: #ff4b72; }
-    #result { font-size: 1.1rem; min-height: 1.5em; margin-top: 4px; }
-    canvas {
-      background: #222; border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(255, 75, 114, 0.2);
+    #result { font-size: 1rem; min-height: 1.5em; margin-top: 4px; }
+    .controls { display: flex; gap: 8px; margin-top: 10px; }
+    select, button {
+      padding: 8px 16px; font-size: 0.9rem; font-weight: bold;
+      color: #fff; background: #ff4b72; border: none;
+      border-radius: 16px; cursor: pointer; outline: none;
     }
-    button {
-      margin-top: 15px; padding: 10px 24px; font-size: 1rem;
-      font-weight: bold; color: #fff; background: #ff4b72;
-      border: none; border-radius: 20px; cursor: pointer;
-    }
+    select { background: #333; border: 1px solid #ff4b72; }
+    select option:disabled { color: #666; background: #222; }
     button:active { transform: scale(0.95); }
+
+    /* Modal Popup Overlay */
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .overlay.active { opacity: 1; pointer-events: auto; }
+    .popup {
+      background: #222; border: 2px solid #ff4b72;
+      border-radius: 20px; padding: 25px 20px; text-align: center;
+      max-width: 85%; width: 320px;
+      box-shadow: 0 10px 30px rgba(255, 75, 114, 0.4);
+      transform: scale(0.8); transition: transform 0.3s ease;
+    }
+    .overlay.active .popup { transform: scale(1); }
+    .popup h2 { color: #ff4b72; margin: 0 0 10px 0; font-size: 1.5rem; }
+    .popup p { font-size: 1.2rem; font-weight: 600; line-height: 1.4; margin: 15px 0; color: #fff; }
+    .popup button { background: #ff4b72; font-size: 1rem; width: 100%; padding: 10px; }
   </style>
 </head>
 <body>
@@ -36,22 +56,53 @@
   </div>
 
   <canvas id="paintCanvas"></canvas>
-  <button onclick="resetGame()">Reset Game</button>
+
+  <div class="controls">
+    <select id="difficulty" onchange="changeDifficulty()">
+      <option value="75">Easy (>75%)</option>
+      <option value="80" disabled>Medium (>80%) 🔒</option>
+      <option value="85" disabled>Hard (>85%) 🔒</option>
+      <option value="90" disabled>Extremely Hard (>90%) 🔒</option>
+    </select>
+    <button onclick="resetGame()">Reset</button>
+  </div>
+
+  <div class="overlay" id="popupOverlay">
+    <div class="popup">
+      <h2 id="popupTitle">Level Cleared!</h2>
+      <p id="popupMessage">I love you Jasleena Saluja!</p>
+      <button onclick="closePopup()">Continue</button>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById('paintCanvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score');
     const resultEl = document.getElementById('result');
+    const diffSelect = document.getElementById('difficulty');
+    const overlay = document.getElementById('popupOverlay');
+    const popupMessage = document.getElementById('popupMessage');
+    const popupTitle = document.getElementById('popupTitle');
 
     let isDrawing = false;
     let userPoints = [];
     let successes = 0;
     const MAX_SUCCESSES = 5;
-    const TARGET_ACCURACY = 90;
+    let targetAccuracy = parseInt(diffSelect.value);
+
+    // Romantic love messages for Jasleena
+    const loveMessages = [
+      "I love you Jasleena Saluja ❤️",
+      "You're mine Jass 💕",
+      "Jg4life 💖",
+      "Forever & Always, Jasleena Saluja 💗",
+      "You hold the key to my heart, Jass 💞",
+      "My heart beats only for Jasleena 💓"
+    ];
 
     function resizeCanvas() {
-      const size = Math.min(window.innerWidth - 40, window.innerHeight - 180, 400);
+      const size = Math.min(window.innerWidth - 40, window.innerHeight - 200, 400);
       canvas.width = size;
       canvas.height = size;
       clearCanvas();
@@ -60,7 +111,6 @@
 
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw faint guide point at center
       ctx.fillStyle = '#333';
       ctx.beginPath();
       ctx.arc(canvas.width / 2, canvas.height / 2, 3, 0, Math.PI * 2);
@@ -114,13 +164,9 @@
     canvas.addEventListener('touchend', stopDrawing);
 
     function evaluateHeart() {
-      // 1. Resample user stroke to 100 equidistant points
       const samples = resample(userPoints, 100);
-      
-      // 2. Generate ideal heart points matched to user stroke bounding box
       const target = getIdealHeart(samples);
 
-      // 3. Calculate average deviation distance normalized to size
       let totalErr = 0;
       let width = Math.max(...samples.map(p => p.x)) - Math.min(...samples.map(p => p.x));
       let height = Math.max(...samples.map(p => p.y)) - Math.min(...samples.map(p => p.y));
@@ -139,16 +185,48 @@
       let accuracy = Math.max(0, 100 - (avgErr / scale) * 250);
       accuracy = Math.round(accuracy * 10) / 10;
 
-      if (accuracy >= TARGET_ACCURACY) {
+      if (accuracy >= targetAccuracy) {
         successes++;
         scoreEl.textContent = `Successes: ${successes} / ${MAX_SUCCESSES}`;
         if (successes >= MAX_SUCCESSES) {
-          resultEl.textContent = `🎉 YOU WIN! Final accuracy: ${accuracy}%`;
+          unlockNextLevel();
         } else {
           resultEl.textContent = `Great! Accuracy: ${accuracy}% (Passed)`;
         }
       } else {
-        resultEl.textContent = `Accuracy: ${accuracy}% (Needs >90%)`;
+        resultEl.textContent = `Accuracy: ${accuracy}% (Needs >${targetAccuracy}%)`;
+      }
+    }
+
+    function unlockNextLevel() {
+      const currentIndex = diffSelect.selectedIndex;
+      const nextOption = diffSelect.options[currentIndex + 1];
+
+      // Select a random romantic message
+      const randomMsg = loveMessages[Math.floor(Math.random() * loveMessages.length)];
+      popupMessage.textContent = randomMsg;
+
+      if (nextOption) {
+        nextOption.disabled = false;
+        nextOption.text = nextOption.text.replace(' 🔒', '');
+        popupTitle.textContent = "🎉 Level Cleared!";
+        overlay.classList.add('active');
+
+        // Advance to next level upon closing popup
+        window.pendingNextIndex = currentIndex + 1;
+      } else {
+        popupTitle.textContent = "🏆 Game Completed!";
+        overlay.classList.add('active');
+        window.pendingNextIndex = null;
+      }
+    }
+
+    function closePopup() {
+      overlay.classList.remove('active');
+      if (window.pendingNextIndex !== null && window.pendingNextIndex !== undefined) {
+        diffSelect.selectedIndex = window.pendingNextIndex;
+        window.pendingNextIndex = null;
+        changeDifficulty();
       }
     }
 
@@ -190,6 +268,11 @@
         pts.push({ x: cx + (x / 32) * w, y: cy + (y / 32) * h });
       }
       return pts;
+    }
+
+    function changeDifficulty() {
+      targetAccuracy = parseInt(diffSelect.value);
+      resetGame();
     }
 
     function resetGame() {
