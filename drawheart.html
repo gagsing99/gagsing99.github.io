@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Draw a Perfect Heart</title>
+  <style>
+    * { box-sizing: border-box; touch-action: none; user-select: none; }
+    body {
+      margin: 0; padding: 0;
+      background: #111; color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; overflow: hidden;
+    }
+    #hud { text-align: center; margin-bottom: 10px; }
+    #score { font-size: 1.2rem; font-weight: bold; color: #ff4b72; }
+    #result { font-size: 1.1rem; min-height: 1.5em; margin-top: 4px; }
+    canvas {
+      background: #222; border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(255, 75, 114, 0.2);
+    }
+    button {
+      margin-top: 15px; padding: 10px 24px; font-size: 1rem;
+      font-weight: bold; color: #fff; background: #ff4b72;
+      border: none; border-radius: 20px; cursor: pointer;
+    }
+    button:active { transform: scale(0.95); }
+  </style>
+</head>
+<body>
+
+  <div id="hud">
+    <div id="score">Successes: 0 / 5</div>
+    <div id="result">Draw a heart in one continuous stroke!</div>
+  </div>
+
+  <canvas id="paintCanvas"></canvas>
+  <button onclick="resetGame()">Reset Game</button>
+
+  <script>
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const resultEl = document.getElementById('result');
+
+    let isDrawing = false;
+    let userPoints = [];
+    let successes = 0;
+    const MAX_SUCCESSES = 5;
+    const TARGET_ACCURACY = 90;
+
+    function resizeCanvas() {
+      const size = Math.min(window.innerWidth - 40, window.innerHeight - 180, 400);
+      canvas.width = size;
+      canvas.height = size;
+      clearCanvas();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw faint guide point at center
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function startDrawing(e) {
+      if (successes >= MAX_SUCCESSES) return;
+      isDrawing = true;
+      userPoints = [getPos(e)];
+      clearCanvas();
+      ctx.strokeStyle = '#ff4b72';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(userPoints[0].x, userPoints[0].y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pt = getPos(e);
+      userPoints.push(pt);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      if (userPoints.length < 20) {
+        resultEl.textContent = "Too short! Draw a complete heart.";
+        return;
+      }
+      evaluateHeart();
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function evaluateHeart() {
+      // 1. Resample user stroke to 100 equidistant points
+      const samples = resample(userPoints, 100);
+      
+      // 2. Generate ideal heart points matched to user stroke bounding box
+      const target = getIdealHeart(samples);
+
+      // 3. Calculate average deviation distance normalized to size
+      let totalErr = 0;
+      let width = Math.max(...samples.map(p => p.x)) - Math.min(...samples.map(p => p.x));
+      let height = Math.max(...samples.map(p => p.y)) - Math.min(...samples.map(p => p.y));
+      let scale = (width + height) / 2;
+
+      for (let i = 0; i < 100; i++) {
+        let minDist = Infinity;
+        for (let j = 0; j < 100; j++) {
+          let d = Math.hypot(samples[i].x - target[j].x, samples[i].y - target[j].y);
+          if (d < minDist) minDist = d;
+        }
+        totalErr += minDist;
+      }
+
+      let avgErr = totalErr / 100;
+      let accuracy = Math.max(0, 100 - (avgErr / scale) * 250);
+      accuracy = Math.round(accuracy * 10) / 10;
+
+      if (accuracy >= TARGET_ACCURACY) {
+        successes++;
+        scoreEl.textContent = `Successes: ${successes} / ${MAX_SUCCESSES}`;
+        if (successes >= MAX_SUCCESSES) {
+          resultEl.textContent = `🎉 YOU WIN! Final accuracy: ${accuracy}%`;
+        } else {
+          resultEl.textContent = `Great! Accuracy: ${accuracy}% (Passed)`;
+        }
+      } else {
+        resultEl.textContent = `Accuracy: ${accuracy}% (Needs >90%)`;
+      }
+    }
+
+    function resample(points, n) {
+      let totalLen = 0;
+      for (let i = 1; i < points.length; i++) totalLen += Math.hypot(points[i].x - points[i-1].x, points[i].y - points[i-1].y);
+      let interval = totalLen / (n - 1);
+      let res = [points[0]];
+      let dist = 0;
+      
+      for (let i = 1; i < points.length; i++) {
+        let d = Math.hypot(points[i].x - points[i-1].x, points[i].y - points[i-1].y);
+        if (dist + d >= interval) {
+          let t = (interval - dist) / d;
+          let nx = points[i-1].x + t * (points[i].x - points[i-1].x);
+          let ny = points[i-1].y + t * (points[i].y - points[i-1].y);
+          res.push({ x: nx, y: ny });
+          points.splice(i, 0, { x: nx, y: ny });
+          dist = 0;
+        } else {
+          dist += d;
+        }
+      }
+      while (res.length < n) res.push(points[points.length - 1]);
+      return res;
+    }
+
+    function getIdealHeart(userSamples) {
+      let minX = Math.min(...userSamples.map(p => p.x)), maxX = Math.max(...userSamples.map(p => p.x));
+      let minY = Math.min(...userSamples.map(p => p.y)), maxY = Math.max(...userSamples.map(p => p.y));
+      let cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      let w = maxX - minX, h = maxY - minY;
+
+      let pts = [];
+      for (let i = 0; i < 100; i++) {
+        let t = (i / 100) * Math.PI * 2;
+        let x = 16 * Math.pow(Math.sin(t), 3);
+        let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+        pts.push({ x: cx + (x / 32) * w, y: cy + (y / 32) * h });
+      }
+      return pts;
+    }
+
+    function resetGame() {
+      successes = 0;
+      scoreEl.textContent = `Successes: 0 / ${MAX_SUCCESSES}`;
+      resultEl.textContent = "Draw a heart in one continuous stroke!";
+      clearCanvas();
+    }
+
+    resizeCanvas();
+  </script>
+</body>
+</html>
