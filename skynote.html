@@ -1,496 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life = you | Sticky Note</title>
-    <!-- Tailwind CSS for clean, responsive UI layout -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts for romantic serif & handwriting typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Dancing+Script:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        /* Custom animations and base styles */
-        body {
-            background-color: #030307;
-            background-image: radial-gradient(circle at 50% 35%, #111426 0%, #030307 80%);
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            touch-action: manipulation;
-        }
-
-        /* Sticky note card wrapper with subtle lift & romantic ambient glow */
-        .sticky-note-wrapper {
-            position: relative;
-            aspect-ratio: 1 / 1;
-            width: 100%;
-            max-width: 520px;
-            border-radius: 24px;
-            box-shadow: 
-                0 25px 60px -15px rgba(0, 0, 0, 0.9),
-                0 0 40px -10px rgba(210, 225, 255, 0.14),
-                inset 0 1px 1px rgba(255, 255, 255, 0.18);
-            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
-            overflow: hidden;
-        }
-
-        @media (hover: hover) {
-            .sticky-note-wrapper:hover {
-                transform: translateY(-4px) rotate(-0.5deg);
-                box-shadow: 
-                    0 32px 70px -15px rgba(0, 0, 0, 0.95),
-                    0 0 55px -8px rgba(220, 235, 255, 0.22),
-                    inset 0 1px 1px rgba(255, 255, 255, 0.25);
-            }
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            border-radius: 24px;
-            cursor: crosshair;
-        }
-
-        /* Subtle folded corner illusion via CSS overlay */
-        .sticky-fold {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(225deg, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.12) 50%, rgba(15,18,35,0.65) 54%, transparent 100%);
-            border-bottom-left-radius: 12px;
-            pointer-events: none;
-            z-index: 10;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Life = you</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+    background-color: #030306;
+    color: #f8fafc;
+    font-family: Georgia, "Times New Roman", serif;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+    gap: 18px;
+  }
+  .card-wrap {
+    width: min(92vw, 72dvh, 460px);
+    height: min(92vw, 72dvh, 460px);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.92), 0 0 0 1px rgba(255, 255, 255, 0.14);
+    background: #05060b;
+    flex-shrink: 0;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  button {
+    background: rgba(255, 255, 255, 0.10);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 14px 32px;
+    min-height: 48px;
+    border-radius: 999px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.12s;
+    touch-action: manipulation;
+  }
+  button:active {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(0.96);
+  }
+</style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 text-slate-200 selection:bg-indigo-500/30">
+<body>
 
-    <!-- Main Sticky Note Container -->
-    <main class="w-full flex flex-col items-center justify-center gap-5 my-auto">
-        
-        <!-- Interactive Canvas Sticky Note Card -->
-        <div id="noteContainer" class="sticky-note-wrapper bg-[#05050a] border border-white/10">
-            <div class="sticky-fold"></div>
-            <canvas id="stickyCanvas"></canvas>
-        </div>
+  <div class="card-wrap">
+    <canvas id="noteCanvas" width="900" height="900"></canvas>
+  </div>
+  <button id="saveBtn" type="button">Save Image</button>
 
-        <!-- Subtle Helper Hint -->
-        <p class="text-xs text-slate-400/80 tracking-wide text-center">
-            Tap or glide across the night sky to scatter stardust ✨
-        </p>
+<script>
+(function () {
+  var canvas = document.getElementById("noteCanvas");
+  var ctx = canvas.getContext("2d");
+  var W = 900;
+  var H = 900;
 
-        <!-- Minimal Save Action -->
-        <div class="flex items-center justify-center w-full max-w-[520px]">
-            <button id="savePngBtn" type="button"
-                class="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white text-sm font-medium backdrop-blur-md transition-all shadow-lg">
-                <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Save Image
-            </button>
-        </div>
-    </main>
+  // 1. Glittery stars
+  var stars = [];
+  for (var i = 0; i < 115; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.9 + Math.random() * 2.4,
+      sparkle: Math.random() < 0.36,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.02 + Math.random() * 0.04
+    });
+  }
 
-    <!-- Non-intrusive Toast Notification -->
-    <div id="toast" role="status" aria-live="polite"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-20 opacity-0 pointer-events-none transition-all duration-300 z-50 px-4 py-2.5 rounded-full bg-slate-900/95 border border-white/15 text-xs sm:text-sm text-white shadow-2xl backdrop-blur-md flex items-center gap-2">
-        <span id="toastIcon">✨</span>
-        <span id="toastMsg">Sticky note saved!</span>
-    </div>
+  // 2. Drifting soft clouds
+  var clouds = [
+    { x: 160, y: 170, scale: 1.25, speed: 0.16, alpha: 0.20 },
+    { x: 710, y: 290, scale: 1.05, speed: -0.12, alpha: 0.16 },
+    { x: 260, y: 710, scale: 1.40, speed: 0.14, alpha: 0.22 },
+    { x: 750, y: 770, scale: 1.10, speed: -0.10, alpha: 0.15 }
+  ];
 
-    <script>
-        /**
-         * Romantic Night-Sky Sticky Note Canvas Renderer
-         * Renders:
-         * - Deep black night sky gradient (#05050a to #0d0f1d)
-         * - Soft, drifting translucent night clouds
-         * - White shiny glittery stars with 4-point diffraction spikes & interactive stardust
-         * - Luminous heart-shaped moon with surface craters & halo
-         * - Centered glowing typography: "Life = you"
-         * - Bottom-right signature: "XOXO" / "Gagan"
-         */
+  // 3. Touch & pointer stardust bursts
+  var bursts = [];
+  function spawnStardust(clientX, clientY) {
+    var rect = canvas.getBoundingClientRect();
+    var x = ((clientX - rect.left) / rect.width) * W;
+    var y = ((clientY - rect.top) / rect.height) * H;
+    for (var i = 0; i < 14; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var spd = 0.7 + Math.random() * 2.6;
+      bursts.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 1.0,
+        size: 1.8 + Math.random() * 2.6
+      });
+    }
+  }
 
-        const canvas = document.getElementById('stickyCanvas');
-        const ctx = canvas.getContext('2d');
-        const container = document.getElementById('noteContainer');
+  canvas.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    spawnStardust(e.clientX, e.clientY);
+  }, { passive: false });
 
-        // Logical coordinate system (square 800x800 for crisp rendering at any DPI)
-        const LOGICAL_SIZE = 800;
-        let dpr = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.addEventListener("pointermove", function (e) {
+    if (e.buttons > 0 || e.pointerType === "touch") {
+      spawnStardust(e.clientX, e.clientY);
+    }
+  });
 
-        // State collections
-        let stars = [];
-        let clouds = [];
-        let interactiveSparkles = [];
-        let lastTime = 0;
+  function drawCloud(c) {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.scale(c.scale, c.scale);
 
-        /**
-         * Resize canvas cleanly for crisp Retina / high-DPI screens
-         */
-        function resizeCanvas() {
-            dpr = Math.min(window.devicePixelRatio || 1, 3);
-            canvas.width = LOGICAL_SIZE * dpr;
-            canvas.height = LOGICAL_SIZE * dpr;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
+    var puffs = [
+      { x: 0, y: 0, r: 72 },
+      { x: -58, y: 14, r: 56 },
+      { x: 62, y: 12, r: 58 },
+      { x: -106, y: 24, r: 42 },
+      { x: 112, y: 22, r: 44 }
+    ];
 
-        /**
-         * Initialize twinkling stars and drifting night clouds
-         */
-        function initScene() {
-            stars = [];
-            clouds = [];
+    for (var i = 0; i < puffs.length; i++) {
+      var p = puffs[i];
+      var grad = ctx.createRadialGradient(p.x, p.y - 8, p.r * 0.1, p.x, p.y, p.r);
+      grad.addColorStop(0, "rgba(215, 225, 245, " + c.alpha + ")");
+      grad.addColorStop(0.55, "rgba(130, 145, 175, " + (c.alpha * 0.55) + ")");
+      grad.addColorStop(1, "rgba(20, 24, 38, 0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 
-            // Create 135 background & foreground glittering stars
-            for (let i = 0; i < 135; i++) {
-                const isGlitter = Math.random() < 0.24; // 24% have prominent 4-point diamond flares
-                stars.push({
-                    x: Math.random() * LOGICAL_SIZE,
-                    y: Math.random() * LOGICAL_SIZE,
-                    radius: isGlitter ? (1.4 + Math.random() * 1.6) : (0.5 + Math.random() * 1.3),
-                    baseAlpha: 0.35 + Math.random() * 0.65,
-                    twinkleSpeed: 1.2 + Math.random() * 3.2,
-                    twinklePhase: Math.random() * Math.PI * 2,
-                    isGlitter: isGlitter,
-                    flareScale: 5 + Math.random() * 8,
-                    tint: Math.random() > 0.75 ? '#e0ebff' : '#ffffff'
-                });
-            }
+  function drawHeartMoon(cx, cy, size) {
+    ctx.save();
+    ctx.translate(cx, cy);
 
-            // Create layered translucent dark clouds drifting across the sky
-            const cloudConfigs = [
-                { x: 140, y: 150, scale: 1.15, speed: 5.5, opacity: 0.26 },
-                { x: 560, y: 210, scale: 1.35, speed: 4.0, opacity: 0.22 },
-                { x: 260, y: 460, scale: 1.5,  speed: 3.2, opacity: 0.18 },
-                { x: 640, y: 600, scale: 1.25, speed: 4.8, opacity: 0.24 },
-                { x: 80,  y: 670, scale: 1.4,  speed: 3.6, opacity: 0.20 },
-                { x: 430, y: 110, scale: 0.95, speed: 6.2, opacity: 0.19 }
-            ];
+    // Outer moonlight aura
+    var halo = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, size * 2.3);
+    halo.addColorStop(0, "rgba(255, 250, 225, 0.34)");
+    halo.addColorStop(0.5, "rgba(220, 230, 255, 0.10)");
+    halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 2.3, 0, Math.PI * 2);
+    ctx.fill();
 
-            cloudConfigs.forEach(cfg => {
-                // Pre-generate organic puff offsets for each cloud cluster
-                const puffs = [];
-                const puffCount = 7;
-                for (let p = 0; p < puffCount; p++) {
-                    puffs.push({
-                        dx: (p - puffCount / 2) * 38 * cfg.scale + (Math.random() - 0.5) * 20,
-                        dy: Math.sin(p * 1.1) * 16 * cfg.scale,
-                        r: (48 + Math.sin(p * 0.9) * 24) * cfg.scale
-                    });
-                }
-                clouds.push({
-                    x: cfg.x,
-                    y: cfg.y,
-                    speed: cfg.speed,
-                    opacity: cfg.opacity,
-                    scale: cfg.scale,
-                    puffs: puffs
-                });
-            });
-        }
+    // Heart path centered around (0,0)
+    ctx.save();
+    ctx.translate(0, -size * 0.85);
 
-        /**
-         * Draw deep black night sky with subtle midnight-indigo depth
-         */
-        function drawSkyBackground() {
-            const bgGrad = ctx.createLinearGradient(0, 0, LOGICAL_SIZE * 0.3, LOGICAL_SIZE);
-            bgGrad.addColorStop(0, '#040409');
-            bgGrad.addColorStop(0.5, '#070812');
-            bgGrad.addColorStop(1, '#0d0f1d');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.35);
+    ctx.bezierCurveTo(0, 0, -size, 0, -size, size * 0.55);
+    ctx.bezierCurveTo(-size, size * 1.05, 0, size * 1.38, 0, size * 1.65);
+    ctx.bezierCurveTo(0, size * 1.38, size, size * 1.05, size, size * 0.55);
+    ctx.bezierCurveTo(size, 0, 0, 0, 0, size * 0.35);
+    ctx.closePath();
 
-            // Subtle ambient nebula glow around the heart moon region
-            const moonAura = ctx.createRadialGradient(205, 175, 10, 205, 175, 340);
-            moonAura.addColorStop(0, 'rgba(205, 220, 255, 0.11)');
-            moonAura.addColorStop(0.5, 'rgba(130, 150, 210, 0.04)');
-            moonAura.addColorStop(1, 'rgba(5, 5, 10, 0)');
-            ctx.fillStyle = moonAura;
-            ctx.fillRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
-        }
+    ctx.shadowColor = "rgba(255, 248, 214, 0.85)";
+    ctx.shadowBlur = 32;
 
-        /**
-         * Draw soft, drifting translucent clouds
-         */
-        function drawClouds(dt) {
-            clouds.forEach(cloud => {
-                cloud.x += cloud.speed * dt;
-                if (cloud.x > LOGICAL_SIZE + 220) {
-                    cloud.x = -220;
-                }
+    var moonGrad = ctx.createLinearGradient(-size, 0, size, size * 1.6);
+    moonGrad.addColorStop(0, "#fffdf5");
+    moonGrad.addColorStop(0.55, "#f7eecf");
+    moonGrad.addColorStop(1, "#dfd0a2");
+    ctx.fillStyle = moonGrad;
+    ctx.fill();
 
-                cloud.puffs.forEach(puff => {
-                    const px = cloud.x + puff.dx;
-                    const py = cloud.y + puff.dy;
-                    const grad = ctx.createRadialGradient(px, py, puff.r * 0.1, px, py, puff.r);
-                    grad.addColorStop(0, `rgba(28, 33, 56, ${cloud.opacity})`);
-                    grad.addColorStop(0.55, `rgba(18, 21, 38, ${cloud.opacity * 0.65})`);
-                    grad.addColorStop(1, 'rgba(10, 12, 22, 0)');
+    // Subtle lunar craters clipped inside heart
+    ctx.clip();
+    ctx.shadowBlur = 0;
+    var craters = [
+      { x: -size * 0.38, y: size * 0.52, r: size * 0.14 },
+      { x: size * 0.32, y: size * 0.72, r: size * 0.18 },
+      { x: -size * 0.10, y: size * 1.05, r: size * 0.11 },
+      { x: size * 0.42, y: size * 0.38, r: size * 0.09 }
+    ];
+    for (var i = 0; i < craters.length; i++) {
+      var cr = craters[i];
+      ctx.fillStyle = "rgba(175, 160, 120, 0.22)";
+      ctx.beginPath();
+      ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(px, py, puff.r, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-            });
-        }
+    ctx.restore();
+    ctx.restore();
+  }
 
-        /**
-         * Helper to draw a crisp 4-point glittery star flare
-         */
-        function drawFourPointStar(x, y, size, alpha, color) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  function drawFourPointStar(x, y, radius, alpha) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "rgba(255, 255, 255, " + alpha + ")";
+    ctx.shadowColor = "rgba(255, 255, 255, " + alpha + ")";
+    ctx.shadowBlur = 9;
 
-            // Soft center glow
-            const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 1.3);
-            glow.addColorStop(0, color);
-            glow.addColorStop(0.35, 'rgba(255, 255, 255, 0.5)');
-            glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = glow;
-            ctx.beginPath();
-            ctx.arc(0, 0, size * 1.3, 0, Math.PI * 2);
-            ctx.fill();
+    ctx.beginPath();
+    var spikes = 4;
+    var outer = radius * 2.4;
+    var inner = radius * 0.35;
+    for (var i = 0; i < spikes * 2; i++) {
+      var r = i % 2 === 0 ? outer : inner;
+      var angle = (i * Math.PI) / spikes;
+      var px = Math.cos(angle) * r;
+      var py = Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 
-            // 4-point diamond diffraction spikes
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            const inner = size * 0.14;
-            ctx.moveTo(0, -size);
-            ctx.quadraticCurveTo(inner, -inner, size, 0);
-            ctx.quadraticCurveTo(inner, inner, 0, size);
-            ctx.quadraticCurveTo(-inner, inner, -size, 0);
-            ctx.quadraticCurveTo(-inner, -inner, 0, -size);
-            ctx.closePath();
-            ctx.fill();
+  function render() {
+    // Deep black night sky gradient
+    var bg = ctx.createRadialGradient(W * 0.5, H * 0.35, 45, W * 0.5, H * 0.5, W * 0.75);
+    bg.addColorStop(0, "#0d111f");
+    bg.addColorStop(0.55, "#05060b");
+    bg.addColorStop(1, "#010103");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
 
-            // Bright white pinpoint core
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(0, 0, Math.max(0.8, size * 0.15), 0, Math.PI * 2);
-            ctx.fill();
+    // Stars
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      s.phase += s.speed;
+      var alpha = 0.45 + 0.55 * Math.abs(Math.sin(s.phase));
+      if (s.sparkle) {
+        drawFourPointStar(s.x, s.y, s.r, alpha);
+      } else {
+        ctx.fillStyle = "rgba(255, 255, 255, " + alpha + ")";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
-            ctx.restore();
-        }
+    // Drifting clouds
+    for (var j = 0; j < clouds.length; j++) {
+      var c = clouds[j];
+      c.x += c.speed;
+      if (c.x > W + 180) c.x = -180;
+      if (c.x < -180) c.x = W + 180;
+      drawCloud(c);
+    }
 
-        /**
-         * Draw all white shiny glittery stars
-         */
-        function drawStars(timeSec) {
-            stars.forEach(star => {
-                // Avoid overlapping directly over the bright core of the heart moon
-                const distToMoon = Math.hypot(star.x - 205, star.y - 175);
-                if (distToMoon < 62) return;
+    // Heart-shaped moon
+    drawHeartMoon(W * 0.5, 210, 72);
 
-                const wave = Math.sin(timeSec * star.twinkleSpeed + star.twinklePhase);
-                const sparkleFactor = 0.5 + 0.5 * wave;
-                const currentAlpha = star.baseAlpha * (0.35 + 0.65 * sparkleFactor);
+    // Subtle starry border frame
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(32, 32, W - 64, H - 64);
 
-                if (star.isGlitter) {
-                    const dynamicSize = star.flareScale * (0.55 + 0.55 * sparkleFactor);
-                    drawFourPointStar(star.x, star.y, dynamicSize, currentAlpha, star.tint);
-                } else {
-                    ctx.save();
-                    ctx.globalAlpha = currentAlpha;
-                    ctx.fillStyle = star.tint;
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            });
-        }
+    // Centered message: "Life = you"
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "italic 68px Georgia, 'Times New Roman', serif";
+    ctx.shadowColor = "rgba(255, 245, 210, 0.65)";
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("Life = you", W * 0.5, H * 0.52);
+    ctx.restore();
 
-        /**
-         * Define a smooth, romantic heart-shaped path centered at (cx, cy)
-         */
-        function createHeartPath(ctx, cx, cy, size) {
-            ctx.beginPath();
-            const topCurveHeight = size * 0.3;
-            ctx.moveTo(cx, cy + topCurveHeight);
-            // Left lobe
-            ctx.bezierCurveTo(
-                cx, cy,
-                cx - size * 0.55, cy,
-                cx - size * 0.55, cy + topCurveHeight
-            );
-            // Left bottom curve to tip
-            ctx.bezierCurveTo(
-                cx - size * 0.55, cy + (size + topCurveHeight) * 0.52,
-                cx, cy + (size + topCurveHeight) * 0.78,
-                cx, cy + size
-            );
-            // Right bottom curve from tip
-            ctx.bezierCurveTo(
-                cx, cy + (size + topCurveHeight) * 0.78,
-                cx + size * 0.55, cy + (size + topCurveHeight) * 0.52,
-                cx + size * 0.55, cy + topCurveHeight
-            );
-            // Right lobe
-            ctx.bezierCurveTo(
-                cx + size * 0.55, cy,
-                cx, cy,
-                cx, cy + topCurveHeight
-            );
-            ctx.closePath();
-        }
+    // Bottom-right signature: "XOXO" / "Gagan"
+    ctx.save();
+    ctx.textAlign = "right";
+    ctx.textBaseline = "alphabetic";
+    ctx.shadowColor = "rgba(255, 245, 210, 0.45)";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "rgba(255, 250, 235, 0.92)";
+    ctx.font = "600 28px Georgia, 'Times New Roman', serif";
+    ctx.fillText("XOXO", W - 66, H - 104);
+    ctx.font = "italic 34px Georgia, 'Times New Roman', serif";
+    ctx.fillText("Gagan", W - 66, H - 64);
+    ctx.restore();
 
-        /**
-         * Draw the luminous heart-shaped moon in the upper-left sky
-         */
-        function drawHeartMoon(timeSec) {
-            const cx = 205;
-            const cy = 112;
-            const size = 122;
-            const pulse = 1 + Math.sin(timeSec * 1.4) * 0.025;
+    // Interactive stardust particles
+    for (var k = bursts.length - 1; k >= 0; k--) {
+      var b = bursts[k];
+      b.x += b.vx;
+      b.y += b.vy;
+      b.life -= 0.025;
+      if (b.life <= 0) {
+        bursts.splice(k, 1);
+        continue;
+      }
+      drawFourPointStar(b.x, b.y, b.size * b.life, b.life);
+    }
 
-            ctx.save();
-            // Slight romantic tilt for the heart moon
-            ctx.translate(cx, cy + size * 0.5);
-            ctx.rotate(-0.14);
-            ctx.translate(-cx, -(cy + size * 0.5));
+    requestAnimationFrame(render);
+  }
 
-            // 1. Outer soft moonlight halo
-            const haloGrad = ctx.createRadialGradient(cx, cy + size * 0.48, size * 0.2, cx, cy + size * 0.48, size * 1.55 * pulse);
-            haloGrad.addColorStop(0, 'rgba(255, 253, 240, 0.32)');
-            haloGrad.addColorStop(0.45, 'rgba(215, 228, 255, 0.11)');
-            haloGrad.addColorStop(1, 'rgba(215, 228, 255, 0)');
-            ctx.fillStyle = haloGrad;
-            ctx.beginPath();
-            ctx.arc(cx, cy + size * 0.48, size * 1.55 * pulse, 0, Math.PI * 2);
-            ctx.fill();
+  // Mobile & Desktop Save Image button
+  document.getElementById("saveBtn").addEventListener("click", function () {
+    var dataUrl = canvas.toDataURL("image/png");
+    var link = document.createElement("a");
+    link.download = "life-equals-you.png";
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
 
-            // 2. Heart Moon Body with luminous ivory-silver gradient & shadow glow
-            ctx.save();
-            ctx.shadowColor = 'rgba(245, 248, 255, 0.75)';
-            ctx.shadowBlur = 28;
-
-            createHeartPath(ctx, cx, cy, size);
-            const moonGrad = ctx.createRadialGradient(
-                cx - size * 0.16, cy + size * 0.28, size * 0.08,
-                cx, cy + size * 0.52, size * 0.85
-            );
-            moonGrad.addColorStop(0, '#ffffff');
-            moonGrad.addColorStop(0.45, '#f7f8fc');
-            moonGrad.addColorStop(0.85, '#dce3f2');
-            moonGrad.addColorStop(1, '#bcc7de');
-            ctx.fillStyle = moonGrad;
-            ctx.fill();
-            ctx.restore();
-
-            // 3. Subtle lunar craters clipped inside the heart shape
-            ctx.save();
-            createHeartPath(ctx, cx, cy, size);
-            ctx.clip();
-
-            const craters = [
-                { x: cx - 22, y: cy + 46, r: 11, alpha: 0.09 },
-                { x: cx + 24, y: cy + 54, r: 14, alpha: 0.08 },
-                { x: cx - 6,  y: cy + 74, r: 9,  alpha: 0.10 },
-                { x: cx + 12, y: cy + 36, r: 6,  alpha: 0.07 },
-                { x: cx - 32, y: cy + 68, r: 7,  alpha: 0.08 },
-                { x: cx + 4,  y: cy + 96, r: 8,  alpha: 0.09 }
-            ];
-
-            craters.forEach(c => {
-                const cGrad = ctx.createRadialGradient(c.x - c.r * 0.25, c.y - c.r * 0.25, 1, c.x, c.y, c.r);
-                cGrad.addColorStop(0, `rgba(130, 145, 175, ${c.alpha * 0.5})`);
-                cGrad.addColorStop(0.8, `rgba(115, 130, 160, ${c.alpha})`);
-                cGrad.addColorStop(1, 'rgba(255, 255, 255, 0.15)');
-                ctx.fillStyle = cGrad;
-                ctx.beginPath();
-                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // Soft inner rim highlight
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.restore();
-            ctx.restore();
-        }
-
-        /**
-         * Draw the centered text: "Life = you"
-         */
-        function drawCenterMessage(timeSec) {
-            const centerX = LOGICAL_SIZE / 2;
-            const centerY = LOGICAL_SIZE / 2 + 12;
-            const shimmer = 0.88 + 0.12 * Math.sin(timeSec * 2.0);
-
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // Subtle delicate horizontal stardust line behind the text
-            const lineGrad = ctx.createLinearGradient(centerX - 180, centerY + 38, centerX + 180, centerY + 38);
-            lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-            lineGrad.addColorStop(0.5, 'rgba(230, 238, 255, 0.25)');
-            lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.strokeStyle = lineGrad;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(centerX - 180, centerY + 38);
-            ctx.lineTo(centerX + 180, centerY + 38);
-            ctx.stroke();
-
-            // Outer soft white-silver glow
-            ctx.shadowColor = `rgba(225, 236, 255, ${0.65 * shimmer})`;
-            ctx.shadowBlur = 22;
-
-            // Elegant romantic serif typography
-            ctx.font = 'italic 500 64px "Cormorant Garamond", Georgia, serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText('Life = you', centerX, centerY);
-
-            // Second crisp pass for sharp legibility
-            ctx.shadowBlur = 6;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
-            ctx.fillText('Life = you', centerX, centerY);
-
-            ctx.restore();
-        }
-
-        /**
-         * Draw bottom-right signature:
-         * XOXO
-         * Gagan
-         */
-        function drawSignature() {
-            const marginRight = 54;
-            const marginBottom = 52;
-            const x = LOGICAL_SIZE - marginRight;
-            const yBottom = LOGICAL_SIZE - marginBottom;
-
-            ctx.save();
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'alphabetic';
-
-            // Soft moonlight shadow
-            ctx.shadowColor = 'rgba(215, 228, 255, 0.45)';
-            ctx.shadowBlur = 12;
-
-            // "XOXO"
-            ctx.font = '500 22px "Cormorant Garamond", Georgia, serif';
-            ctx.fillStyle = 'rgba(235, 242, 255, 0.88)';
-            ctx.letterSpacing = '4px';
-            ctx.fillText('XOXO', x, yBottom - 36);
-
-            // "Gagan"
-            ctx.letterSpacing = '0px';
-            ctx.font = '700 36px "Dancing Script", cursive, Georgia, serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText('Gagan', x, yBottom);
-
-            ctx.restore();
-        }
-
-        /**
-         * Update and draw interactive stardust
+  render();
+})();
+</script>
+</body>
+</html>
