@@ -1,464 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Happy Scale — I Love You, Jasleena Saluja</title>
-    <!-- Load Tailwind CSS for responsive layout & UI controls -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load romantic Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Custom romantic styling & animations */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: radial-gradient(circle at center, #2d0a1e 0%, #160410 60%, #090106 100%);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        #canvas-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        /* Center Romantic Typography Overlay */
-        .center-message-wrapper {
-            position: absolute;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            z-index: 10;
-            padding: 1rem;
-            max-width: 85vw;
-            transform: translateY(6%);
-        }
-
-        .love-prefix {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-weight: 600;
-            color: #ffd1e3;
-            letter-spacing: 0.08em;
-            text-shadow: 0 0 15px rgba(255, 105, 180, 0.7), 0 2px 4px rgba(0, 0, 0, 0.6);
-            animation: gentleFloat 3.5s ease-in-out infinite;
-        }
-
-        .jasleena-name {
-            font-family: 'Great Vibes', cursive;
-            background: linear-gradient(135deg, #fff5f8 0%, #ff9ec7 30%, #ffd700 65%, #ffffff 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 18px rgba(255, 77, 148, 0.85)) drop-shadow(0 0 35px rgba(255, 215, 0, 0.45));
-            animation: shimmerText 4s linear infinite, heartbeatScale 2.4s ease-in-out infinite;
-            line-height: 1.15;
-            padding: 0.2em 0.3em;
-        }
-
-        .infinite-badge {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 182, 217, 0.35);
-            box-shadow: 0 0 25px rgba(255, 64, 129, 0.35);
-        }
-
-        @keyframes shimmerText {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
-        }
-
-        @keyframes heartbeatScale {
-            0%, 100% { transform: scale(1); }
-            14% { transform: scale(1.045); }
-            28% { transform: scale(1); }
-            42% { transform: scale(1.035); }
-            70% { transform: scale(1); }
-        }
-
-        @keyframes gentleFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-4px); }
-        }
-    </style>
-</head>
-<body>
-    <div id="canvas-container">
-        <!-- Main Interactive HTML5 Canvas -->
-        <canvas id="happyCanvas"></canvas>
-
-        <!-- Top Header Pill -->
-        <div class="absolute top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center w-full px-4">
-            <div class="infinite-badge px-4 py-1.5 sm:px-6 sm:py-2 rounded-full flex items-center gap-2.5">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-300 animate-ping"></span>
-                <span class="text-xs sm:text-sm font-bold tracking-widest uppercase text-amber-200">
-                    Happy Scale • ∞% &amp; Rising
-                </span>
-                <span class="text-rose-300 text-sm sm:text-base">💖</span>
-            </div>
-        </div>
-
-        <!-- Center Romantic Focal Point -->
-        <div class="center-message-wrapper">
-            <p class="love-prefix text-xl sm:text-3xl md:text-4xl mb-0.5">
-                I love you,
-            </p>
-            <h1 class="jasleena-name text-5xl sm:text-7xl md:text-8xl font-normal">
-                Jasleena Saluja
-            </h1>
-            <div id="rising-counter" class="mt-2 sm:mt-3 px-4 py-1.5 rounded-full bg-rose-950/75 border border-pink-400/40 text-pink-200 text-xs sm:text-sm font-semibold tracking-wider shadow-lg tabular-nums">
-                HAPPINESS LEVEL: <span id="happiness-value" class="text-amber-300 font-bold">100.00% ↑</span>
-            </div>
-        </div>
-
-        <!-- Bottom Interactive Controls -->
-        <div class="absolute bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-wrap items-center justify-center gap-3 w-full px-4">
-            <button id="loveBurstBtn" class="pointer-events-auto group relative overflow-hidden rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 px-6 py-3 sm:px-8 sm:py-3.5 text-white font-bold text-sm sm:text-base shadow-[0_0_25px_rgba(244,63,94,0.65)] hover:shadow-[0_0_35px_rgba(251,191,36,0.85)] active:scale-95 transition-all duration-200 flex items-center gap-2">
-                <span>Send Love Burst</span>
-                <span class="text-lg group-hover:scale-125 transition-transform">✨💖</span>
-            </button>
-        </div>
-    </div>
-
-    <script>
-        /**
-         * Happy Scale — Interactive HTML5 Canvas Application
-         * Dedicated to Jasleena Saluja
-         *
-         * Features:
-         * - Happiness meter gauge pinned at the happiest maximum end while visibly pulsing,
-         *   flowing, and rising continuously in energy/light
-         * - Happiness counter starting at 100.00%, incrementing smoothly every single animation frame,
-         *   and persisting/resuming automatically via localStorage + window.name fallback
-         * - Ambient floating hearts, golden sparkles, and interactive tap/click firework bursts
-         */
-
-        function initHappyScale() {
-            const canvas = document.getElementById('happyCanvas');
-            const ctx = canvas.getContext('2d');
-            const happinessValueEl = document.getElementById('happiness-value');
-            const loveBurstBtn = document.getElementById('loveBurstBtn');
-
-            let width = 0;
-            let height = 0;
-            let dpr = 1;
-            let centerX = 0;
-            let centerY = 0;
-            let gaugeRadius = 180;
-
-            // Persistent storage key & initial value setup (starts at 100 on first visit)
-            const STORAGE_KEY = 'jasleena_happy_scale_value_v1';
-
-            function loadSavedHappiness() {
-                // 1. Try localStorage first
-                try {
-                    const raw = window.localStorage.getItem(STORAGE_KEY);
-                    if (raw !== null) {
-                        const parsed = parseFloat(raw);
-                        if (Number.isFinite(parsed) && parsed >= 100) {
-                            return parsed;
-                        }
-                    }
-                } catch (err) {
-                    // Fall back if sandboxed iframe restricts localStorage
-                }
-
-                // 2. Fallback to window.name persistence across reloads in restricted frames
-                try {
-                    if (window.name && window.name.startsWith(STORAGE_KEY + ':')) {
-                        const parsed = parseFloat(window.name.split(':')[1]);
-                        if (Number.isFinite(parsed) && parsed >= 100) {
-                            return parsed;
-                        }
-                    }
-                } catch (err) {
-                    // Ignore window.name access issues
-                }
-
-                return 100.0;
-            }
-
-            function saveHappinessValue() {
-                const formatted = happinessLevel.toFixed(3);
-                try {
-                    window.localStorage.setItem(STORAGE_KEY, formatted);
-                } catch (err) {
-                    // Ignore storage quota or sandbox restrictions
-                }
-                try {
-                    window.name = STORAGE_KEY + ':' + formatted;
-                } catch (err) {
-                    // Ignore window.name restrictions
-                }
-            }
-
-            // Animation & counter state variables
-            let time = 0;
-            let lastTimestamp = null;
-            let happinessLevel = loadSavedHappiness(); // Starts at 100.00 and resumes from last saved number
-            let surgeIntensity = 0;
-
-            // Render initial value immediately on load
-            happinessValueEl.textContent = `${happinessLevel.toFixed(2)}% ↑`;
-
-            // Save continuously and reliably whenever the user hides, leaves, or closes the page
-            setInterval(saveHappinessValue, 1000);
-            window.addEventListener('beforeunload', saveHappinessValue);
-            window.addEventListener('pagehide', saveHappinessValue);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
-                    saveHappinessValue();
-                }
-            });
-
-            // Particle collections
-            const ambientHearts = [];
-            const sparkles = [];
-            const burstParticles = [];
-            const risingShockwaves = [];
-
-            // Responsive Canvas Resizer
-            function resizeCanvas() {
-                dpr = Math.min(window.devicePixelRatio || 1, 2);
-                width = window.innerWidth;
-                height = window.innerHeight;
-
-                canvas.width = width * dpr;
-                canvas.height = height * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-                centerX = width / 2;
-                centerY = height * 0.52;
-
-                const minDim = Math.min(width, height);
-                gaugeRadius = Math.max(125, Math.min(minDim * 0.38, 310));
-            }
-
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-
-            // Helper: Draw a smooth vector heart shape
-            function drawHeartPath(context, x, y, size) {
-                context.beginPath();
-                const topCurveHeight = size * 0.3;
-                context.moveTo(x, y + topCurveHeight);
-                // Left lobe
-                context.bezierCurveTo(
-                    x, y,
-                    x - size / 2, y,
-                    x - size / 2, y + topCurveHeight
-                );
-                // Bottom left curve
-                context.bezierCurveTo(
-                    x - size / 2, y + (size + topCurveHeight) / 2,
-                    x, y + (size + topCurveHeight) / 1.4,
-                    x, y + size
-                );
-                // Bottom right curve
-                context.bezierCurveTo(
-                    x, y + (size + topCurveHeight) / 1.4,
-                    x + size / 2, y + (size + topCurveHeight) / 2,
-                    x + size / 2, y + topCurveHeight
-                );
-                // Right lobe
-                context.bezierCurveTo(
-                    x + size / 2, y,
-                    x, y,
-                    x, y + topCurveHeight
-                );
-                context.closePath();
-            }
-
-            // Initialize ambient floating hearts
-            function initAmbientParticles() {
-                ambientHearts.length = 0;
-                sparkles.length = 0;
-
-                const heartCount = Math.min(34, Math.floor((width * height) / 26000) + 14);
-                for (let i = 0; i < heartCount; i++) {
-                    ambientHearts.push({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
-                        size: 8 + Math.random() * 14,
-                        speedY: 0.4 + Math.random() * 0.9,
-                        swaySpeed: 0.01 + Math.random() * 0.02,
-                        swayOffset: Math.random() * Math.PI * 2,
-                        alpha: 0.15 + Math.random() * 0.35,
-                        hue: 330 + Math.random() * 35
-                    });
-                }
-
-                const sparkleCount = 55;
-                for (let i = 0; i < sparkleCount; i++) {
-                    sparkles.push({
-                        angle: Math.random() * Math.PI * 2,
-                        distRatio: 0.45 + Math.random() * 0.95,
-                        speed: (0.002 + Math.random() * 0.006) * (Math.random() > 0.5 ? 1 : -1),
-                        size: 1.2 + Math.random() * 2.6,
-                        twinkleOffset: Math.random() * Math.PI * 2,
-                        isGold: Math.random() > 0.4
-                    });
-                }
-            }
-
-            initAmbientParticles();
-
-            // Create an explosive burst of hearts and golden stardust
-            function triggerLoveBurst(x, y, count = 28) {
-                surgeIntensity = Math.min(surgeIntensity + 1.0, 2.5);
-                happinessLevel += 5.0; // Instant +5% boost on tap/button press!
-                saveHappinessValue();
-
-                // Add expanding shockwave ring from the center gauge
-                risingShockwaves.push({
-                    radius: gaugeRadius * 0.85,
-                    alpha: 0.85,
-                    lineWidth: 5
-                });
-
-                const colors = ['#ff4d94', '#ff85b3', '#ffd700', '#ffb347', '#ffffff', '#ff1e7a'];
-                for (let i = 0; i < count; i++) {
-                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
-                    const speed = 2.5 + Math.random() * 6.5;
-                    burstParticles.push({
-                        x: x,
-                        y: y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed - 1.2,
-                        size: 6 + Math.random() * 10,
-                        alpha: 1,
-                        decay: 0.012 + Math.random() * 0.012,
-                        color: colors[Math.floor(Math.random() * colors.length)],
-                        isHeart: Math.random() > 0.35,
-                        rotation: (Math.random() - 0.5) * 0.6
-                    });
-                }
-            }
-
-            // Interactive Canvas & Button Listeners
-            canvas.addEventListener('pointerdown', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const tapX = e.clientX - rect.left;
-                const tapY = e.clientY - rect.top;
-                triggerLoveBurst(tapX, tapY, 24);
-            });
-
-            loveBurstBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                triggerLoveBurst(centerX, centerY - gaugeRadius * 0.15, 42);
-            });
-
-            // Draw the main Rising Happiness Gauge
-            function drawHappinessGauge() {
-                const startAngle = Math.PI * 0.78;
-                const endAngle = Math.PI * 2.22;
-                const totalSpan = endAngle - startAngle;
-
-                // Subtle continuous upward breathing expansion so the gauge always feels rising
-                const riseBreath = Math.sin(time * 2.6) * 3.5 + surgeIntensity * 8;
-                const activeRadius = gaugeRadius + riseBreath;
-
-                // 1. Soft radial aura behind the center text
-                const auraGrad = ctx.createRadialGradient(
-                    centerX, centerY, activeRadius * 0.1,
-                    centerX, centerY, activeRadius * 1.45
-                );
-                auraGrad.addColorStop(0, `rgba(255, 77, 148, ${0.22 + surgeIntensity * 0.1})`);
-                auraGrad.addColorStop(0.55, 'rgba(190, 24, 93, 0.09)');
-                auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                ctx.fillStyle = auraGrad;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, activeRadius * 1.45, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 2. Background track arc
-                ctx.save();
-                ctx.lineCap = 'round';
-                ctx.lineWidth = Math.max(14, gaugeRadius * 0.085);
-                ctx.strokeStyle = 'rgba(255, 182, 217, 0.12)';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, activeRadius, startAngle, endAngle);
-                ctx.stroke();
-
-                // 3. Main Happiest Full-Scale Arc (100% pinned at the top-right peak + glowing pulse)
-                const arcGrad = ctx.createLinearGradient(
-                    centerX - activeRadius, centerY + activeRadius * 0.4,
-                    centerX + activeRadius, centerY - activeRadius * 0.5
-                );
-                arcGrad.addColorStop(0, '#ff3385');
-                arcGrad.addColorStop(0.45, '#ff77a9');
-                arcGrad.addColorStop(0.8, '#ffb703');
-                arcGrad.addColorStop(1, '#fff3b0');
-
-                ctx.shadowColor = 'rgba(255, 105, 180, 0.85)';
-                ctx.shadowBlur = 22 + Math.sin(time * 4) * 6 + surgeIntensity * 14;
-                ctx.strokeStyle = arcGrad;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, activeRadius, startAngle, endAngle);
-                ctx.stroke();
-
-                // 4. Continuously Rising Energy Wave traveling endlessly from start -> peak
-                const waveCount = 3;
-                for (let w = 0; w < waveCount; w++) {
-                    const progress = ((time * 0.55) + w / waveCount) % 1;
-                    const waveStart = startAngle + Math.max(0, progress - 0.22) * totalSpan;
-                    const waveEnd = startAngle + progress * totalSpan;
-
-                    const waveAlpha = Math.sin(progress * Math.PI) * 0.9;
-                    ctx.shadowColor = '#ffd700';
-                    ctx.shadowBlur = 18;
-                    ctx.lineWidth = Math.max(6, gaugeRadius * 0.045);
-                    ctx.strokeStyle = `rgba(255, 250, 210, ${waveAlpha})`;
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, activeRadius, waveStart, waveEnd);
-                    ctx.stroke();
-                }
-
-                // 5. Outer Concentric Rising Halo Ring (constantly expanding upward)
-                const haloProgress = (time * 0.42) % 1;
-                const haloRadius = activeRadius + haloProgress * (gaugeRadius * 0.28);
-                const haloAlpha = (1 - haloProgress) * 0.35;
-                ctx.shadowBlur = 0;
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = `rgba(255, 215, 0, ${haloAlpha})`;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, haloRadius, startAngle, endAngle);
-                ctx.stroke();
-
-                // 6. Scale Tick Marks around the gauge
-                const totalTicks = 36;
-                for (let i = 0; i <= totalTicks; i++) {
-                    const ratio = i / totalTicks;
-                    const angle = startAngle + ratio * totalSpan;
-                    const isMajor = i % 6 === 0;
-                    const innerR = activeRadius - (isMajor ? 22 : 15);
-                    const outerR = activeRadius - 9;
-
-                    // Wave high
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Happy Scale — Jasleena Saluja</title><style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#090208;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+#app{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer;z-index:1}
+.top{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 20px;border-radius:99px;background:rgba(42,10,28,.7);border:1px solid rgba(255,192,224,.38);box-shadow:0 4px 20px rgba(255,64,129,.35);backdrop-filter:blur(6px)}
+.dot{width:8px;height:8px;border-radius:50%;background:#ffd700;box-shadow:0 0 10px #ffd700;animation:pd 1.6s ease-in-out infinite}
+.btxt{color:#ffe4b5;font:800 12px/1 system-ui,sans-serif;letter-spacing:.18em}
+.mid{position:relative;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;text-align:center;padding:12px;max-width:84vw;transform:translateY(6px)}
+.bheart{font-size:clamp(1.5rem,4vw,2.3rem);margin-bottom:4px;filter:drop-shadow(0 0 14px rgba(255,77,148,.9));animation:hb 1.4s ease-in-out infinite}
+.pre{font:italic 400 clamp(1.15rem,3vw,2rem)/1.2 Georgia,serif;color:#ffd6e7;letter-spacing:.05em;text-shadow:0 0 14px rgba(255,105,180,.75)}
+.name{font:italic 700 clamp(2rem,5.6vw,4rem)/1.12 "Snell Roundhand","Brush Script MT",Georgia,serif;background:linear-gradient(120deg,#fff,#ffb3d9 30%,#ffd700 55%,#ff85b3 80%,#fff);background-size:220% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 16px rgba(255,77,148,.85)) drop-shadow(0 0 26px rgba(255,215,0,.4));animation:sh 4.2s linear infinite,hb 2.6s ease-in-out infinite;padding:2px 8px}
+.stat{margin-top:10px;padding:6px 16px;border-radius:99px;background:rgba(28,5,18,.8);border:1px solid rgba(255,182,217,.4);color:#ffcce0;font:700 clamp(.74rem,1.9vw,.9rem)/1.2 system-ui,sans-serif;letter-spacing:.07em;font-variant-numeric:tabular-nums}
+.val{color:#ffd700;font-weight:800;text-shadow:0 0 10px rgba(255,215,0,.65)}
+.sub{margin-top:6px;color:#ffe4b5;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;opacity:.88}
+.bot{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:2}
+.btn{cursor:pointer;border:1px solid rgba(255,235,180,.55);border-radius:99px;padding:12px 26px;font:700 14px/1 system-ui,sans-serif;letter-spacing:.04em;color:#fff;background:linear-gradient(135deg,#f43f5e,#ec4899 52%,#f59e0b);box-shadow:0 6px 24px rgba(244,63,94,.6),0 0 18px rgba(251,191,36,.4);transition:transform .15s}
+.btn:hover{transform:translateY(-2px) scale(1.03)}.btn:active{transform:scale(.95)}
+@keyframes pd{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.45);opacity:.6}}
+@keyframes sh{0%{background-position:0 center}100%{background-position:220% center}}
+@keyframes hb{0%,100%{transform:scale(1)}16%{transform:scale(1.08)}32%{transform:scale(1)}48%{transform:scale(1.05)}}
+</style></head><body><div id="app"><canvas id="c"></canvas>
+<div class="top"><div class="badge"><span class="dot"></span><span class="btxt">HAPPY SCALE</span><span>💖</span></div></div>
+<div class="mid"><div class="bheart">💗</div><div class="pre">I love you,</div><h1 class="name">Jasleena Saluja</h1><div class="stat">HAPPINESS: <span id="v" class="val">100.00% ↑</span></div><div class="sub">ALWAYS ON THE RISE</div></div>
+<div class="bot"><button id="b" type="button" class="btn">Send More Love ✨</button></div>
+</div><script>
+(()=>{
+const c=document.getElementById("c"),x=c.getContext("2d"),v=document.getElementById("v"),b=document.getElementById("b"),K="jasleena_happy_scale_v2";
+const load=()=>{let n=100;try{let s=localStorage.getItem(K);if(s&&+s>=100)return+s}catch(e){}try{if(window.name.startsWith(K+"=")){let s=+window.name.slice(K.length+1);if(s>=100)return s}}catch(e){}return n};
+const save=n=>{let s=n.toFixed(4);try{localStorage.setItem(K,s)}catch(e){}try{window.name=K+"="+s}catch(e){}};
+let hap=load(),W=0,H=0,cx=0,cy=0,R=180,t=0,lt=performance.now(),boost=0,hearts=[],dust=[],bursts=[],rings=[];
+const show=()=>{v.textContent=hap.toFixed(2)+"% \u2191"};show();
+setInterval(()=>save(hap),1000);
+["beforeunload","pagehide"].forEach(e=>addEventListener(e,()=>save(hap)));
+document.addEventListener("visibilitychange",()=>{if(document.hidden)save(hap)});
+const resize=()=>{let d=Math.min(devicePixelRatio||1,2);W=innerWidth||360;H=innerHeight||640;c.width=W*d;c.height=H*d;x.setTransform(d,0,0,d,0,0);cx=W*.5;cy=H*.51;R=Math.max(125,Math.min(Math.min(W,H)*.37,295))};
+addEventListener("resize",resize);resize();
+const heartPath=(px,py,s)=>{let h=s*.3;x.beginPath();x.moveTo(px,py+h);x.bezierCurveTo(px,py,px-s*.5,py,px-s*.5,py+h);x.bezierCurveTo(px-s*.5,py+(s+h)*.5,px,py+(s+h)*.72,px,py+s);x.bezierCurveTo(px,py+(s+h)*.72,px+s*.5,py+(s+h)*.5,px+s*.5,py+h);x.bezierCurveTo(px+s*.5,py,px,py,px,py+h);x.closePath()};
+for(let i=0;i<26;i++)hearts.push({x:Math.random()*W,y:Math.random()*H,s:9+Math.random()*13,vy:24+Math.random()*38,sa:12+Math.random()*20,sf:.8+Math.random()*1.3,p:Math.random()*6.28,a:.14+Math.random()*.3,h:332+Math.random()*28});
+for(let i=0;i<55;i++)dust.push({x:Math.random()*W,y:Math.random()*H,vy:14+Math.random()*28,vx:(Math.random()-.5)*12,r:1+Math.random()*2.3,p:Math.random()*6.28,sp:2+Math.random()*3.5});
+const burst=(px,py,n)=>{boost=Math.min(boost+1,3);hap+=1;show();save(hap);rings.push({r:R*.88,a:.85});const cols=["#ff4d94","#ff85b3","#ffd700","#ffb347","#fff","#fb7185"];for(let i=0;i<n;i++){let a=6.283*i/n+(Math.random()-.5)*.45,sp=90+Math.random()*230;bursts.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-45,s:7+Math.random()*10,a:1,d:.75+Math.random()*.6,c:cols[i%cols.length],h:Math.random()>.35})}};
+c.addEventListener("pointerdown",e=>{let r=c.getBoundingClientRect();burst(e.clientX-r.left,e.clientY-r.top,24)});
+b.addEventListener("click",e=>{e.stopPropagation();burst(cx,cy-R*.15,36)});
+const frame=now=>{
+  let dt=Math.min(.25,Math.max(.001,(now-lt)/1000));lt=now;t+=dt;boost*=Math.pow(.08,dt);
+  hap+=(.25+boost*1.8)*dt;show();
+  let bg=x.createRadialGradient(cx,cy,18,cx,cy,Math.max(W,H)*.82);
+  bg.addColorStop(0,`rgba(46,12,35,${.88+Math.sin(t*1.1)*.08})`);bg.addColorStop(.52,"#1a0714");bg.addColorStop(1,"#090208");
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  for(let k=0;k<3;k++){let bx=cx+Math.cos(t*.35+k*2.1)*W*.24,by=cy+Math.sin(t*.28+k*1.7)*H*.18,br=Math.max(135,R*1.3),ag=x.createRadialGradient(bx,by,0,bx,by,br);ag.addColorStop(0,k===1?"rgba(255,190,90,.07)":"rgba(255,77,148,.08)");ag.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=ag;x.beginPath();x.arc(bx,by,br,0,6.283);x.fill()}
+  hearts.forEach(h=>{h.y-=h.vy*(1+boost*.5)*dt;if(h.y<-30){h.y=H+20;h.x=Math.random()*W}x.save();x.fillStyle=`hsla(${h.h},92%,72%,${h.a})`;x.shadowColor="rgba(255,105,180,.45)";x.shadowBlur=8;heartPath(h.x+Math.sin(t*h.sf+h.p)*h.sa,h.y,h.s);x.fill();x.restore()});
+  dust.forEach(d=>{d.y-=d.vy*dt;d.x+=d.vx*dt;if(d.y<-8){d.y=H+8;d.x=Math.random()*W}if(d.x<-8)d.x=W+8;if(d.x>W+8)d.x=-8;let tw=.25+.75*(.5+.5*Math.sin(t*d.sp+d.p));x.fillStyle=`rgba(255,223,115,${tw})`;x.beginPath();x.arc(d.x,d.y,d.r,0,6.283);x.fill()});
+  for(let i=rings.length-1;i>=0;i--){let g=rings[i];g.r+=190*dt;g.a-=.85*dt;if(g.a<=0){rings.splice(i,1);continue}x.strokeStyle=`rgba(255,215,0,${g.a})`;x.lineWidth=4;x.beginPath();x.arc(cx,cy,g.r,0,6.283);x.stroke()}
+  let sa=Math.PI*.76,ea=Math.PI*2.24,sp=ea-sa,r=R+Math.sin(t*2.5)*3.5+boost*7.5,lw=Math.max(13,R*.085);
+  let ig=x.createRadialGradient(cx,cy,r*.1,cx,cy,r*1.4);ig.addColorStop(0,`rgba(255,85,155,${.2+boost*.08})`);ig.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=ig;x.beginPath();x.arc(cx,cy,r*1.4,0,6.283);x.fill();
+  x.save();x.lineCap="round";x.lineWidth=lw;x.strokeStyle="rgba(255,192,224,.14)";x.beginPath();x.arc(cx,cy,r,sa,ea);x.stroke();
+  let mg=x.createLinearGradient(cx-r,cy+r*.4,cx+r,cy-r*.4);mg.addColorStop(0,"#e11d48");mg.addColorStop(.35,"#ff4d94");mg.addColorStop(.7,"#fb7185");mg.addColorStop(1,"#ffd700");
+  x.shadowColor="rgba(255,105,180,.85)";x.shadowBlur=18+Math.sin(t*4)*6+boost*12;x.strokeStyle=mg;x.beginPath();x.arc(cx,cy,r,sa,ea);x.stroke();
+  for(let p=0;p<3;p++){let u=(t*.55+p/3)%1;x.shadowColor="#ffd700";x.shadowBlur=16;x.lineWidth=lw*.5;x.strokeStyle=`rgba(255,250,215,${Math.sin(u*Math.PI)*.9})`;x.beginPath();x.arc(cx,cy,r,sa+Math.max(0,u-.2)*sp,sa+u*sp);x.stroke()}
+  let pa=ea+Math.abs(Math.sin(t*6))*.03+boost*.025,px=cx+Math.cos(pa)*r,py=cy+Math.sin(pa)*r,pg=x.createRadialGradient(px,py,2,px,py,24+boost*8);
+  pg.addColorStop(0,"#fff");pg.addColorStop(.35,"#ffd700");pg.addColorStop(.75,"rgba(255,77,148,.5)");pg.addColorStop(1,"rgba(255,77,148,0)");
+  x.fillStyle=pg;x.beginPath();x.arc(px,py,24+boost*8,0,6.283);x.fill();x.fillStyle="#fff";x.beginPath();x.arc(px,py,5,0,6.283);x.fill();
+  let fs=Math.max(11,Math.round(R*.068)),ld=r+Math.max(22,R*.13);x.font=`700 ${fs}px system-ui,sans-serif`;x.textAlign="center";x.textBaseline="middle";x.shadowBlur=0;
+  x.fillStyle="rgba(255,198,226,.82)";x.fillText("100%",cx+Math.cos(sa)*ld,cy+Math.sin(sa)*ld+8);
+  x.fillStyle="#ffd700";x.shadowColor="rgba(255,215,0,.85)";x.shadowBlur=10;x.fillText("HAPPIEST \u2191",cx+Math.cos(ea)*ld,cy+Math.sin(ea)*ld+8);x.restore();
+  for(let i=bursts.length-1;i>=0;i--){let q=bursts[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy-=95*dt;q.vx*=Math.pow(.18,dt);q.a-=q.d*dt;if(q.a<=0){bursts.splice(i,1);continue}x.save();x.globalAlpha=q.a;x.fillStyle=q.c;x.shadowColor=q.c;x.shadowBlur=10;if(q.h){heartPath(q.x,q.y,q.s);x.fill()}else{x.beginPath();x.arc(q.x,q.y,q.s*.45,0,6.283);x.fill()}x.restore()}
+  requestAnimationFrame(frame);
+};
+requestAnimationFrame(frame);setTimeout(()=>burst(cx,cy-R*.2,20),220);
+})();
+</script></body></html>
